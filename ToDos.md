@@ -25,9 +25,13 @@
 - [x] Built-in Multi-Stream Speed Benchmark dialog (testing individual vs bonded throughput).
 - [x] Settings dialog for custom proxy ports and load balancing modes.
 
-## Milestone 4: Verification, Release Management & Auto Check-in [COMPLETED]
-- [x] Compile and verify C# .NET solution with `dotnet build` (0 warnings, 0 errors).
-- [x] Generate self-contained native Windows release publish (`publish/CombiSpeed.exe`).
-- [x] Clean up any temporary files/scripts.
+## Milestone 4: One-Click Start, Stop & Installer Scripts [COMPLETED]
+- [x] Add CLI arguments parsing (`--start`, `--stop`, `--minimized`) and IPC in `App.xaml.cs`.
+- [x] Create `Start-CombiSpeed.bat`: 1-click launcher that launches CombiSpeed and automatically activates bonding mode.
+- [x] Create `Stop-CombiSpeed.bat`: 1-click stopper that halts running instances and safely resets Windows proxy settings.
+- [x] Create `Install-CombiSpeed.bat`: 1-click automated installer deploying to `%LOCALAPPDATA%\Programs\CombiSpeed`, creating Desktop & Start Menu shortcuts, and registering in Windows "Add or Remove Programs".
+- [x] Create `Uninstall-CombiSpeed.bat`: Clean uninstaller removing files, shortcuts, and registry entries.
+- [x] Embed native application icon (`app.ico`) in `.csproj`, window icons, desktop shortcuts, and executable metadata.
+- [x] Test and verify start, stop, installer, and uninstaller flows.
 - [x] Update documentation (`ReadMe.md`, `KnownIssues.md`, `ReleaseNotes.md`, `version.json`).
-- [x] Git commit and version tag increment (`v1.1.0`).
+- [x] Git commit and tag `v1.1.1`.

@@ -1,5 +1,34 @@
 # Release Notes
 
+## [1.1.1] - 2026-10-29 - One-Click Start, Stop & Installer Release
+
+### 🚀 Highlights & Features
+- **One-Click Start Script (`Start-CombiSpeed.bat`)**:
+  - Automatically discovers executable across installation, publish, and build directories.
+  - Launches CombiSpeed and automatically engages multi-WAN network bonding (`--start`).
+  - Supports `--minimized` background launch.
+- **One-Click Stop Script (`Stop-CombiSpeed.bat`)**:
+  - Signals graceful shutdown to running CombiSpeed instances (`--stop`).
+  - Implements multi-layered fail-safe to immediately restore Windows System Proxy to Direct Internet via Registry and WinINet APIs, preventing orphaned proxy states.
+  - Terminates any lingering processes.
+- **One-Click Automated Installer (`Install-CombiSpeed.bat`)**:
+  - Deploys CombiSpeed to modern user application location `%LOCALAPPDATA%\Programs\CombiSpeed` without requiring administrative UAC elevation.
+  - Automatically compiles fresh binaries via `.NET SDK` if release package is missing.
+  - Creates **Desktop Shortcuts** (`CombiSpeed`, `Start CombiSpeed (Bonding)`, and `Stop CombiSpeed`).
+  - Creates **Start Menu Folder** with application shortcuts and uninstaller.
+  - Fully registers in **Windows Installed Apps / Add or Remove Programs** (`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\CombiSpeed`) with display metadata, icon, and uninstaller.
+  - Supports silent non-interactive installation (`--silent --no-launch`).
+- **One-Click Clean Uninstaller (`Uninstall-CombiSpeed.bat`)**:
+  - Halts proxy and restores network settings.
+  - Removes Desktop and Start Menu shortcuts.
+  - Cleans up Windows Add/Remove Programs registry key and application directory.
+- **Embedded Application Icon & Metadata**:
+  - Embedded `app.ico` into `CombiSpeed.csproj`, Windows taskbar, title bar, and generated desktop shortcuts.
+- **Command-Line Interface (CLI)**:
+  - Supported flags: `--start` (`-s`), `--stop`, `--minimized` (`-m`).
+
+---
+
 ## [1.1.0] - 2026-10-29 - Native C# .NET Windows Edition
 
 ### 🚀 Highlights & Architectural Modernization

@@ -11,9 +11,26 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Loaded += (s, e) =>
+        Loaded += async (s, e) =>
         {
             App.ViewModel = ViewModel;
+
+            if (App.StartMinimized)
+            {
+                WindowState = WindowState.Minimized;
+            }
+
+            if (App.AutoStart && ViewModel != null)
+            {
+                if (!ViewModel.IsEngineRunning)
+                {
+                    await ViewModel.TogglePowerAsync();
+                }
+                if (!ViewModel.IsWindowsProxyActive)
+                {
+                    ViewModel.ToggleWindowsProxy();
+                }
+            }
         };
     }
 

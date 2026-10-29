@@ -146,5 +146,43 @@ The compiled standalone executable is located at `publish/CombiSpeed.exe` (~150 
 
 ---
 
+## ⚡ One-Click Start, Stop & Installer
+
+CombiSpeed includes zero-configuration one-click scripts for seamless daily operation and installation:
+
+### 1. One-Click Installer (`Install-CombiSpeed.bat`)
+Installs CombiSpeed for the current user into `%LOCALAPPDATA%\Programs\CombiSpeed` without requiring administrative (UAC) elevation:
+- Automatically compiles release binaries if needed.
+- Creates **Desktop Shortcuts** (`CombiSpeed`, `Start CombiSpeed (Bonding)`, and `Stop CombiSpeed`).
+- Creates **Start Menu Folder** with app launcher, bonding launcher, stopper, and uninstaller.
+- Registers in Windows **Installed Apps** / **Add or Remove Programs** (`Settings > Apps > Installed apps`) with full uninstaller support.
+- Supports silent automated install via `Install-CombiSpeed.bat --silent --no-launch`.
+
+### 2. One-Click Start (`Start-CombiSpeed.bat`)
+Double-click `Start-CombiSpeed.bat` to launch CombiSpeed and immediately engage multi-WAN network bonding:
+```cmd
+# Standard launch with auto-bonding
+Start-CombiSpeed.bat
+
+# Launch directly into system tray / minimized
+Start-CombiSpeed.bat --minimized
+```
+
+### 3. One-Click Stop (`Stop-CombiSpeed.bat`)
+Double-click `Stop-CombiSpeed.bat` for instant, fail-safe shutdown:
+- Sends graceful shutdown signal to running CombiSpeed instances.
+- Cleans up and shuts down local proxy servers.
+- **Fail-Safe Windows Proxy Reset**: Direct registry and WinINet API restore guarantees that Windows System Proxy is turned OFF, ensuring internet connectivity is never broken or left hanging.
+- Terminates any lingering processes.
+
+### 4. CLI Arguments Reference
+| Argument | Alias | Description |
+|---|---|---|
+| `--start` | `-s` | Starts CombiSpeed and automatically engages network bonding on launch. |
+| `--stop` | *(none)* | Signals any running CombiSpeed instance to shutdown and safely restores system proxy. |
+| `--minimized` | `-m` | Launches CombiSpeed in minimized window mode. |
+
+---
+
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
