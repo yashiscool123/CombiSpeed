@@ -67,9 +67,16 @@
                         <ComboBoxItem Content="Active-Passive Link Failover (Redundancy mode)" Tag="Failover"/>
                     </ComboBox>
 
-                    <!-- Windows Proxy Auto-start -->
-                    <TextBlock Text="WINDOWS INTEGRATION" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
+                    <!-- Windows & Virtual Adapter Integration -->
+                    <TextBlock Text="WINDOWS &amp; VIRTUAL ADAPTER INTEGRATION" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
+                    <CheckBox x:Name="ChkAutoVirtualBridge" Content="Auto-connect Virtual Bonded Bridge when CombiSpeed starts" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,8"/>
                     <CheckBox x:Name="ChkAutoWindowsProxy" Content="Auto-enable Windows System Proxy when CombiSpeed starts" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,16"/>
+
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Virtual Bridge Tunnel Port:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                        <TextBox x:Name="TxtBridgePort" Text="8443" Background="#080C14" Foreground="White" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas"/>
+                        <TextBlock Text="Default: 8443 (Local virtual tunnel gateway listener)" FontSize="10" Foreground="#64748B" Margin="0,2,0,0"/>
+                    </StackPanel>
 
                     <!-- Terminal Proxy String -->
                     <TextBlock Text="CLI PROXY STRING (CURL / GIT / NPM / DOCKER)" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>

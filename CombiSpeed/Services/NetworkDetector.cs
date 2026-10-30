@@ -8,10 +8,13 @@ public class NetworkDetector
 {
     private readonly Dictionary<string, NetworkAdapterModel> _cachedAdapters = new();
 
+    private static readonly string[] AccentPalette = { "#00F0FF", "#8B5CF6", "#10B981", "#F59E0B", "#EC4899", "#3B82F6" };
+
     public List<NetworkAdapterModel> DetectAdapters()
     {
         var interfaces = NetworkInterface.GetAllNetworkInterfaces();
         var result = new List<NetworkAdapterModel>();
+        int colorIdx = 0;
 
         foreach (var iface in interfaces)
         {
@@ -57,9 +60,11 @@ public class NetworkDetector
                 UploadSpeedBps = existing?.UploadSpeedBps ?? 0,
                 TotalRxBytes = existing?.TotalRxBytes ?? 0,
                 TotalTxBytes = existing?.TotalTxBytes ?? 0,
-                WanIp = existing?.WanIp ?? "Resolving..."
+                WanIp = existing?.WanIp ?? "Resolving...",
+                AccentHexColor = AccentPalette[colorIdx % AccentPalette.Length]
             };
 
+            colorIdx++;
             _cachedAdapters[id] = model;
             result.Add(model);
         }
@@ -75,7 +80,27 @@ public class NetworkDetector
             }
         }
 
+        RecalculateEffectivePercentages(result);
         return result;
+    }
+
+    public static void RecalculateEffectivePercentages(IEnumerable<NetworkAdapterModel> adapters)
+    {
+        var list = adapters.ToList();
+        var enabled = list.Where(a => a.IsEnabled).ToList();
+        int totalWeight = enabled.Sum(a => a.Weight);
+
+        foreach (var adapter in list)
+        {
+            if (!adapter.IsEnabled || totalWeight == 0)
+            {
+                adapter.EffectivePercentage = 0;
+            }
+            else
+            {
+                adapter.EffectivePercentage = Math.Round((double)adapter.Weight / totalWeight * 100.0, 1);
+            }
+        }
     }
 
     public List<NetworkAdapterModel> GetAllCached() => _cachedAdapters.Values.ToList();

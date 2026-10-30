@@ -22,12 +22,15 @@ if defined EXE_PATH (
 :: 2. Safety Net: Ensure any remaining CombiSpeed processes are terminated
 taskkill /F /IM CombiSpeed.exe /T >nul 2>&1
 
-:: 3. Safety Net: Ensure Windows System Proxy is completely disabled in registry
+:: 3. Safety Net: Ensure Virtual Bonded Bridge adapter connection is disconnected
+rasdial "CombiSpeed Bonded Bridge" /DISCONNECT >nul 2>&1
+
+:: 4. Safety Net: Ensure Windows System Proxy is completely disabled in registry
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f >nul 2>&1
 
 echo.
 echo [SUCCESS] CombiSpeed stopped successfully.
-echo [SUCCESS] Windows System Proxy disabled. Direct Internet restored!
+echo [SUCCESS] Virtual Bridge disconnected & Windows System Proxy disabled. Direct Internet restored!
 echo.
 timeout /t 2 >nul 2>&1 || ping -n 3 127.0.0.1 >nul
 exit /b 0

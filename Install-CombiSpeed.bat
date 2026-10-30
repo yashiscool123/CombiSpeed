@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 title CombiSpeed - One-Click Installer
 
 echo =====================================================================
-echo           CombiSpeed - One-Click Installer (v1.1.1)
+echo           CombiSpeed - One-Click Installer (v1.2.0)
 echo       Network Adapter Bonding ^& Bandwidth Aggregation Engine
 echo =====================================================================
 echo.
@@ -106,7 +106,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 echo [5/5] Registering in Windows Add or Remove Programs...
 set "REG_KEY=HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\CombiSpeed"
 reg add "%REG_KEY%" /v "DisplayName" /t REG_SZ /d "CombiSpeed - Network Adapter Bonding & Bandwidth Aggregator" /f >nul
-reg add "%REG_KEY%" /v "DisplayVersion" /t REG_SZ /d "1.1.1" /f >nul
+reg add "%REG_KEY%" /v "DisplayVersion" /t REG_SZ /d "1.2.0" /f >nul
+powershell -NoProfile -Command "Add-VpnConnection -Name 'CombiSpeed Bonded Bridge' -ServerAddress '127.0.0.1' -TunnelType Automatic -EncryptionLevel Optional -AllUserConnection:$false -SplitTunneling:$false -Force" >nul 2>&1
 reg add "%REG_KEY%" /v "Publisher" /t REG_SZ /d "CombiSpeed" /f >nul
 reg add "%REG_KEY%" /v "InstallLocation" /t REG_SZ /d "%TARGET_DIR%" /f >nul
 reg add "%REG_KEY%" /v "DisplayIcon" /t REG_SZ /d "%TARGET_DIR%\CombiSpeed.exe,0" /f >nul

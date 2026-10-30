@@ -1,5 +1,32 @@
 # Release Notes
 
+## [1.2.0] - 2026-10-30 - Virtual VPN / Adapter Connection & Weighted Bandwidth Bridge Release
+
+### 🚀 Highlights & Features
+- **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem**:
+  - Automatically creates and manages a native Windows adapter connection: **`CombiSpeed Bonded Bridge`** (`CombiSpeed Virtual Adapter`).
+  - Registers directly in Windows Network Connections (`ncpa.cpl`) and Windows Settings -> Network & Internet -> VPN using Windows user-mode phonebook (`rasphone.pbk`) without requiring UAC admin privileges.
+  - Acts as the unified virtual network bridge merging all active physical network adapters (Ethernet, Wi-Fi, Cellular, etc.).
+- **Strict Percentage Bandwidth Utilization (Smooth Weighted Round Robin)**:
+  - Implements mathematically provable **Smooth Weighted Round Robin (SWRR)** in `LoadBalancerEngine.cs`.
+  - Distributes all outgoing traffic streams smoothly across the physical network adapters strictly in accordance with user-configured percentage weights (e.g. 70% Wi-Fi, 30% Ethernet), eliminating traffic clustering or burstiness.
+  - Automatically calculates and displays the **Effective % of Bonded Pool** (e.g. `60.0% of Bonded Pool`) for each enabled adapter.
+- **Dedicated Virtual Bonded Bridge Dashboard Card**:
+  - Live status indicator badge (`BONDED & ACTIVE` / `READY TO CONNECT`).
+  - Displays Windows connection name, Virtual IP (`10.254.1.2`), Gateway (`10.254.1.1`), and live throughput.
+  - **Dynamic Multi-Color Segmented Bandwidth Distribution Bar**: Real-time visual representation of each physical adapter's proportion of the total bonded pool.
+  - Action buttons: `Toggle Bridge`, `View in Windows (ncpa.cpl)`, and `Re-provision Adapter`.
+- **Individual Physical Adapter Telemetry & Indicators**:
+  - Each adapter card features a unique Cyberpunk neon accent color (Cyan, Purple, Emerald, Amber, Pink).
+  - Prominent `BANDWIDTH: XX.X% of Bonded Pool` indicator reflecting real-time weight changes.
+  - Live individual download/upload speedometers and ping badges.
+- **Fail-Safe Virtual Bridge Lifecycle Management**:
+  - `Stop-CombiSpeed.bat` and `App.xaml.cs` `--stop` handler include `rasdial "CombiSpeed Bonded Bridge" /DISCONNECT`, guaranteeing direct internet is always restored.
+  - `Uninstall-CombiSpeed.bat` automatically removes the VPN connection profile.
+  - `Install-CombiSpeed.bat` pre-provisions the virtual adapter connection profile during installation.
+
+---
+
 ## [1.1.1] - 2026-10-29 - One-Click Start, Stop & Installer Release
 
 ### 🚀 Highlights & Features

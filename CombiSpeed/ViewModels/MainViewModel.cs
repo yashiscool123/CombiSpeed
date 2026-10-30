@@ -35,6 +35,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly NetworkDetector _networkDetector = new();
     private readonly LoadBalancerEngine _loadBalancer = new();
     private readonly WindowsProxyManager _proxyManager = new();
+    private readonly VirtualBridgeManager _virtualBridgeManager = new("CombiSpeed Bonded Bridge");
     private readonly SpeedTester _speedTester = new();
     private readonly HealthMonitor _healthMonitor;
     private readonly ProxyEngine _proxyEngine;
@@ -42,9 +43,13 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly DispatcherTimer _uiTimer;
     private readonly List<double> _downloadHistory = new(new double[60]);
     private readonly List<double> _uploadHistory = new(new double[60]);
+    private long _prevBridgeRx;
+    private long _prevBridgeTx;
 
     public ObservableCollection<NetworkAdapterModel> Adapters { get; } = new();
     public ObservableCollection<AuditLogModel> AuditLogs { get; } = new();
+
+    public VirtualBridgeModel VirtualBridge => _virtualBridgeManager.Model;
 
     private bool _isEngineRunning;
     public bool IsEngineRunning
@@ -127,6 +132,9 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ICommand TogglePowerCommand { get; }
     public ICommand ToggleWindowsProxyCommand { get; }
+    public ICommand ToggleVirtualBridgeCommand { get; }
+    public ICommand OpenNetworkConnectionsCommand { get; }
+    public ICommand ReprovisionBridgeCommand { get; }
     public ICommand RefreshAdaptersCommand { get; }
     public ICommand ClearLogsCommand { get; }
 
@@ -140,10 +148,22 @@ public class MainViewModel : INotifyPropertyChanged
 
         TogglePowerCommand = new RelayCommand(async () => await TogglePowerAsync());
         ToggleWindowsProxyCommand = new RelayCommand(ToggleWindowsProxy);
+        ToggleVirtualBridgeCommand = new RelayCommand(async () => await ToggleVirtualBridgeAsync());
+        OpenNetworkConnectionsCommand = new RelayCommand(VirtualBridgeManager.OpenWindowsNetworkConnections);
+        ReprovisionBridgeCommand = new RelayCommand(async () => await ReprovisionBridgeAsync());
         RefreshAdaptersCommand = new RelayCommand(RefreshAdapters);
         ClearLogsCommand = new RelayCommand(() => AuditLogs.Clear());
 
         _proxyEngine.OnAuditLog += log =>
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                AuditLogs.Insert(0, log);
+                while (AuditLogs.Count > 100) AuditLogs.RemoveAt(AuditLogs.Count - 1);
+            });
+        };
+
+        _virtualBridgeManager.OnAuditLog += log =>
         {
             Application.Current?.Dispatcher.InvokeAsync(() =>
             {
@@ -189,7 +209,31 @@ public class MainViewModel : INotifyPropertyChanged
         Adapters.Clear();
         foreach (var a in detected)
         {
+            a.WeightChanged += OnAdapterWeightChanged;
             Adapters.Add(a);
+        }
+
+        NetworkDetector.RecalculateEffectivePercentages(Adapters);
+        UpdateMergedSummary();
+    }
+
+    private void OnAdapterWeightChanged()
+    {
+        NetworkDetector.RecalculateEffectivePercentages(Adapters);
+        UpdateMergedSummary();
+    }
+
+    private void UpdateMergedSummary()
+    {
+        var enabled = Adapters.Where(a => a.IsEnabled && a.Weight > 0).ToList();
+        if (enabled.Count == 0)
+        {
+            VirtualBridge.MergedAdaptersSummary = "No Physical Adapters Merged (Enable adapters & set % weight > 0)";
+        }
+        else
+        {
+            string parts = string.Join(" + ", enabled.Select(a => $"{a.Name} ({a.EffectivePercentage:F0}%)"));
+            VirtualBridge.MergedAdaptersSummary = $"{enabled.Count} Adapters Merged: {parts}";
         }
     }
 
@@ -203,6 +247,11 @@ public class MainViewModel : INotifyPropertyChanged
                 IsWindowsProxyActive = false;
             }
 
+            if (VirtualBridge.IsConnected)
+            {
+                await _virtualBridgeManager.StopBridgeAsync();
+            }
+
             await _proxyEngine.StopAsync();
             IsEngineRunning = false;
         }
@@ -214,12 +263,34 @@ public class MainViewModel : INotifyPropertyChanged
             await _proxyEngine.StartAsync(Config.HttpPort, Config.SocksPort);
             IsEngineRunning = true;
 
+            if (Config.EnableVirtualBridge)
+            {
+                await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached());
+            }
+
             if (Config.EnableWindowsProxy)
             {
                 _proxyManager.Enable(Config.HttpPort, Config.SocksPort);
                 IsWindowsProxyActive = true;
             }
         }
+    }
+
+    public async Task ToggleVirtualBridgeAsync()
+    {
+        if (VirtualBridge.IsConnected)
+        {
+            await _virtualBridgeManager.StopBridgeAsync();
+        }
+        else
+        {
+            await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached());
+        }
+    }
+
+    public async Task ReprovisionBridgeAsync()
+    {
+        await _virtualBridgeManager.EnsureProfileCreatedAsync();
     }
 
     public void ToggleWindowsProxy()
@@ -242,17 +313,25 @@ public class MainViewModel : INotifyPropertyChanged
         {
             _proxyManager.Disable();
         }
+        _virtualBridgeManager.Dispose();
         _healthMonitor.Stop();
         _ = _proxyEngine.StopAsync();
     }
 
     private void UpdateTelemetryUI()
     {
-        BondedDownloadSpeed = NetworkAdapterModel.FormatSpeed(_proxyEngine.InstantDownloadSpeedBps);
-        BondedUploadSpeed = NetworkAdapterModel.FormatSpeed(_proxyEngine.InstantUploadSpeedBps);
-        ActiveStreamsCount = _proxyEngine.ActiveConnections;
+        long currentBridgeRx = VirtualBridge.TotalRxBytes;
+        long currentBridgeTx = VirtualBridge.TotalTxBytes;
+        VirtualBridge.DownloadSpeedBps = Math.Max(0, currentBridgeRx - _prevBridgeRx);
+        VirtualBridge.UploadSpeedBps = Math.Max(0, currentBridgeTx - _prevBridgeTx);
+        _prevBridgeRx = currentBridgeRx;
+        _prevBridgeTx = currentBridgeTx;
+
+        BondedDownloadSpeed = NetworkAdapterModel.FormatSpeed(_proxyEngine.InstantDownloadSpeedBps + VirtualBridge.DownloadSpeedBps);
+        BondedUploadSpeed = NetworkAdapterModel.FormatSpeed(_proxyEngine.InstantUploadSpeedBps + VirtualBridge.UploadSpeedBps);
+        ActiveStreamsCount = _proxyEngine.ActiveConnections + VirtualBridge.ActiveStreams;
         TotalStreamsCount = _proxyEngine.TotalConnections;
-        SessionVolume = NetworkAdapterModel.FormatBytes(_proxyEngine.TotalDownloadBytes + _proxyEngine.TotalUploadBytes);
+        SessionVolume = NetworkAdapterModel.FormatBytes(_proxyEngine.TotalDownloadBytes + _proxyEngine.TotalUploadBytes + VirtualBridge.TotalRxBytes + VirtualBridge.TotalTxBytes);
 
         if (_proxyEngine.StartedAt.HasValue && IsEngineRunning)
         {

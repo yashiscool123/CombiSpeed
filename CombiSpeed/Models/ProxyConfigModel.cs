@@ -14,5 +14,8 @@ public class ProxyConfigModel
     public int SocksPort { get; set; } = 1080;
     public RoutingMode RoutingMode { get; set; } = RoutingMode.Weighted;
     public bool EnableWindowsProxy { get; set; } = false;
+    public bool EnableVirtualBridge { get; set; } = true;
+    public string VirtualAdapterName { get; set; } = "CombiSpeed Bonded Bridge";
+    public int VirtualBridgePort { get; set; } = 8443;
     public string? PrimaryAdapterId { get; set; }
 }

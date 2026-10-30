@@ -5,7 +5,7 @@ namespace CombiSpeed.Services;
 public class LoadBalancerEngine
 {
     private int _currentIndex;
-    private int _weightCounter;
+    private readonly Dictionary<string, int> _currentWeights = new();
     private readonly object _lock = new();
 
     public RoutingMode Mode { get; set; } = RoutingMode.Weighted;
@@ -53,20 +53,46 @@ public class LoadBalancerEngine
                         return pool[_currentIndex];
                     }
 
-                    int minWeight = Math.Max(1, weightedPool.Min(a => a.Weight));
-                    var current = weightedPool[_currentIndex % weightedPool.Count];
+                    // Smooth Weighted Round Robin (SWRR):
+                    // Guarantees mathematically optimal, smoothly interleaved dispatch strictly proportional to weights.
+                    int totalWeight = weightedPool.Sum(a => a.Weight);
+                    NetworkAdapterModel? selected = null;
+                    int maxCurrentWeight = int.MinValue;
 
-                    _weightCounter++;
-                    int quota = Math.Max(1, (int)Math.Round((double)current.Weight / minWeight));
-
-                    if (_weightCounter >= quota)
+                    foreach (var adapter in weightedPool)
                     {
-                        _currentIndex = (_currentIndex + 1) % weightedPool.Count;
-                        _weightCounter = 0;
+                        if (!_currentWeights.TryGetValue(adapter.Id, out int current))
+                        {
+                            current = 0;
+                        }
+                        current += adapter.Weight;
+                        _currentWeights[adapter.Id] = current;
+
+                        if (current > maxCurrentWeight)
+                        {
+                            maxCurrentWeight = current;
+                            selected = adapter;
+                        }
                     }
 
-                    return current;
+                    if (selected != null)
+                    {
+                        _currentWeights[selected.Id] -= totalWeight;
+                        return selected;
+                    }
+
+                    _currentIndex = (_currentIndex + 1) % weightedPool.Count;
+                    return weightedPool[_currentIndex];
             }
+        }
+    }
+
+    public void ResetState()
+    {
+        lock (_lock)
+        {
+            _currentIndex = 0;
+            _currentWeights.Clear();
         }
     }
 }

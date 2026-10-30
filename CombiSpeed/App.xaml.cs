@@ -25,6 +25,10 @@ public partial class App : Application
             var proxyManager = new WindowsProxyManager();
             proxyManager.Disable();
 
+            // Disconnect any active Virtual Bridge adapter
+            var bridgeManager = new VirtualBridgeManager();
+            _ = bridgeManager.DisconnectAsync();
+
             // Find and terminate any running CombiSpeed processes
             var currentProc = Process.GetCurrentProcess();
             var running = Process.GetProcessesByName("CombiSpeed");

@@ -68,6 +68,12 @@
                                 Visibility="{Binding IsWindowsProxyActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="SYS PROXY ON" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
                         </Border>
+
+                        <!-- Virtual Bridge Tag -->
+                        <Border Margin="6,0,0,0" Padding="6,2" CornerRadius="4" Background="#064E3B" BorderBrush="#10B981" BorderThickness="0.5"
+                                Visibility="{Binding VirtualBridge.IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="BRIDGE BONDED" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
+                        </Border>
                     </StackPanel>
 
                     <!-- Window Control Buttons -->
@@ -171,6 +177,111 @@
                         </Grid>
                     </Border>
 
+                    <!-- Virtual VPN / Adapter Connection / Bonded Bridge Card -->
+                    <Border Background="#0F172A" CornerRadius="16" BorderBrush="#1E293B" BorderThickness="1" Padding="18" Margin="0,0,0,16">
+                        <StackPanel>
+                            <!-- Header row -->
+                            <Grid Margin="0,0,0,10">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="30" Height="30" CornerRadius="8" Background="#064E3B" BorderBrush="#10B981" BorderThickness="1" Margin="0,0,10,0">
+                                        <TextBlock Text="🌉" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="VIRTUAL BONDED BRIDGE &amp; ADAPTER CONNECTION" FontSize="12" FontWeight="Black" Foreground="#00F0FF"/>
+                                            <Border Margin="10,0,0,0" Padding="8,2" CornerRadius="6" Background="{Binding VirtualBridge.StatusBrush}">
+                                                <TextBlock Text="{Binding VirtualBridge.StatusText}" FontSize="9" FontWeight="Bold" Foreground="White" FontFamily="Consolas"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Unified Windows virtual network adapter merging physical interfaces proportional to their allocated % bandwidth." FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Action buttons -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Button Command="{Binding ToggleVirtualBridgeCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="⚡" FontSize="12" Margin="0,0,6,0"/>
+                                            <TextBlock Text="{Binding VirtualBridge.IsConnected, StringFormat='{}Bridge: {0}'}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="Connect Bridge"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding VirtualBridge.IsConnected}" Value="True">
+                                                                <Setter Property="Text" Value="Disconnect Bridge"/>
+                                                                <Setter Property="Foreground" Value="#10B981"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Content="View in Windows (ncpa.cpl)" Command="{Binding OpenNetworkConnectionsCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" ToolTip="Inspect adapter in Windows Network Connections"/>
+                                    <Button Content="⟳ Re-provision" Command="{Binding ReprovisionBridgeCommand}" Style="{StaticResource CyberButton}" ToolTip="Re-create Windows connection profile"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Bridge Metadata Grid -->
+                            <Border Background="#080C14" CornerRadius="10" Padding="14,10" Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="WINDOWS CONNECTION NAME" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
+                                        <TextBlock Text="{Binding VirtualBridge.ConnectionName}" FontSize="13" FontWeight="Bold" Foreground="White" FontFamily="Consolas"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="VIRTUAL IP" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
+                                        <TextBlock Text="{Binding VirtualBridge.VirtualIp}" FontSize="13" FontWeight="Bold" Foreground="#00F0FF" FontFamily="Consolas"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="GATEWAY" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
+                                        <TextBlock Text="{Binding VirtualBridge.GatewayIp}" FontSize="13" FontWeight="Bold" Foreground="#CBD5E1" FontFamily="Consolas"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="3">
+                                        <TextBlock Text="BRIDGE THROUGHPUT" FontSize="9" FontWeight="Bold" Foreground="#64748B"/>
+                                        <TextBlock Text="{Binding VirtualBridge.FormattedDownloadSpeed, StringFormat='{}↓ {0}'}" FontSize="13" FontWeight="Bold" Foreground="#10B981" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Merged Member Adapters & Bandwidth Breakdown -->
+                            <Border Background="#131D33" CornerRadius="10" Padding="12,10">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,6">
+                                        <TextBlock Text="MERGED PHYSICAL ADAPTERS &amp; BANDWIDTH ALLOCATION %" FontSize="10" FontWeight="Bold" Foreground="#00F0FF"/>
+                                        <TextBlock Text="{Binding VirtualBridge.MergedAdaptersSummary}" FontSize="10" Foreground="#CBD5E1" HorizontalAlignment="Right" FontFamily="Consolas"/>
+                                    </Grid>
+
+                                    <!-- Segmented Multi-Color Bandwidth Distribution Bar -->
+                                    <Border Height="14" CornerRadius="6" Background="#080C14" ClipToBounds="True">
+                                        <ItemsControl ItemsSource="{Binding Adapters}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Rectangle Height="14" Width="{Binding EffectivePercentageWidth}" Fill="{Binding AccentHexColor}" ToolTip="{Binding FormattedEffectivePercentage}" Margin="0,0,2,0"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Telemetry 4-Card Grid -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
@@ -268,7 +379,8 @@
                                                 <!-- Top: Name, Status, Toggle -->
                                                 <Grid Margin="0,0,0,8">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🖧" FontSize="16" Foreground="#00F0FF" Margin="0,0,8,0"/>
+                                                        <Border Width="4" Height="26" Background="{Binding AccentHexColor}" CornerRadius="2" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="🖧" FontSize="16" Foreground="{Binding AccentHexColor}" Margin="0,0,8,0"/>
                                                         <StackPanel>
                                                             <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" Foreground="White"/>
                                                             <TextBlock Text="{Binding Description}" FontSize="10" Foreground="#94A3B8" MaxWidth="280" TextTrimming="CharacterEllipsis"/>
@@ -312,12 +424,15 @@
                                                     </Grid>
                                                 </Border>
 
-                                                <!-- Weight Ratio Slider -->
-                                                <Grid>
-                                                    <TextBlock Text="Traffic Weight Ratio:" FontSize="11" Foreground="#94A3B8"/>
-                                                    <TextBlock Text="{Binding Weight, StringFormat='{}{0}%'}" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" HorizontalAlignment="Right" FontFamily="Consolas"/>
+                                                <!-- Weight Ratio Slider & Effective Utilization % -->
+                                                <Grid Margin="0,0,0,2">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="BANDWIDTH: " FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
+                                                        <TextBlock Text="{Binding FormattedEffectivePercentage}" FontSize="10" FontWeight="Bold" Foreground="{Binding AccentHexColor}"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Weight, StringFormat='{}Weight: {0}%'}" FontSize="10" Foreground="#64748B" HorizontalAlignment="Right" FontFamily="Consolas"/>
                                                 </Grid>
-                                                <Slider Minimum="0" Maximum="100" Value="{Binding Weight}" SmallChange="5" LargeChange="10" Margin="0,4,0,0" IsEnabled="{Binding IsEnabled}"/>
+                                                <Slider Minimum="0" Maximum="100" Value="{Binding Weight}" SmallChange="5" LargeChange="10" Margin="0,2,0,0" IsEnabled="{Binding IsEnabled}"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>

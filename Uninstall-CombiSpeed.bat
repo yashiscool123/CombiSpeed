@@ -33,8 +33,10 @@ if exist "%~dp0Stop-CombiSpeed.bat" (
     call "%~dp0Stop-CombiSpeed.bat"
 ) else (
     taskkill /F /IM CombiSpeed.exe /T >nul 2>&1
+    rasdial "CombiSpeed Bonded Bridge" /DISCONNECT >nul 2>&1
     reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f >nul 2>&1
 )
+powershell -NoProfile -Command "Remove-VpnConnection -Name 'CombiSpeed Bonded Bridge' -Force -ErrorAction SilentlyContinue" >nul 2>&1
 
 echo [2/4] Removing Desktop and Start Menu shortcuts...
 if exist "%USERPROFILE%\Desktop\CombiSpeed.lnk" del /f /q "%USERPROFILE%\Desktop\CombiSpeed.lnk" >nul 2>&1

@@ -35,3 +35,19 @@
 - [x] Test and verify start, stop, installer, and uninstaller flows.
 - [x] Update documentation (`ReadMe.md`, `KnownIssues.md`, `ReleaseNotes.md`, `version.json`).
 - [x] Git commit and tag `v1.1.1`.
+
+## Milestone 5: Virtual VPN / Adapter Connection & Bandwidth Bridge Subsystem [COMPLETED]
+- [x] Design and implement `VirtualBridgeModel.cs` for Windows virtual adapter and bonded bridge telemetry.
+- [x] Implement `VirtualBridgeManager.cs`: Native Windows VPN adapter connection provisioning via `Add-VpnConnection` and user-mode phonebook (`rasphone.pbk`) with zero UAC friction.
+- [x] Implement `VirtualBridgeServer.cs`: Dedicated high-throughput local tunnel gateway (port 8443) dispatching connections across physical NICs with Smooth Weighted Round Robin.
+- [x] Implement mathematically optimal Smooth Weighted Round Robin (SWRR) in `LoadBalancerEngine.cs` to strictly enforce user % bandwidth allocations without burstiness or clustering.
+- [x] Implement dynamic Effective % of Bonded Pool calculation (`RecalculateEffectivePercentages`) across active physical adapters with real-time UI updates.
+- [x] Add Cyberpunk Virtual Bonded Bridge Card in `MainWindow.xaml`:
+  - Real-time connection status badge (`BONDED & ACTIVE` / `READY TO CONNECT`).
+  - Merged physical adapters summary text with active percentages.
+  - Multi-Color Segmented Bandwidth Distribution Bar visually rendering each adapter's proportional share.
+  - 1-Click buttons: `Toggle Bridge`, `View in Windows (ncpa.cpl)`, `Re-provision`.
+- [x] Enhance individual physical adapter cards with distinct accent colors, `BANDWIDTH: XX.X% of Bonded Pool` indicator, and live speedometers.
+- [x] Update `SettingsWindow` to configure Virtual Bridge port and auto-connect toggle.
+- [x] Update `Start-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, `Install-CombiSpeed.bat`, and `Uninstall-CombiSpeed.bat` to manage the Virtual Bridge lifecycle cleanly.
+- [x] Increment version to `1.2.0` (versionCode: 4) and verify release build.

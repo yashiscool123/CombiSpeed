@@ -21,35 +21,47 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🚀 Key Features
 
-1. **Native C# High-Performance Sockets**:
+1. **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem (NEW in v1.2.0)**:
+   - Provisions a native Windows adapter connection: **`CombiSpeed Bonded Bridge`** (`CombiSpeed Virtual Adapter`).
+   - Registers directly in Windows Network Connections (`ncpa.cpl`) and Windows Settings -> Network & Internet -> VPN using the Windows user-mode phonebook (`rasphone.pbk`), requiring zero driver signing or UAC elevation.
+   - Unified virtual interface that merges physical network adapters (Ethernet, Wi-Fi, Cellular) into a single virtual pipe.
+   - Dedicated dashboard card with live connection status (`BONDED & ACTIVE`), Windows adapter name, Virtual IP (`10.254.1.2`), Gateway (`10.254.1.1`), and 1-click controls to toggle the bridge or inspect in `ncpa.cpl`.
+
+2. **Strict % Bandwidth Utilization (Smooth Weighted Round Robin)**:
+   - Implements mathematically provable **Smooth Weighted Round Robin (SWRR)** in `LoadBalancerEngine.cs`.
+   - Distributes outgoing traffic across physical network adapters strictly according to user-configured percentage weights (e.g. 70% Wi-Fi, 30% Ethernet) with zero clustering or burstiness.
+   - Real-time **Dynamic Multi-Color Segmented Bandwidth Distribution Bar** visualizing each physical adapter's proportion of the total bonded pool.
+   - Per-adapter `BANDWIDTH: XX.X% of Bonded Pool` indicator dynamically updated whenever sliders change.
+
+3. **Native C# High-Performance Sockets**:
    - Outgoing sockets are explicitly bound to adapter local IPv4 addresses using `Socket.Bind(new IPEndPoint(localIp, 0))`.
    - Zero-overhead bi-directional streaming using .NET `ArrayPool<byte>` memory management.
 
-2. **Dual-Mode High-Throughput Proxy Engine**:
+4. **Dual-Mode High-Throughput Proxy Engine**:
    - **RFC 1928 SOCKS5 Proxy Server** (port 1080): Connect method with IPv4 and Domain Name resolution.
    - **HTTP / HTTPS CONNECT Forward Proxy** (port 8080): Direct tunneling for Chrome, Edge, Firefox, Brave, and all desktop applications.
 
-3. **Intelligent Load Balancing & Routing Algorithms**:
-   - **Dynamic Weighted Round-Robin (WRR)**: Proportional distribution based on user weight ratios (e.g. 70% Ethernet, 30% Wi-Fi Hotspot).
+5. **Intelligent Load Balancing & Routing Algorithms**:
+   - **Smooth Weighted Round-Robin (SWRR)**: Proportional distribution based on user weight ratios (e.g. 70% Ethernet, 30% Wi-Fi Hotspot).
    - **Equal-Share Multiplexing**: Automatically balances connections equally across all available healthy adapters.
    - **Least-Latency Smart Routing**: Continuously measures real-time RTT per adapter and routes through the lowest-ping adapter.
    - **Active-Passive Link Failover**: Designates a primary connection with instant auto-fallback if connection degradation or packet loss occurs.
 
-4. **1-Click Windows System Proxy Integration**:
+6. **1-Click Windows System Proxy Integration**:
    - Automated toggle for Windows Internet Settings (`HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`).
    - Uses native Win32 `wininet.dll` API (`InternetSetOption`) to apply proxy changes immediately across the entire OS without restarting browsers.
-   - **Graceful Restoration**: Automatically reverts Windows proxy settings on exit so the user's internet is never broken.
+   - **Graceful Restoration**: Automatically reverts Windows proxy settings and disconnects virtual bridge on exit.
 
-5. **Real-Time Telemetry & Throughput Visualizer**:
-   - Live per-adapter download & upload speed meters (KB/s, MB/s).
+7. **Real-Time Telemetry & Throughput Visualizer**:
+   - Live per-adapter download & upload speed meters (KB/s, MB/s) with distinct Cyberpunk neon accent colors.
    - 60-second real-time scrolling bandwidth waveform canvas with cyan and purple gradient fills.
    - Live RTT ping and adapter health indicators with instant online/offline detection.
    - Session data transferred counters (MB/GB) per adapter and aggregate total.
 
-6. **Built-In Multi-Stream Bonding Benchmark (Speed Tester)**:
+8. **Built-In Multi-Stream Bonding Benchmark (Speed Tester)**:
    - On-demand benchmark utility that tests individual adapter speeds alongside concurrent bonded aggregate throughput so you can visually verify speed combination in real-time.
 
-7. **Futuristic Cyberpunk Glassmorphic WPF Dashboard**:
+9. **Futuristic Cyberpunk Glassmorphic WPF Dashboard**:
    - Precision dark UI (`#080C14` background, deep navy cards `#0F172A`, glowing cyan `#00F0FF` and emerald `#10B981` indicators).
    - Draggable frameless custom window titlebar with minimize/maximize/close.
    - Interactive weight percentage sliders, animated adapter link indicators, and real-time audit log streaming.
@@ -58,13 +70,15 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v1.2.0) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
+| **Virtual Bridge / Adapter Connection** | **Native Windows VPN & Virtual Adapter (`CombiSpeed Bonded Bridge`)** in `ncpa.cpl` & Windows Settings | None (Speedy is purely an isolated local SOCKS proxy) | Rigid single physical adapter binding |
+| **Percentage Bandwidth Utilization** | **Smooth Weighted Round Robin (SWRR)** enforcing exact % ratios (e.g. 70%/30%) without clustering | None (No bandwidth allocation or weighting) | 100% to single lowest metric adapter |
 | **Runtime & Memory** | **Native C# (.NET 8 WPF)**: ~25 MB RAM, 150 KB executable | Electron / Node: ~200 MB RAM, 150 MB package | OS Network Driver |
 | **Socket Binding** | **`Socket.Bind(new IPEndPoint(adapterIp, 0))`** on every socket | **Missing `localAddress`** (traffic leaks back to default gateway) | Lowest metric adapter only |
 | **Concurrency Reliability** | Persistent async non-blocking `TcpListener` with connection pooling | Spawns a new listener on port 8080 per connection, throwing `EADDRINUSE` | N/A |
 | **Proxy Protocol Support** | **Dual SOCKS5 & HTTP/HTTPS CONNECT** | SOCKS5 only (IPv4 only) | None |
-| **Windows OS Integration** | **Native WinINet `InternetSetOption` API** with fail-safe revert | None (Manual proxy config required in every app) | None |
+| **Windows OS Integration** | **Native WinINet `InternetSetOption` API & User Phonebook (`rasphone.pbk`)** | None (Manual proxy config required in every app) | None |
 | **Adapter Health & Failover** | Continuous RTT probes with auto-rerouting on packet loss | None (Dead connection leads to application hang) | OS metric failover takes 30-60+ seconds |
 | **Live Telemetry & Speedometer**| Real-time per-adapter MB/s gauges, canvas waveform, and audit logs | Text console logs only | Task Manager adapter graph (split, not bonded) |
 
@@ -72,14 +86,16 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 💡 Real-World Challenges Solved
 
-1. **Slow Downloads & Large File Transfers**:
+1. **System-Wide Multi-Adapter Merging**:
+   - Creates a dedicated virtual adapter connection (`CombiSpeed Bonded Bridge`) in Windows Network Connections (`ncpa.cpl`), merging disparate network adapters into a single virtual pipe.
+2. **Strict Bandwidth Ratio Sharing & Data Cap Management**:
+   - Enforces user-defined % bandwidth ratios (e.g., 80% on unlimited home fiber, 20% on metered 5G hotspot) via Smooth Weighted Round Robin with real-time visual progress bars.
+3. **Slow Downloads & Large File Transfers**:
    - Multi-connection download managers (IDM, Free Download Manager, Steam multi-chunk downloads, Torrent clients, Git clones) open dozens of concurrent TCP streams. CombiSpeed spreads these streams across both Ethernet and Wi-Fi simultaneously, delivering the combined sum of both download pipes.
-2. **Buffering & Unstable 4K/8K Video Streaming**:
+4. **Buffering & Unstable 4K/8K Video Streaming**:
    - Video platforms buffer media using concurrent chunk requests. CombiSpeed fetches video segments across all adapters, preventing buffering during peak congestion.
-3. **Remote Work & Critical Video Calls**:
+5. **Remote Work & Critical Video Calls**:
    - Combines a fluctuating mobile hotspot with a home broadband connection. If one connection experiences jitter or temporary dropouts, CombiSpeed's health monitor redirects traffic instantly.
-4. **Data Cap Management**:
-   - Flexible weight sliders allow users to cap usage on metered cellular tethering (e.g., 20%) while utilizing unlimited fiber broadband for the remaining 80%.
 
 ---
 
@@ -89,35 +105,41 @@ When a Windows machine is connected to multiple internet sources simultaneously 
                       ┌────────────────────────────────────────┐
                       │    Windows Applications / Browsers     │
                       └───────────────────┬────────────────────┘
-                                          │ (Localhost : 8080 / 1080)
-                                          ▼
+                                          │
+                     ┌────────────────────┴────────────────────┐
+                     ▼                                         ▼
+         ┌───────────────────────────┐             ┌───────────────────────────┐
+         │ CombiSpeed Bonded Bridge  │             │  Local Proxy Endpoints    │
+         │ (Windows Virtual Adapter) │             │  - HTTP/HTTPS (Port 8080) │
+         │ IP: 10.254.1.2            │             │  - SOCKS5 (Port 1080)     │
+         │ Gateway: 10.254.1.1       │             │  - WinINet Registry Hook  │
+         └─────────────┬─────────────┘             └─────────────┬─────────────┘
+                       │                                         │
+                       └────────────────────┬────────────────────┘
+                                            ▼
                       ┌────────────────────────────────────────┐
-                      │    CombiSpeed C# .NET Aggregation Core │
-                      │  - HTTP/HTTPS CONNECT Forward Proxy    │
-                      │  - RFC 1928 SOCKS5 Forward Proxy       │
-                      │  - 1-Click WinINet Registry Hook       │
+                      │ CombiSpeed Smooth Weighted Round-Robin │
+                      │       Dynamic % Bandwidth Router       │
+                      │  - Adapter 1 Share: 60% (e.g. Ethernet)│
+                      │  - Adapter 2 Share: 40% (e.g. Wi-Fi)   │
+                      │  - Continuous RTT Latency Prober       │
                       └───────────────────┬────────────────────┘
                                           │
                         ┌─────────────────┴─────────────────┐
-                        │   Load Balancer & Health Monitor  │
-                        │   - Weighted Round-Robin (WRR)    │
-                        │   - Least Latency Probe           │
-                        │   - Active Failover Engine        │
-                        └────────┬─────────────────┬────────┘
-                                 │                 │
-              Socket.Bind(adapterIp_1)            Socket.Bind(adapterIp_2)
-                                 │                 │
-                                 ▼                 ▼
-             ┌─────────────────────────┐     ┌─────────────────────────┐
-             │ Adapter 1 (Ethernet 3)  │     │ Adapter 2 (Wi-Fi 2)     │
-             │ IP: 192.168.1.9         │     │ IP: 192.168.1.28        │
-             └────────────┬────────────┘     └────────────┬────────────┘
-                          │                               │
-                          ▼ (WAN 1)                       ▼ (WAN 2)
-             ┌─────────────────────────────────────────────────────────┐
-             │                    Global Internet                      │
-             │          Combined Throughput = WAN 1 + WAN 2            │
-             └─────────────────────────────────────────────────────────┘
+                        │                                   │
+             Socket.Bind(adapterIp_1)            Socket.Bind(adapterIp_2)
+                        │ (60% Bandwidth)                   │ (40% Bandwidth)
+                        ▼                                   ▼
+            ┌─────────────────────────┐         ┌─────────────────────────┐
+            │ Adapter 1 (Ethernet 3)  │         │ Adapter 2 (Wi-Fi 2)     │
+            │ IP: 192.168.1.9         │         │ IP: 192.168.1.28        │
+            └────────────┬────────────┘         └────────────┬────────────┘
+                         │                                  │
+                         ▼ (WAN 1)                          ▼ (WAN 2)
+            ┌─────────────────────────────────────────────────────────────┐
+            │                      Global Internet                        │
+            │      Combined Bandwidth Pipe = 60% WAN 1 + 40% WAN 2        │
+            └─────────────────────────────────────────────────────────────┘
 ```
 
 ---

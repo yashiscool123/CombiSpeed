@@ -38,19 +38,52 @@ public class NetworkAdapterModel : INotifyPropertyChanged
         set => SetField(ref _status, value);
     }
 
+    public event Action? WeightChanged;
+
     private bool _isEnabled = true;
     public bool IsEnabled
     {
         get => _isEnabled;
-        set => SetField(ref _isEnabled, value);
+        set
+        {
+            if (SetField(ref _isEnabled, value))
+            {
+                WeightChanged?.Invoke();
+            }
+        }
     }
 
     private int _weight = 50;
     public int Weight
     {
         get => _weight;
-        set => SetField(ref _weight, Math.Clamp(value, 0, 100));
+        set
+        {
+            if (SetField(ref _weight, Math.Clamp(value, 0, 100)))
+            {
+                WeightChanged?.Invoke();
+            }
+        }
     }
+
+    private double _effectivePercentage = 50.0;
+    public double EffectivePercentage
+    {
+        get => _effectivePercentage;
+        set
+        {
+            if (SetField(ref _effectivePercentage, value))
+            {
+                OnPropertyChanged(nameof(FormattedEffectivePercentage));
+                OnPropertyChanged(nameof(EffectivePercentageWidth));
+            }
+        }
+    }
+
+    public string FormattedEffectivePercentage => $"{EffectivePercentage:F1}% of Bonded Pool";
+    public double EffectivePercentageWidth => Math.Max(2.0, EffectivePercentage * 3.0);
+
+    public string AccentHexColor { get; set; } = "#00F0FF";
 
     private int _pingMs;
     public int PingMs

@@ -15,6 +15,8 @@ public partial class SettingsWindow : Window
 
         TxtHttpPort.Text = config.HttpPort.ToString();
         TxtSocksPort.Text = config.SocksPort.ToString();
+        TxtBridgePort.Text = config.VirtualBridgePort.ToString();
+        ChkAutoVirtualBridge.IsChecked = config.EnableVirtualBridge;
         ChkAutoWindowsProxy.IsChecked = config.EnableWindowsProxy;
 
         foreach (ComboBoxItem item in CmbRoutingMode.Items)
@@ -48,12 +50,14 @@ public partial class SettingsWindow : Window
     {
         if (int.TryParse(TxtHttpPort.Text, out int httpPort)) _config.HttpPort = httpPort;
         if (int.TryParse(TxtSocksPort.Text, out int socksPort)) _config.SocksPort = socksPort;
+        if (int.TryParse(TxtBridgePort.Text, out int bridgePort)) _config.VirtualBridgePort = bridgePort;
 
         if (CmbRoutingMode.SelectedItem is ComboBoxItem item && Enum.TryParse<RoutingMode>(item.Tag?.ToString(), out var mode))
         {
             _config.RoutingMode = mode;
         }
 
+        _config.EnableVirtualBridge = ChkAutoVirtualBridge.IsChecked == true;
         _config.EnableWindowsProxy = ChkAutoWindowsProxy.IsChecked == true;
         DialogResult = true;
         Close();
