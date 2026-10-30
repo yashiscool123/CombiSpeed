@@ -33,35 +33,51 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - Real-time **Dynamic Multi-Color Segmented Bandwidth Distribution Bar** visualizing each physical adapter's proportion of the total bonded pool.
    - Per-adapter `BANDWIDTH: XX.X% of Bonded Pool` indicator dynamically updated whenever sliders change.
 
-3. **Native C# High-Performance Sockets**:
+3. **RFC 1928 SOCKS5 UDP Associate Relay (Gaming & UDP Acceleration - NEW in v1.3.0)**:
+   - Full implementation of SOCKS5 `UDP ASSOCIATE` (Command `0x03`).
+   - Binds outbound UDP sockets directly to physical adapter IPs (`Socket.Bind(new IPEndPoint(adapterIp, 0))`), accelerating multiplayer gaming (Valorant, CS2, CoD, Steam), Discord/VoIP voice channels, DNS queries, and WebRTC video across bonded connections.
+   - Encapsulates and returns UDP replies back to the client.
+
+4. **PAC (Proxy Auto-Config) Domain-Based Interface Routing (NEW in v1.3.0)**:
+   - Dynamically compiles RFC-compliant JavaScript `FindProxyForURL(url, host)` scripts.
+   - Built-in PAC server serving `http://127.0.0.1:8080/proxy.pac` directly on the proxy port without port conflicts.
+   - Granular domain and subnet bypass rules (e.g. banking portals, corporate intranet `192.168.*`, `10.*` -> Direct; all other web traffic -> Bonded).
+   - Automated 1-click Windows `AutoConfigURL` registry and WinINet integration.
+
+5. **Windows Service & Headless Background Mode (NEW in v1.3.0)**:
+   - Runs headless as a background Windows Service without requiring active user logon or open GUI (`--service`, `--headless`).
+   - CLI service management: `--service-install`, `--service-uninstall`, `--service-start`, `--service-stop`.
+   - 1-click scripts: `Install-Service.bat` and `Uninstall-Service.bat` registering `CombiSpeedService` in Windows Service Control Manager with automatic crash recovery.
+
+6. **Native C# High-Performance Sockets**:
    - Outgoing sockets are explicitly bound to adapter local IPv4 addresses using `Socket.Bind(new IPEndPoint(localIp, 0))`.
    - Zero-overhead bi-directional streaming using .NET `ArrayPool<byte>` memory management.
 
-4. **Dual-Mode High-Throughput Proxy Engine**:
-   - **RFC 1928 SOCKS5 Proxy Server** (port 1080): Connect method with IPv4 and Domain Name resolution.
+7. **Dual-Mode High-Throughput Proxy Engine**:
+   - **RFC 1928 SOCKS5 Proxy Server** (port 1080): Connect & UDP Associate methods with IPv4 and Domain Name resolution.
    - **HTTP / HTTPS CONNECT Forward Proxy** (port 8080): Direct tunneling for Chrome, Edge, Firefox, Brave, and all desktop applications.
 
-5. **Intelligent Load Balancing & Routing Algorithms**:
+8. **Intelligent Load Balancing & Routing Algorithms**:
    - **Smooth Weighted Round-Robin (SWRR)**: Proportional distribution based on user weight ratios (e.g. 70% Ethernet, 30% Wi-Fi Hotspot).
    - **Equal-Share Multiplexing**: Automatically balances connections equally across all available healthy adapters.
    - **Least-Latency Smart Routing**: Continuously measures real-time RTT per adapter and routes through the lowest-ping adapter.
    - **Active-Passive Link Failover**: Designates a primary connection with instant auto-fallback if connection degradation or packet loss occurs.
 
-6. **1-Click Windows System Proxy Integration**:
+9. **1-Click Windows System Proxy Integration**:
    - Automated toggle for Windows Internet Settings (`HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`).
    - Uses native Win32 `wininet.dll` API (`InternetSetOption`) to apply proxy changes immediately across the entire OS without restarting browsers.
    - **Graceful Restoration**: Automatically reverts Windows proxy settings and disconnects virtual bridge on exit.
 
-7. **Real-Time Telemetry & Throughput Visualizer**:
+10. **Real-Time Telemetry & Throughput Visualizer**:
    - Live per-adapter download & upload speed meters (KB/s, MB/s) with distinct Cyberpunk neon accent colors.
    - 60-second real-time scrolling bandwidth waveform canvas with cyan and purple gradient fills.
    - Live RTT ping and adapter health indicators with instant online/offline detection.
    - Session data transferred counters (MB/GB) per adapter and aggregate total.
 
-8. **Built-In Multi-Stream Bonding Benchmark (Speed Tester)**:
+11. **Built-In Multi-Stream Bonding Benchmark (Speed Tester)**:
    - On-demand benchmark utility that tests individual adapter speeds alongside concurrent bonded aggregate throughput so you can visually verify speed combination in real-time.
 
-9. **Futuristic Cyberpunk Glassmorphic WPF Dashboard**:
+12. **Futuristic Cyberpunk Glassmorphic WPF Dashboard**:
    - Precision dark UI (`#080C14` background, deep navy cards `#0F172A`, glowing cyan `#00F0FF` and emerald `#10B981` indicators).
    - Draggable frameless custom window titlebar with minimize/maximize/close.
    - Interactive weight percentage sliders, animated adapter link indicators, and real-time audit log streaming.

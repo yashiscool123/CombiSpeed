@@ -160,6 +160,18 @@ public class ProxyEngine : IDisposable
                 string method = requestLine[0].ToUpperInvariant();
                 string uriStr = requestLine[1];
 
+                // Built-in PAC (Proxy Auto-Config) Script Server
+                if (method == "GET" && (uriStr.Contains("proxy.pac", StringComparison.OrdinalIgnoreCase) || uriStr.EndsWith("/pac", StringComparison.OrdinalIgnoreCase)))
+                {
+                    string pacScript = PacConfigModel.Current.GeneratePacScript();
+                    byte[] pacBytes = Encoding.UTF8.GetBytes(pacScript);
+                    string pacResponse = $"HTTP/1.1 200 OK\r\nContent-Type: application/x-ns-proxy-autoconfig; charset=utf-8\r\nContent-Length: {pacBytes.Length}\r\nConnection: close\r\n\r\n";
+                    await clientStream.WriteAsync(Encoding.ASCII.GetBytes(pacResponse), token);
+                    await clientStream.WriteAsync(pacBytes, token);
+                    ArrayPool<byte>.Shared.Return(buffer);
+                    return;
+                }
+
                 // Select target adapter
                 var adapters = _getAdapters();
                 chosenAdapter = _loadBalancer.GetNextAdapter(adapters);
@@ -260,6 +272,7 @@ public class ProxyEngine : IDisposable
         var clientIp = (client.Client.RemoteEndPoint as IPEndPoint)?.Address.ToString() ?? "127.0.0.1";
         string targetHost = "";
         int targetPort = 0;
+        string protocol = "SOCKS5";
         NetworkAdapterModel? chosenAdapter = null;
         long bytesSession = 0;
         string? error = null;
@@ -282,9 +295,57 @@ public class ProxyEngine : IDisposable
                 // Read connection request
                 byte[] reqHeader = new byte[4];
                 int reqBytes = await clientStream.ReadAsync(reqHeader.AsMemory(0, 4), token);
-                if (reqBytes < 4 || reqHeader[0] != 0x05 || reqHeader[1] != 0x01) // Only CONNECT supported
+                if (reqBytes < 4 || reqHeader[0] != 0x05) return;
+
+                byte cmd = reqHeader[1];
+                if (cmd != 0x01 && cmd != 0x03) // 0x01: CONNECT, 0x03: UDP ASSOCIATE
                 {
                     await clientStream.WriteAsync(new byte[] { 0x05, 0x07, 0x00, 0x01, 0, 0, 0, 0, 0, 0 }, token);
+                    return;
+                }
+
+                if (cmd == 0x03)
+                {
+                    // RFC 1928 SOCKS5 UDP ASSOCIATE RELAY
+                    protocol = "SOCKS5 (UDP ASSOCIATE)";
+                    byte bndAddrType = reqHeader[3];
+                    IPEndPoint? clientUdpEndpoint = null;
+
+                    if (bndAddrType == 0x01)
+                    {
+                        byte[] ipBytes = new byte[4];
+                        await clientStream.ReadAsync(ipBytes.AsMemory(0, 4), token);
+                        byte[] clientPortBytes = new byte[2];
+                        await clientStream.ReadAsync(clientPortBytes.AsMemory(0, 2), token);
+                        int port = (clientPortBytes[0] << 8) | clientPortBytes[1];
+                        clientUdpEndpoint = new IPEndPoint(new IPAddress(ipBytes), port);
+                    }
+                    else
+                    {
+                        int skip = (bndAddrType == 0x03) ? clientStream.ReadByte() : 16;
+                        byte[] dummy = new byte[skip + 2];
+                        await clientStream.ReadAsync(dummy.AsMemory(0, dummy.Length), token);
+                    }
+
+                    using var udpRelay = new Socks5UdpRelay(_loadBalancer, _getAdapters, RecordBytes, AddAuditLog);
+                    int assignedRelayPort = udpRelay.StartRelay(clientUdpEndpoint);
+
+                    // Send Success Reply: [0x05, 0x00 (Rep), 0x00 (Rsv), 0x01 (IPv4), BND.ADDR (127.0.0.1), BND.PORT (2 bytes)]
+                    byte[] udpReply = new byte[] {
+                        0x05, 0x00, 0x00, 0x01,
+                        127, 0, 0, 1,
+                        (byte)((assignedRelayPort >> 8) & 0xFF),
+                        (byte)(assignedRelayPort & 0xFF)
+                    };
+                    await clientStream.WriteAsync(udpReply, token);
+
+                    // Hold TCP control channel until client disconnects
+                    byte[] hold = new byte[1];
+                    while (!token.IsCancellationRequested)
+                    {
+                        int r = await clientStream.ReadAsync(hold.AsMemory(0, 1), token);
+                        if (r <= 0) break;
+                    }
                     return;
                 }
 
@@ -349,7 +410,7 @@ public class ProxyEngine : IDisposable
             {
                 var log = new AuditLogModel
                 {
-                    Protocol = "SOCKS5",
+                    Protocol = protocol,
                     TargetHost = targetHost,
                     TargetPort = targetPort,
                     AdapterId = chosenAdapter.Id,
@@ -419,7 +480,7 @@ public class ProxyEngine : IDisposable
         return totalSessionBytes;
     }
 
-    private void RecordBytes(NetworkAdapterModel adapter, int rx, int tx)
+    private void RecordBytes(NetworkAdapterModel adapter, long rx, long tx)
     {
         if (rx > 0)
         {

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
         Icon="pack://application:,,,/Assets/app.ico"
-        Height="520" Width="560"
+        Height="640" Width="600"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
         Foreground="#F1F5F9"
@@ -77,6 +77,29 @@
                         <TextBox x:Name="TxtBridgePort" Text="8443" Background="#080C14" Foreground="White" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas"/>
                         <TextBlock Text="Default: 8443 (Local virtual tunnel gateway listener)" FontSize="10" Foreground="#64748B" Margin="0,2,0,0"/>
                     </StackPanel>
+
+                    <!-- Proxy Auto-Config (PAC) & Domain Routing -->
+                    <TextBlock Text="PROXY AUTO-CONFIG (PAC) DOMAIN ROUTING" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
+                    <CheckBox x:Name="ChkEnablePac" Content="Enable PAC Domain Routing (AutoConfigURL)" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,6"/>
+                    <TextBlock Text="Bypasses the proxy for intranet and custom domains, while aggregating the rest." FontSize="10" Foreground="#64748B" Margin="0,0,0,8"/>
+
+                    <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="10" Margin="0,0,0,16">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="Domain Routing Rules" FontSize="11" FontWeight="Bold" Foreground="#CBD5E1"/>
+                                <Button Content="Preview PAC Script" Click="PreviewPac_Click" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <DataGrid x:Name="GridPacRules" Height="130" AutoGenerateColumns="False" CanUserAddRows="True" Background="Transparent" BorderThickness="0" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#131D33" Foreground="#CBD5E1">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="PATTERN (DOMAIN / IP)" Binding="{Binding Pattern}" Width="160"/>
+                                    <DataGridTextColumn Header="ACTION (Bonded / Direct)" Binding="{Binding Action}" Width="140"/>
+                                    <DataGridTextColumn Header="DESCRIPTION" Binding="{Binding Description}" Width="*"/>
+                                    <DataGridCheckBoxColumn Header="ACTIVE" Binding="{Binding IsEnabled}" Width="55"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
 
                     <!-- Terminal Proxy String -->
                     <TextBlock Text="CLI PROXY STRING (CURL / GIT / NPM / DOCKER)" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>

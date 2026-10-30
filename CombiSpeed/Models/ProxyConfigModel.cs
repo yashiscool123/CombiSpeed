@@ -14,6 +14,8 @@ public class ProxyConfigModel
     public int SocksPort { get; set; } = 1080;
     public RoutingMode RoutingMode { get; set; } = RoutingMode.Weighted;
     public bool EnableWindowsProxy { get; set; } = false;
+    public bool EnablePac { get; set; } = false;
+    public string PacUrl { get; set; } = "http://127.0.0.1:8080/proxy.pac";
     public bool EnableVirtualBridge { get; set; } = true;
     public string VirtualAdapterName { get; set; } = "CombiSpeed Bonded Bridge";
     public int VirtualBridgePort { get; set; } = 8443;

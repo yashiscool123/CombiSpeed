@@ -1,5 +1,26 @@
 # Release Notes
 
+## [1.3.0] - 2026-10-30 - PAC Domain Router, Windows Service & SOCKS5 UDP Associate Release
+
+### 🚀 Highlights & Features
+- **PAC (Proxy Auto-Config) Domain-Based Interface Routing**:
+  - Implements dynamic Proxy Auto-Config script generator (`FindProxyForURL`) allowing domain-based and subnet-based granular routing.
+  - Automatically serves compliant JavaScript PAC script directly on `http://127.0.0.1:8080/proxy.pac` without opening additional ports.
+  - Supports custom rule definition: Direct/Bypass (e.g. banking sites, internal corporate portals, RFC 1918 private subnets `192.168.*`, `10.*`), Bonded aggregation, or SOCKS5-specific paths.
+  - 1-click Windows integration using native WinINet `AutoConfigURL` registry and runtime cache synchronization.
+  - Added PAC rule editor and live script preview dialog in `SettingsWindow`.
+- **RFC 1928 SOCKS5 UDP Associate Relay (Gaming & UDP Acceleration)**:
+  - Extends SOCKS5 proxy engine with full RFC 1928 `UDP ASSOCIATE` command (`0x03`) support.
+  - Relays UDP datagrams with outbound physical adapter socket binding (`Socket.Bind(new IPEndPoint(adapterIp, 0))`), accelerating multiplayer gaming (Valorant, CS2, Call of Duty, Steam), Discord/VoIP voice channels, DNS resolution, and WebRTC video calls across bonded adapters.
+  - Encapsulates and returns remote UDP responses back to the client seamlessly.
+- **Windows Service & Headless Background Execution Mode**:
+  - Complete background daemon mode running headless without requiring a logged-in user or active WPF GUI (`--service`, `--headless`).
+  - Added CLI service commands: `--service-install`, `--service-uninstall`, `--service-start`, `--service-stop`.
+  - Created 1-click automated management scripts: `Install-Service.bat` and `Uninstall-Service.bat` registering `CombiSpeedService` in Windows Service Control Manager with auto-recovery on failure.
+  - Integrated service termination in `Stop-CombiSpeed.bat` and `Uninstall-CombiSpeed.bat`.
+
+---
+
 ## [1.2.0] - 2026-10-30 - Virtual VPN / Adapter Connection & Weighted Bandwidth Bridge Release
 
 ### 🚀 Highlights & Features

@@ -51,3 +51,15 @@
 - [x] Update `SettingsWindow` to configure Virtual Bridge port and auto-connect toggle.
 - [x] Update `Start-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, `Install-CombiSpeed.bat`, and `Uninstall-CombiSpeed.bat` to manage the Virtual Bridge lifecycle cleanly.
 - [x] Increment version to `1.2.0` (versionCode: 4) and verify release build.
+
+## Milestone 6: Enterprise & High-Performance Capabilities [COMPLETED]
+- [x] Implement PAC (Proxy Auto-Config) rule generator & models (`PacRuleModel.cs`, `PacConfigModel.cs`) with RFC-compliant JavaScript compilation (`FindProxyForURL`).
+- [x] Embed dynamic PAC script server in `ProxyEngine.cs` serving `http://127.0.0.1:8080/proxy.pac` with zero port overhead.
+- [x] Add Windows `AutoConfigURL` registry and WinINet hook in `WindowsProxyManager.cs` (`EnablePac`/`DisablePac`).
+- [x] Implement PAC Rule Editor and Preview dialog in `SettingsWindow.xaml` and `SettingsWindow.xaml.cs`.
+- [x] Implement RFC 1928 SOCKS5 UDP Associate Relay (`Socks5UdpRelay.cs`) with physical adapter socket binding (`Socket.Bind(new IPEndPoint(adapterIp, 0))`) for gaming, VoIP, DNS, and UDP video acceleration.
+- [x] Implement Headless Execution Engine (`HeadlessEngine.cs`) and Windows Service mode (`--service`, `--headless`, `--proxy`).
+- [x] Add CLI Service management commands (`--service-install`, `--service-uninstall`, `--service-start`, `--service-stop`).
+- [x] Create 1-click Windows Service management scripts: `Install-Service.bat` and `Uninstall-Service.bat`.
+- [x] Update `Install-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, and `Uninstall-CombiSpeed.bat` for service lifecycle integration.
+- [x] Increment version to `1.3.0` (versionCode: 5) and verify release build.

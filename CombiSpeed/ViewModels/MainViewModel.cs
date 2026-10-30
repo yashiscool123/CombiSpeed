@@ -244,6 +244,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (IsWindowsProxyActive)
             {
                 _proxyManager.Disable();
+                _proxyManager.DisablePac();
                 IsWindowsProxyActive = false;
             }
 
@@ -268,7 +269,12 @@ public class MainViewModel : INotifyPropertyChanged
                 await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached());
             }
 
-            if (Config.EnableWindowsProxy)
+            if (Config.EnablePac)
+            {
+                _proxyManager.EnablePac(Config.PacUrl);
+                IsWindowsProxyActive = true;
+            }
+            else if (Config.EnableWindowsProxy)
             {
                 _proxyManager.Enable(Config.HttpPort, Config.SocksPort);
                 IsWindowsProxyActive = true;

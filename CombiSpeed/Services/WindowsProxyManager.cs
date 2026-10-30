@@ -15,8 +15,10 @@ public class WindowsProxyManager
 
     private int? _originalProxyEnable;
     private string? _originalProxyServer;
+    private string? _originalAutoConfigUrl;
 
     public bool IsApplied { get; private set; }
+    public bool IsPacApplied { get; private set; }
 
     public bool GetSystemProxyStatus(out string server)
     {
@@ -32,6 +34,76 @@ public class WindowsProxyManager
         }
         catch
         {
+            return false;
+        }
+    }
+
+    public bool GetPacStatus(out string pacUrl)
+    {
+        pacUrl = "";
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(InternetSettingsKey, false);
+            if (key == null) return false;
+
+            pacUrl = key.GetValue("AutoConfigURL", "")?.ToString() ?? "";
+            return !string.IsNullOrWhiteSpace(pacUrl);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public bool EnablePac(string pacUrl = "http://127.0.0.1:8080/proxy.pac")
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(InternetSettingsKey, true);
+            if (key == null) return false;
+
+            if (_originalAutoConfigUrl == null)
+            {
+                _originalAutoConfigUrl = key.GetValue("AutoConfigURL", "")?.ToString();
+            }
+
+            key.SetValue("AutoConfigURL", pacUrl, RegistryValueKind.String);
+            key.SetValue("ProxyEnable", 0, RegistryValueKind.DWord);
+
+            RefreshWinINet();
+            IsPacApplied = true;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to enable PAC: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool DisablePac()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(InternetSettingsKey, true);
+            if (key == null) return false;
+
+            if (!string.IsNullOrEmpty(_originalAutoConfigUrl))
+            {
+                key.SetValue("AutoConfigURL", _originalAutoConfigUrl, RegistryValueKind.String);
+            }
+            else
+            {
+                try { key.DeleteValue("AutoConfigURL"); } catch { }
+            }
+
+            RefreshWinINet();
+            IsPacApplied = false;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to disable PAC: {ex.Message}");
             return false;
         }
     }
@@ -72,6 +144,11 @@ public class WindowsProxyManager
     {
         try
         {
+            if (IsPacApplied)
+            {
+                DisablePac();
+            }
+
             using var key = Registry.CurrentUser.OpenSubKey(InternetSettingsKey, true);
             if (key == null) return false;
 

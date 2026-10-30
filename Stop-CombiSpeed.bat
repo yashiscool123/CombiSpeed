@@ -19,7 +19,8 @@ if defined EXE_PATH (
     start "" /wait "%EXE_PATH%" --stop
 )
 
-:: 2. Safety Net: Ensure any remaining CombiSpeed processes are terminated
+:: 2. Safety Net: Ensure any running Windows Service or CombiSpeed processes are halted
+sc.exe stop CombiSpeedService >nul 2>&1
 taskkill /F /IM CombiSpeed.exe /T >nul 2>&1
 
 :: 3. Safety Net: Ensure Virtual Bonded Bridge adapter connection is disconnected

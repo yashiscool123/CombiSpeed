@@ -18,6 +18,8 @@ public partial class SettingsWindow : Window
         TxtBridgePort.Text = config.VirtualBridgePort.ToString();
         ChkAutoVirtualBridge.IsChecked = config.EnableVirtualBridge;
         ChkAutoWindowsProxy.IsChecked = config.EnableWindowsProxy;
+        ChkEnablePac.IsChecked = config.EnablePac;
+        GridPacRules.ItemsSource = PacConfigModel.Current.Rules;
 
         foreach (ComboBoxItem item in CmbRoutingMode.Items)
         {
@@ -46,6 +48,14 @@ public partial class SettingsWindow : Window
         MessageBox.Show("Copied proxy environment string to clipboard!", "CombiSpeed", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
+    private void PreviewPac_Click(object sender, RoutedEventArgs e)
+    {
+        int httpPort = int.TryParse(TxtHttpPort.Text, out int h) ? h : 8080;
+        int socksPort = int.TryParse(TxtSocksPort.Text, out int s) ? s : 1080;
+        string pac = PacConfigModel.Current.GeneratePacScript(httpPort, socksPort);
+        MessageBox.Show(pac, "Generated PAC Script Preview", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         if (int.TryParse(TxtHttpPort.Text, out int httpPort)) _config.HttpPort = httpPort;
@@ -59,6 +69,7 @@ public partial class SettingsWindow : Window
 
         _config.EnableVirtualBridge = ChkAutoVirtualBridge.IsChecked == true;
         _config.EnableWindowsProxy = ChkAutoWindowsProxy.IsChecked == true;
+        _config.EnablePac = ChkEnablePac.IsChecked == true;
         DialogResult = true;
         Close();
     }

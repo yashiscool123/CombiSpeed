@@ -45,6 +45,8 @@ echo [2/5] Copying binaries and configuration files...
 xcopy /Y /Q "%SOURCE_DIR%\*" "%TARGET_DIR%\" >nul
 copy /Y "%~dp0Start-CombiSpeed.bat" "%TARGET_DIR%\" >nul
 copy /Y "%~dp0Stop-CombiSpeed.bat" "%TARGET_DIR%\" >nul
+copy /Y "%~dp0Install-Service.bat" "%TARGET_DIR%\" >nul
+copy /Y "%~dp0Uninstall-Service.bat" "%TARGET_DIR%\" >nul
 copy /Y "%~dp0Uninstall-CombiSpeed.bat" "%TARGET_DIR%\" >nul
 if exist "%ICON_SOURCE%" copy /Y "%ICON_SOURCE%" "%TARGET_DIR%\app.ico" >nul
 

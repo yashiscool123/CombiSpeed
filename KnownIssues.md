@@ -17,6 +17,6 @@
 ## Feature Backlog
 - [x] One-Click Start, Stop & Installer scripts with CLI flags (`--start`, `--stop`, `--minimized`).
 - [x] Windows Virtual Adapter / VPN Connection & Bandwidth Bridge merging physical NICs based on % weights.
-- [ ] PAC (Proxy Auto-Config) rule generator for domain-based interface routing.
-- [ ] Windows service mode for background headless execution without GUI.
-- [ ] UDP associate relay support for SOCKS5 (gaming/streaming UDP acceleration).
+- [x] PAC (Proxy Auto-Config) rule generator for domain-based interface routing.
+- [x] Windows service mode for background headless execution without GUI.
+- [x] UDP associate relay support for SOCKS5 (gaming/streaming UDP acceleration).
