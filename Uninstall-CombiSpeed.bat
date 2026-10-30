@@ -52,8 +52,10 @@ if exist "%START_MENU%" rmdir /s /q "%START_MENU%" >nul 2>&1
 echo [3/4] Removing Windows Add/Remove Programs registry entry...
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\CombiSpeed" /f >nul 2>&1
 
-echo [4/4] Removing application files...
+echo [4/4] Removing application files and settings...
 set "INSTALL_DIR=%LOCALAPPDATA%\Programs\CombiSpeed"
+set "DATA_DIR=%LOCALAPPDATA%\CombiSpeed"
+if exist "%DATA_DIR%" rmdir /s /q "%DATA_DIR%" >nul 2>&1
 
 echo.
 echo [SUCCESS] CombiSpeed has been successfully uninstalled.

@@ -28,3 +28,4 @@ echo [SUCCESS] CombiSpeedService has been completely removed.
 echo.
 timeout /t 2 >nul 2>&1 || ping -n 3 127.0.0.1 >nul
 exit /b 0
+

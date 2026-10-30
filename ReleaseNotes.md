@@ -1,5 +1,30 @@
 # Release Notes
 
+## [1.3.1] - 2026-10-30 - Adapter Settings & Combination Profiles Persistence Release
+
+### 🚀 Highlights & Features
+- **Adapter Combination & Weight Persistence**:
+  - Automatically persists selected adapter states (`IsEnabled`) and custom percentage weights (`Weight`) to disk (`%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`).
+  - Restores exact adapter selections and bandwidth allocations upon application restart or adapter rescan.
+  - Multi-attribute adapter binding: Uses permanent MAC address as primary key with name fallback, ensuring settings stay stably bound even across dynamic DHCP IP re-assignments.
+- **Debounced Auto-Save Engine**:
+  - Live 400ms debounced disk saving on UI slider dragging and checkbox toggles, preventing disk thrashing while guaranteeing zero configuration loss.
+  - Fail-safe immediate save on application shutdown (`OnApplicationExit`) and explicit settings updates.
+  - Atomic two-stage write protocol (`.tmp` -> replace) preventing file corruption during sudden system crashes or power-offs.
+- **Combination Profiles & Preset Switching**:
+  - Named profile presets (e.g. `Default Combination`, `Office Mode`, `Gaming 70/30`, `Mobile Backup`).
+  - 1-click Profile dropdown selector in `MainWindow.xaml` allowing rapid switching between custom adapter combinations.
+  - Dedicated Cyberpunk `InputDialog` for creating and saving new combination profiles on the fly.
+  - Profile deletion capability (`✕`) with safety lock on the default profile.
+- **Dashboard Auto-Save Indicator**:
+  - Added real-time Auto-Save status badge (`💾 Auto-Saved: HH:mm:ss` / `Saving changes...`) directly on the adapter combination toolbar.
+- **Headless & Windows Service Integration**:
+  - `HeadlessEngine` now loads and applies saved adapter combinations and weight allocations automatically.
+- **Diagnostic Verification**:
+  - Added `--verify-persistence` CLI flag providing comprehensive automated regression testing of configuration storage, loading, and profile registration.
+
+---
+
 ## [1.3.0] - 2026-10-30 - PAC Domain Router, Windows Service & SOCKS5 UDP Associate Release
 
 ### 🚀 Highlights & Features

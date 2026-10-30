@@ -37,6 +37,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly WindowsProxyManager _proxyManager = new();
     private readonly VirtualBridgeManager _virtualBridgeManager = new("CombiSpeed Bonded Bridge");
     private readonly SpeedTester _speedTester = new();
+    private readonly ConfigurationStore _configStore = new();
     private readonly HealthMonitor _healthMonitor;
     private readonly ProxyEngine _proxyEngine;
 
@@ -48,8 +49,35 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ObservableCollection<NetworkAdapterModel> Adapters { get; } = new();
     public ObservableCollection<AuditLogModel> AuditLogs { get; } = new();
+    public ObservableCollection<string> SavedProfiles { get; } = new();
 
     public VirtualBridgeModel VirtualBridge => _virtualBridgeManager.Model;
+
+    private string _activeProfileName = "Default Combination";
+    public string ActiveProfileName
+    {
+        get => _activeProfileName;
+        set
+        {
+            if (SetField(ref _activeProfileName, value))
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _configStore.ApplyProfile(value, Adapters, Config);
+                    NetworkDetector.RecalculateEffectivePercentages(Adapters);
+                    UpdateMergedSummary();
+                    AutoSaveStatusText = $"Loaded profile '{value}'";
+                }
+            }
+        }
+    }
+
+    private string _autoSaveStatusText = "Settings Synced";
+    public string AutoSaveStatusText
+    {
+        get => _autoSaveStatusText;
+        set => SetField(ref _autoSaveStatusText, value);
+    }
 
     private bool _isEngineRunning;
     public bool IsEngineRunning
@@ -137,6 +165,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ReprovisionBridgeCommand { get; }
     public ICommand RefreshAdaptersCommand { get; }
     public ICommand ClearLogsCommand { get; }
+    public ICommand SaveCurrentSettingsCommand { get; }
+    public ICommand SaveProfileCommand { get; }
+    public ICommand DeleteProfileCommand { get; }
 
     public SpeedTester SpeedTesterService => _speedTester;
     public LoadBalancerEngine LoadBalancerService => _loadBalancer;
@@ -153,6 +184,47 @@ public class MainViewModel : INotifyPropertyChanged
         ReprovisionBridgeCommand = new RelayCommand(async () => await ReprovisionBridgeAsync());
         RefreshAdaptersCommand = new RelayCommand(RefreshAdapters);
         ClearLogsCommand = new RelayCommand(() => AuditLogs.Clear());
+        SaveCurrentSettingsCommand = new RelayCommand(SaveCurrentCombinationImmediate);
+        SaveProfileCommand = new RelayCommand(SaveCurrentCombinationImmediate);
+        DeleteProfileCommand = new RelayCommand(DeleteCurrentProfile);
+
+        // Restore saved Config
+        if (_configStore.Data.Config != null)
+        {
+            Config.HttpPort = _configStore.Data.Config.HttpPort;
+            Config.SocksPort = _configStore.Data.Config.SocksPort;
+            Config.VirtualBridgePort = _configStore.Data.Config.VirtualBridgePort;
+            Config.RoutingMode = _configStore.Data.Config.RoutingMode;
+            Config.EnableVirtualBridge = _configStore.Data.Config.EnableVirtualBridge;
+            Config.EnableWindowsProxy = _configStore.Data.Config.EnableWindowsProxy;
+            Config.EnablePac = _configStore.Data.Config.EnablePac;
+            Config.PacUrl = _configStore.Data.Config.PacUrl;
+            Config.PrimaryAdapterId = _configStore.Data.Config.PrimaryAdapterId;
+        }
+
+        // Restore profile list
+        var profiles = _configStore.GetProfileNames();
+        SavedProfiles.Clear();
+        foreach (var p in profiles)
+        {
+            SavedProfiles.Add(p);
+        }
+        if (!string.IsNullOrWhiteSpace(_configStore.Data.ActiveProfileName) && SavedProfiles.Contains(_configStore.Data.ActiveProfileName))
+        {
+            _activeProfileName = _configStore.Data.ActiveProfileName;
+        }
+        else
+        {
+            _activeProfileName = SavedProfiles.FirstOrDefault() ?? "Default Combination";
+        }
+
+        _configStore.OnSaved += () =>
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                AutoSaveStatusText = $"Auto-Saved: {DateTime.Now:T}";
+            });
+        };
 
         _proxyEngine.OnAuditLog += log =>
         {
@@ -203,6 +275,34 @@ public class MainViewModel : INotifyPropertyChanged
         IsWindowsProxyActive = _proxyManager.GetSystemProxyStatus(out _);
     }
 
+    public void SaveCurrentCombinationImmediate()
+    {
+        _configStore.SaveImmediate(Adapters, Config, ActiveProfileName);
+        AutoSaveStatusText = $"Saved: {DateTime.Now:T}";
+    }
+
+    public void CreateNewProfile(string profileName)
+    {
+        if (string.IsNullOrWhiteSpace(profileName)) return;
+        _configStore.SaveCombinationProfile(profileName, Adapters, Config.RoutingMode);
+        if (!SavedProfiles.Contains(profileName))
+        {
+            SavedProfiles.Add(profileName);
+        }
+        ActiveProfileName = profileName;
+        AutoSaveStatusText = $"Profile '{profileName}' saved";
+    }
+
+    public void DeleteCurrentProfile()
+    {
+        if (ActiveProfileName == "Default Combination") return;
+        var toRemove = ActiveProfileName;
+        _configStore.Data.SavedProfiles.RemoveAll(p => p.ProfileName.Equals(toRemove, StringComparison.OrdinalIgnoreCase));
+        SavedProfiles.Remove(toRemove);
+        ActiveProfileName = "Default Combination";
+        SaveCurrentCombinationImmediate();
+    }
+
     public void RefreshAdapters()
     {
         var detected = _networkDetector.DetectAdapters();
@@ -213,6 +313,9 @@ public class MainViewModel : INotifyPropertyChanged
             Adapters.Add(a);
         }
 
+        // Apply saved adapter settings & weights
+        _configStore.ApplyToAdapters(Adapters);
+
         NetworkDetector.RecalculateEffectivePercentages(Adapters);
         UpdateMergedSummary();
     }
@@ -221,6 +324,8 @@ public class MainViewModel : INotifyPropertyChanged
     {
         NetworkDetector.RecalculateEffectivePercentages(Adapters);
         UpdateMergedSummary();
+        _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+        AutoSaveStatusText = "Saving changes...";
     }
 
     private void UpdateMergedSummary()
@@ -315,6 +420,12 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void OnApplicationExit()
     {
+        try
+        {
+            _configStore.SaveImmediate(Adapters, Config, ActiveProfileName);
+        }
+        catch { }
+
         if (_proxyManager.IsApplied)
         {
             _proxyManager.Disable();

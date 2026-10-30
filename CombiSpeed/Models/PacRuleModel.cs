@@ -55,3 +55,4 @@ public class PacRuleModel : INotifyPropertyChanged
         return true;
     }
 }
+

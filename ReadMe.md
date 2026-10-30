@@ -21,30 +21,39 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🚀 Key Features
 
-1. **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem (NEW in v1.2.0)**:
+1. **Adapter Settings & Combination Profiles Persistence (NEW in v1.3.1)**:
+   - Automatically saves all selected adapter states (`IsEnabled`) and custom percentage weights (`Weight`) to disk (`%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`).
+   - Restores exact adapter selections and bandwidth allocations upon application restart or adapter rescan.
+   - **Multi-Attribute Adapter Binding**: Uses the permanent hardware MAC address as primary key with name fallback, guaranteeing that configurations stay stably bound even across dynamic DHCP IP re-assignments.
+   - **Debounced Auto-Save Engine**: 400ms debounced disk saving on UI slider dragging and checkbox toggles, preventing disk thrashing while guaranteeing zero configuration loss.
+   - **Combination Profiles & Preset Switching**: Save, switch, and manage custom adapter combination profiles (e.g. `Default Combination`, `Office Mode`, `Gaming 70/30`, `Mobile Hotspot Backup`).
+   - Dedicated Cyberpunk `InputDialog` for creating and saving new combination profiles on the fly.
+   - Real-time `💾 Auto-Saved: HH:mm:ss` status badge directly on the adapter combination toolbar.
+
+2. **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem**:
    - Provisions a native Windows adapter connection: **`CombiSpeed Bonded Bridge`** (`CombiSpeed Virtual Adapter`).
    - Registers directly in Windows Network Connections (`ncpa.cpl`) and Windows Settings -> Network & Internet -> VPN using the Windows user-mode phonebook (`rasphone.pbk`), requiring zero driver signing or UAC elevation.
    - Unified virtual interface that merges physical network adapters (Ethernet, Wi-Fi, Cellular) into a single virtual pipe.
    - Dedicated dashboard card with live connection status (`BONDED & ACTIVE`), Windows adapter name, Virtual IP (`10.254.1.2`), Gateway (`10.254.1.1`), and 1-click controls to toggle the bridge or inspect in `ncpa.cpl`.
 
-2. **Strict % Bandwidth Utilization (Smooth Weighted Round Robin)**:
+3. **Strict % Bandwidth Utilization (Smooth Weighted Round Robin)**:
    - Implements mathematically provable **Smooth Weighted Round Robin (SWRR)** in `LoadBalancerEngine.cs`.
    - Distributes outgoing traffic across physical network adapters strictly according to user-configured percentage weights (e.g. 70% Wi-Fi, 30% Ethernet) with zero clustering or burstiness.
    - Real-time **Dynamic Multi-Color Segmented Bandwidth Distribution Bar** visualizing each physical adapter's proportion of the total bonded pool.
    - Per-adapter `BANDWIDTH: XX.X% of Bonded Pool` indicator dynamically updated whenever sliders change.
 
-3. **RFC 1928 SOCKS5 UDP Associate Relay (Gaming & UDP Acceleration - NEW in v1.3.0)**:
+4. **RFC 1928 SOCKS5 UDP Associate Relay (Gaming & UDP Acceleration)**:
    - Full implementation of SOCKS5 `UDP ASSOCIATE` (Command `0x03`).
    - Binds outbound UDP sockets directly to physical adapter IPs (`Socket.Bind(new IPEndPoint(adapterIp, 0))`), accelerating multiplayer gaming (Valorant, CS2, CoD, Steam), Discord/VoIP voice channels, DNS queries, and WebRTC video across bonded connections.
    - Encapsulates and returns UDP replies back to the client.
 
-4. **PAC (Proxy Auto-Config) Domain-Based Interface Routing (NEW in v1.3.0)**:
+5. **PAC (Proxy Auto-Config) Domain-Based Interface Routing**:
    - Dynamically compiles RFC-compliant JavaScript `FindProxyForURL(url, host)` scripts.
    - Built-in PAC server serving `http://127.0.0.1:8080/proxy.pac` directly on the proxy port without port conflicts.
    - Granular domain and subnet bypass rules (e.g. banking portals, corporate intranet `192.168.*`, `10.*` -> Direct; all other web traffic -> Bonded).
    - Automated 1-click Windows `AutoConfigURL` registry and WinINet integration.
 
-5. **Windows Service & Headless Background Mode (NEW in v1.3.0)**:
+6. **Windows Service & Headless Background Mode**:
    - Runs headless as a background Windows Service without requiring active user logon or open GUI (`--service`, `--headless`).
    - CLI service management: `--service-install`, `--service-uninstall`, `--service-start`, `--service-stop`.
    - 1-click scripts: `Install-Service.bat` and `Uninstall-Service.bat` registering `CombiSpeedService` in Windows Service Control Manager with automatic crash recovery.
@@ -86,13 +95,17 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET v1.2.0) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v1.3.1) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
+| **Adapter Settings & Profiles** | **Durable Persistence (`adapter_settings.json`), MAC binding, debounced auto-save & presets** | None (Lost on restart) | None (Default metric reset) |
 | **Virtual Bridge / Adapter Connection** | **Native Windows VPN & Virtual Adapter (`CombiSpeed Bonded Bridge`)** in `ncpa.cpl` & Windows Settings | None (Speedy is purely an isolated local SOCKS proxy) | Rigid single physical adapter binding |
 | **Percentage Bandwidth Utilization** | **Smooth Weighted Round Robin (SWRR)** enforcing exact % ratios (e.g. 70%/30%) without clustering | None (No bandwidth allocation or weighting) | 100% to single lowest metric adapter |
 | **Runtime & Memory** | **Native C# (.NET 8 WPF)**: ~25 MB RAM, 150 KB executable | Electron / Node: ~200 MB RAM, 150 MB package | OS Network Driver |
 | **Socket Binding** | **`Socket.Bind(new IPEndPoint(adapterIp, 0))`** on every socket | **Missing `localAddress`** (traffic leaks back to default gateway) | Lowest metric adapter only |
 | **Concurrency Reliability** | Persistent async non-blocking `TcpListener` with connection pooling | Spawns a new listener on port 8080 per connection, throwing `EADDRINUSE` | N/A |
+| **UDP & Gaming Acceleration** | **RFC 1928 SOCKS5 UDP Associate Relay** with physical adapter binding | None (TCP only) | Default route only |
+| **Domain-Based Policy Routing** | **Dynamic PAC compiler (`FindProxyForURL`)** with built-in HTTP server | None | None |
+| **Background / Service Mode** | **Windows Service (`CombiSpeedService`) & Headless daemon** | None (Requires active foreground GUI) | N/A |
 | **Proxy Protocol Support** | **Dual SOCKS5 & HTTP/HTTPS CONNECT** | SOCKS5 only (IPv4 only) | None |
 | **Windows OS Integration** | **Native WinINet `InternetSetOption` API & User Phonebook (`rasphone.pbk`)** | None (Manual proxy config required in every app) | None |
 | **Adapter Health & Failover** | Continuous RTT probes with auto-rerouting on packet loss | None (Dead connection leads to application hang) | OS metric failover takes 30-60+ seconds |
@@ -219,6 +232,12 @@ Double-click `Stop-CombiSpeed.bat` for instant, fail-safe shutdown:
 | `--start` | `-s` | Starts CombiSpeed and automatically engages network bonding on launch. |
 | `--stop` | *(none)* | Signals any running CombiSpeed instance to shutdown and safely restores system proxy. |
 | `--minimized` | `-m` | Launches CombiSpeed in minimized window mode. |
+| `--service` / `--headless` | `-h` | Runs CombiSpeed in headless daemon mode or as a Windows background service. |
+| `--service-install` | *(none)* | Automatically registers and configures `CombiSpeedService` in Windows SCM. |
+| `--service-uninstall` | *(none)* | Stops and cleanly deletes `CombiSpeedService` from Windows SCM. |
+| `--service-start` | *(none)* | Starts `CombiSpeedService` via Service Control Manager. |
+| `--service-stop` | *(none)* | Stops `CombiSpeedService` via Service Control Manager. |
+| `--verify-persistence` | *(none)* | Runs automated self-test suite verifying adapter settings, profiles, and persistence engine. |
 
 ---
 

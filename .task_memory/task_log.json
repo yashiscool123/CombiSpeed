@@ -87,6 +87,30 @@
           "progress": "All backlog features implemented and verified successfully."
         }
       ]
+    },
+    {
+      "taskId": "TASK-2026-006",
+      "userQuery": "The application should save the selected adapter settings and adapters for combinations.",
+      "status": "completed",
+      "createdAt": "2026-10-30T12:45:00+05:30",
+      "updatedAt": "2026-10-30T12:57:00+05:30",
+      "progress": "Implemented durable Adapter Settings & Combination Profiles persistence subsystem (%LOCALAPPDATA%\\CombiSpeed\\adapter_settings.json) with MAC address primary key matching, debounced auto-save (400ms), combination profile presets and switching, UI toolbar with real-time auto-save indicator, headless/service restoration, and automated verification tests.",
+      "checkpoints": [
+        {
+          "checkpointId": "CP-601",
+          "timestamp": "2026-10-30T12:45:00+05:30",
+          "inputs": "User requested: 'The application should save the selected adapter settings and adapters for combinations.'",
+          "outputs": "Designed ConfigurationStore & AdapterSettingsPersistence service saving adapter selection (IsEnabled), weight ratios, priority, combination profiles, and proxy/bridge configuration to %LOCALAPPDATA%\\CombiSpeed\\adapter_settings.json with automated debounced disk writes.",
+          "progress": "Initialization and design completed."
+        },
+        {
+          "checkpointId": "CP-602",
+          "timestamp": "2026-10-30T12:57:00+05:30",
+          "inputs": "Implementation of AdapterProfileModel, ConfigurationStore, MainViewModel integration with auto-save & profiles, InputDialog for custom combination profiles, MainWindow toolbar with auto-save badge and profile switcher, HeadlessEngine integration, and regression testing with --verify-persistence.",
+          "outputs": "Built and published CombiSpeed v1.3.1 (versionCode 6) with 0 warnings and 0 errors. Passed 100% of persistence, adapter reload, and profile switching tests. Updated all documentation, installers, and version records.",
+          "progress": "All tasks completed successfully."
+        }
+      ]
     }
   ]
 }

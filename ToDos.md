@@ -63,3 +63,27 @@
 - [x] Create 1-click Windows Service management scripts: `Install-Service.bat` and `Uninstall-Service.bat`.
 - [x] Update `Install-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, and `Uninstall-CombiSpeed.bat` for service lifecycle integration.
 - [x] Increment version to `1.3.0` (versionCode: 5) and verify release build.
+
+## Milestone 7: Adapter Settings & Combination Profiles Persistence Subsystem [COMPLETED]
+- [x] Design persistence models (`AdapterProfileModel.cs`: `AdapterSettingItem`, `CombinationProfileModel`, `PersistedAppDataModel`).
+- [x] Implement `ConfigurationStore.cs`:
+  - Persistent storage in `%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`.
+  - Atomic two-stage file commits (`.tmp` -> replace) to prevent corruption during sudden power-off.
+  - Debounced auto-save (400ms) on slider dragging and toggle changes.
+  - Multi-attribute adapter binding (stable MAC address primary key with Name fallback).
+  - Combination profiles management (Save, Switch, Delete).
+- [x] Implement Cyberpunk `InputDialog.xaml` and `InputDialog.xaml.cs` for saving named combination profiles.
+- [x] Enhance `MainViewModel.cs` to integrate `ConfigurationStore`:
+  - Automatic restore of enabled adapters and weight percentages on application launch and rescan.
+  - Automatic restore of Proxy and Virtual Bridge configurations.
+  - Immediate save on application exit.
+  - Profile switcher and auto-save timestamp badge.
+- [x] Update `MainWindow.xaml`:
+  - Added "ADAPTER COMBINATIONS & ALLOCATION" header toolbar.
+  - Real-time Auto-Save status badge (`💾 Auto-Saved: HH:mm:ss`).
+  - Combination profile selector dropdown.
+  - 1-Click "💾 Save Combination" and "+ New Profile" buttons.
+- [x] Integrated `ConfigurationStore` with `HeadlessEngine.cs` for headless daemon and Windows Service auto-restore.
+- [x] Added `--verify-persistence` CLI diagnostic suite and verified 100% test pass rate.
+- [x] Updated `Install-CombiSpeed.bat` and `Uninstall-CombiSpeed.bat` to handle configuration lifecycle.
+- [x] Increment version to `1.3.1` (versionCode: 6) and verify release build.

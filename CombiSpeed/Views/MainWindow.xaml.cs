@@ -74,6 +74,23 @@ public partial class MainWindow : Window
         {
             Owner = this
         };
-        win.ShowDialog();
+        if (win.ShowDialog() == true)
+        {
+            ViewModel.SaveCurrentCombinationImmediate();
+        }
+    }
+
+    private void NewProfile_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        var dlg = new InputDialog("Save Combination Profile", "Enter a name for this adapter combination and weight ratio:", "Custom Profile")
+        {
+            Owner = this
+        };
+
+        if (dlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(dlg.ResponseText))
+        {
+            ViewModel.CreateNewProfile(dlg.ResponseText);
+        }
     }
 }

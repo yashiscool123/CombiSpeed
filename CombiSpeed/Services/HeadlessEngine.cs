@@ -46,6 +46,15 @@ public class HeadlessEngine : IDisposable
 
         // 1. Detect physical adapters
         var adapters = _networkDetector.DetectAdapters();
+
+        // Load saved adapter combinations and weight settings
+        var configStore = new ConfigurationStore();
+        if (configStore.ApplyToAdapters(adapters))
+        {
+            NetworkDetector.RecalculateEffectivePercentages(adapters);
+            Console.WriteLine("[INFO] Successfully restored saved adapter settings & combination weights from disk.");
+        }
+
         Console.WriteLine($"[INFO] Detected {adapters.Count} active network adapters:");
         foreach (var a in adapters)
         {
@@ -123,3 +132,4 @@ public class HeadlessEngine : IDisposable
         _ = StopAsync();
     }
 }
+
