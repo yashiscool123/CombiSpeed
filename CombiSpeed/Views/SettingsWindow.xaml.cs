@@ -19,6 +19,10 @@ public partial class SettingsWindow : Window
         ChkAutoVirtualBridge.IsChecked = config.EnableVirtualBridge;
         ChkAutoWindowsProxy.IsChecked = config.EnableWindowsProxy;
         ChkEnablePac.IsChecked = config.EnablePac;
+        ChkEnableThrottling.IsChecked = config.EnableBandwidthThrottling;
+        ChkProportionalThrottling.IsChecked = config.EnforceProportionalThrottling;
+        TxtDownloadLimit.Text = (config.GlobalDownloadLimitBps / (1024 * 1024)).ToString();
+        TxtUploadLimit.Text = (config.GlobalUploadLimitBps / (1024 * 1024)).ToString();
         GridPacRules.ItemsSource = PacConfigModel.Current.Rules;
 
         foreach (ComboBoxItem item in CmbRoutingMode.Items)
@@ -70,6 +74,12 @@ public partial class SettingsWindow : Window
         _config.EnableVirtualBridge = ChkAutoVirtualBridge.IsChecked == true;
         _config.EnableWindowsProxy = ChkAutoWindowsProxy.IsChecked == true;
         _config.EnablePac = ChkEnablePac.IsChecked == true;
+
+        _config.EnableBandwidthThrottling = ChkEnableThrottling.IsChecked == true;
+        _config.EnforceProportionalThrottling = ChkProportionalThrottling.IsChecked == true;
+        if (long.TryParse(TxtDownloadLimit.Text, out long dlMb)) _config.GlobalDownloadLimitBps = dlMb * 1024 * 1024;
+        if (long.TryParse(TxtUploadLimit.Text, out long ulMb)) _config.GlobalUploadLimitBps = ulMb * 1024 * 1024;
+
         DialogResult = true;
         Close();
     }

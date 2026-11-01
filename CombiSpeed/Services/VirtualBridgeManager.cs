@@ -27,9 +27,9 @@ public class VirtualBridgeManager : IDisposable
         };
     }
 
-    public async Task StartBridgeAsync(int port, LoadBalancerEngine lb, Func<List<NetworkAdapterModel>> getAdapters)
+    public async Task StartBridgeAsync(int port, LoadBalancerEngine lb, Func<List<NetworkAdapterModel>> getAdapters, BandwidthThrottler? throttler = null)
     {
-        _bridgeServer = new VirtualBridgeServer(lb, getAdapters, _model);
+        _bridgeServer = new VirtualBridgeServer(lb, getAdapters, _model, throttler);
         _bridgeServer.OnAuditLog += log => OnAuditLog?.Invoke(log);
         await _bridgeServer.StartAsync(port);
 

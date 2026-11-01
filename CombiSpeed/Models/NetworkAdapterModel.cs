@@ -83,6 +83,39 @@ public class NetworkAdapterModel : INotifyPropertyChanged
     public string FormattedEffectivePercentage => $"{EffectivePercentage:F1}% of Bonded Pool";
     public double EffectivePercentageWidth => Math.Max(2.0, EffectivePercentage * 3.0);
 
+    private long _speedLimitBps = 0;
+    public long SpeedLimitBps
+    {
+        get => _speedLimitBps;
+        set
+        {
+            if (SetField(ref _speedLimitBps, Math.Max(0, value)))
+            {
+                OnPropertyChanged(nameof(FormattedSpeedLimit));
+                WeightChanged?.Invoke();
+            }
+        }
+    }
+
+    public string FormattedSpeedLimit => _speedLimitBps <= 0 ? "Auto / Unlimited" : FormatSpeed(_speedLimitBps);
+
+    private long _throttledBandwidthBps = 0;
+    public long ThrottledBandwidthBps
+    {
+        get => _throttledBandwidthBps;
+        set
+        {
+            if (SetField(ref _throttledBandwidthBps, value))
+            {
+                OnPropertyChanged(nameof(FormattedThrottledBandwidth));
+                OnPropertyChanged(nameof(IsThrottleActive));
+            }
+        }
+    }
+
+    public bool IsThrottleActive => _throttledBandwidthBps > 0;
+    public string FormattedThrottledBandwidth => _throttledBandwidthBps <= 0 ? "Full Speed" : $"⚡ Capped: {FormatSpeed(_throttledBandwidthBps)}";
+
     public string AccentHexColor { get; set; } = "#00F0FF";
 
     private int _pingMs;

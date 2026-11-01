@@ -1,5 +1,27 @@
 # Release Notes
 
+## [1.3.2] - 2026-11-01 - Real-Time Bandwidth Throttling & Traffic Shaping Release
+
+### 🚀 Highlights & Features
+- **Real-Time Bandwidth Throttling & Token Bucket Rate Limiting**:
+  - Implements high-precision asynchronous Token Bucket rate limiting in [`BandwidthThrottler.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/BandwidthThrottler.cs), actively throttling byte transfer rates across combined connection adapters.
+  - Rate limiting is integrated directly into [`ProxyEngine.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/ProxyEngine.cs) (HTTP, HTTPS CONNECT, SOCKS5 TCP), [`VirtualBridgeServer.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/VirtualBridgeServer.cs) (Windows Virtual Bonded Bridge adapter), and [`Socks5UdpRelay.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/Socks5UdpRelay.cs) (UDP Associate relay).
+- **Strict Proportional Bandwidth Shaping**:
+  - Strictly allocates and throttles byte rates across combined adapters in accordance with user-configured percentage weights (e.g. 75% Ethernet / 25% Wi-Fi), preventing faster lines from drowning out slower lines or violating target ratios.
+- **Configurable Global Speed Caps & Per-Adapter Limits**:
+  - 1-Click speed throttle presets: `Unlimited (Proportional)`, `2 MB/s (16 Mbps)`, `5 MB/s (40 Mbps)`, `10 MB/s (80 Mbps)`, `20 MB/s (160 Mbps)`, `50 MB/s (400 Mbps)`, `100 MB/s (800 Mbps)`, or custom limits.
+  - Per-adapter speed limit overrides allowing users to cap metered connections (e.g., cellular mobile hotspot capped to 2 MB/s).
+- **Dashboard Bandwidth Throttling Toolbar**:
+  - Added dedicated Bandwidth Throttling & Speed Shaper toolbar to [`MainWindow.xaml`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Views/MainWindow.xaml) with active status badge (`⚡ Throttling: ...`) and quick speed cap selector.
+  - Enhanced adapter cards to display allocated throttle rates: `⚡ Capped: XX MB/s`.
+- **Settings & Persistence Integration**:
+  - Added Bandwidth Throttling configuration options in [`SettingsWindow.xaml`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Views/SettingsWindow.xaml).
+  - Automatically persists all throttle settings and per-adapter limits across application restarts in `%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`.
+- **Automated Regression Diagnostic Suite**:
+  - Added `--verify-throttling` CLI flag verifying token bucket rate-limiting delay enforcement, proportional slice allocation, and bypass modes with a 100% test pass rate.
+
+---
+
 ## [1.3.1] - 2026-10-30 - Adapter Settings & Combination Profiles Persistence Release
 
 ### 🚀 Highlights & Features

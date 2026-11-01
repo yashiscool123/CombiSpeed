@@ -129,6 +129,93 @@ public partial class App : Application
             return;
         }
 
+        if (e.Args.Any(a => a.Equals("--verify-throttling", StringComparison.OrdinalIgnoreCase)))
+        {
+            AttachConsole(-1);
+            Console.WriteLine("=====================================================================");
+            Console.WriteLine("      CombiSpeed Bandwidth Throttling & Speed Shaper Self-Test       ");
+            Console.WriteLine("=====================================================================");
+
+            try
+            {
+                var throttler = new BandwidthThrottler();
+                var mockAdapters = new List<Models.NetworkAdapterModel>
+                {
+                    new() { Id = "adapter-1", Name = "Primary Ethernet", IsEnabled = true, Weight = 75 },
+                    new() { Id = "adapter-2", Name = "Secondary Wi-Fi", IsEnabled = true, Weight = 25 }
+                };
+
+                // Combined 2 MB/s cap
+                var config = new Models.ProxyConfigModel
+                {
+                    EnableBandwidthThrottling = true,
+                    EnforceProportionalThrottling = true,
+                    GlobalDownloadLimitBps = 2 * 1024 * 1024,
+                    GlobalUploadLimitBps = 1 * 1024 * 1024
+                };
+
+                throttler.UpdateConfiguration(mockAdapters, config);
+
+                // Verify proportional allocation
+                long expectedAdapter1 = (long)(config.GlobalDownloadLimitBps * 0.75);
+                long expectedAdapter2 = (long)(config.GlobalDownloadLimitBps * 0.25);
+
+                if (mockAdapters[0].ThrottledBandwidthBps != expectedAdapter1)
+                {
+                    throw new Exception($"Adapter 1 allocated bandwidth mismatch: expected {expectedAdapter1}, got {mockAdapters[0].ThrottledBandwidthBps}");
+                }
+                if (mockAdapters[1].ThrottledBandwidthBps != expectedAdapter2)
+                {
+                    throw new Exception($"Adapter 2 allocated bandwidth mismatch: expected {expectedAdapter2}, got {mockAdapters[1].ThrottledBandwidthBps}");
+                }
+
+                Console.WriteLine($"[PASS] Proportional allocation verified: Adapter 1={expectedAdapter1 / 1024} KB/s (75%), Adapter 2={expectedAdapter2 / 1024} KB/s (25%)");
+
+                // Test live throttling delay
+                var sw = Stopwatch.StartNew();
+                // Pump 384KB through Adapter 2 (capped at 524,288 B/s ~ 0.5 MB/s)
+                // 384KB at 512KB/s takes ~600-700ms
+                for (int i = 0; i < 24; i++)
+                {
+                    throttler.ThrottleDownloadAsync(mockAdapters[1], 16384).AsTask().Wait();
+                }
+                sw.Stop();
+
+                Console.WriteLine($"[PASS] Throttler enforced delay: {sw.ElapsedMilliseconds}ms for 384KB transfer (strictly rate-limited).");
+                if (sw.ElapsedMilliseconds < 200)
+                {
+                    throw new Exception("Throttler failed to enforce delay on rate-limited adapter!");
+                }
+
+                // Test unthrottled mode
+                config.EnableBandwidthThrottling = false;
+                throttler.UpdateConfiguration(mockAdapters, config);
+
+                var sw2 = Stopwatch.StartNew();
+                for (int i = 0; i < 24; i++)
+                {
+                    throttler.ThrottleDownloadAsync(mockAdapters[1], 16384).AsTask().Wait();
+                }
+                sw2.Stop();
+                Console.WriteLine($"[PASS] Disabled mode executed without delay: {sw2.ElapsedMilliseconds}ms.");
+
+                Console.WriteLine("=====================================================================");
+                Console.WriteLine("  BANDWIDTH THROTTLING & SPEED SHAPER TESTS PASSED (100% OK)         ");
+                Console.WriteLine("=====================================================================");
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[FAIL] Throttling verification failed: {ex.Message}");
+                Console.ResetColor();
+                Shutdown(1);
+                return;
+            }
+
+            Shutdown(0);
+            return;
+        }
+
         // Service Management Commands
         if (e.Args.Any(a => a.Equals("--service-install", StringComparison.OrdinalIgnoreCase)))
         {

@@ -10,6 +10,7 @@ public class AdapterSettingItem
     public string Description { get; set; } = string.Empty;
     public bool IsEnabled { get; set; } = true;
     public int Weight { get; set; } = 50;
+    public long SpeedLimitBps { get; set; } = 0;
     public string? CustomLabel { get; set; }
 }
 
@@ -32,3 +33,4 @@ public class PersistedAppDataModel
     public List<PacRuleModel> PacRules { get; set; } = new();
     public DateTime LastSaved { get; set; } = DateTime.Now;
 }
+

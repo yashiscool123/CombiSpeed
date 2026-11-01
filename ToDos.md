@@ -87,3 +87,18 @@
 - [x] Added `--verify-persistence` CLI diagnostic suite and verified 100% test pass rate.
 - [x] Updated `Install-CombiSpeed.bat` and `Uninstall-CombiSpeed.bat` to handle configuration lifecycle.
 - [x] Increment version to `1.3.1` (versionCode: 6) and verify release build.
+
+## Milestone 8: Real-Time Bandwidth Throttling & Speed Shaper Subsystem [COMPLETED]
+- [x] Design and implement `BandwidthThrottler.cs` using high-precision asynchronous Token Bucket algorithm.
+- [x] Implement real-time byte rate limiting in `ProxyEngine.cs` for HTTP, HTTPS CONNECT, and SOCKS5 TCP streaming.
+- [x] Implement real-time packet rate limiting in `Socks5UdpRelay.cs` for UDP Associate uploads and downloads.
+- [x] Implement real-time stream rate limiting in `VirtualBridgeServer.cs` for Windows Virtual Bonded Bridge adapter connections.
+- [x] Support Proportional Bandwidth Shaping: strictly allocates and throttles byte rates across combined adapters according to user-configured percentage weights.
+- [x] Add configurable global speed caps (Presets: Unlimited, 2 MB/s, 5 MB/s, 10 MB/s, 20 MB/s, 50 MB/s, 100 MB/s, Custom) and per-adapter speed limits.
+- [x] Add Bandwidth Throttling & Speed Shaper toolbar to `MainWindow.xaml` with live status badge and quick throttle preset selector.
+- [x] Enhance individual adapter cards with real-time `⚡ Capped: XX MB/s` allocation indicators.
+- [x] Add Bandwidth Throttling settings section in `SettingsWindow.xaml` and `SettingsWindow.xaml.cs`.
+- [x] Integrate Throttling state and per-adapter speed limits into `ConfigurationStore` for automatic persistence across reboots.
+- [x] Integrate Throttling into `HeadlessEngine.cs` for Windows Service and CLI background execution.
+- [x] Add `--verify-throttling` CLI diagnostic test suite and verified 100% test pass rate.
+- [x] Increment version to `1.3.2` (versionCode: 7) and publish release binaries.

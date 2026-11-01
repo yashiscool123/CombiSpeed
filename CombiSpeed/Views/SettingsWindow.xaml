@@ -101,6 +101,28 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Bandwidth Throttling & Speed Shaper -->
+                    <TextBlock Text="BANDWIDTH THROTTLING &amp; SPEED SHAPER" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
+                    <CheckBox x:Name="ChkEnableThrottling" Content="Enable Real-Time Bandwidth &amp; Speed Throttling" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,6"/>
+                    <CheckBox x:Name="ChkProportionalThrottling" Content="Strict Proportional Shaping (Enforce exact % bandwidth ratios on throughput)" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Bonded Download Limit (MB/s):" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtDownloadLimit" Text="0" Background="#080C14" Foreground="White" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas"/>
+                            <TextBlock Text="0 = Unlimited (or Proportional % shaping)" FontSize="10" Foreground="#64748B" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Bonded Upload Limit (MB/s):" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtUploadLimit" Text="0" Background="#080C14" Foreground="White" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas"/>
+                            <TextBlock Text="0 = Unlimited" FontSize="10" Foreground="#64748B" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
                     <!-- Terminal Proxy String -->
                     <TextBlock Text="CLI PROXY STRING (CURL / GIT / NPM / DOCKER)" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="12">

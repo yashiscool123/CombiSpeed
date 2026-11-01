@@ -25,6 +25,7 @@ public class ProxyEngine : IDisposable
     private long _currentSecRx;
     private long _currentSecTx;
     private PeriodicTimer? _telemetryTimer;
+    private readonly BandwidthThrottler _throttler = new();
 
     private readonly ConcurrentQueue<AuditLogModel> _auditLogs = new();
     private readonly int _maxLogs = 100;
@@ -37,6 +38,7 @@ public class ProxyEngine : IDisposable
     public long TotalUploadBytes => _totalTxBytes;
     public long InstantDownloadSpeedBps { get; private set; }
     public long InstantUploadSpeedBps { get; private set; }
+    public BandwidthThrottler Throttler => _throttler;
 
     public event Action<AuditLogModel>? OnAuditLog;
     public event Action? OnTelemetryTick;
@@ -48,6 +50,11 @@ public class ProxyEngine : IDisposable
     }
 
     public List<AuditLogModel> GetAuditLogs() => _auditLogs.ToList();
+
+    public void UpdateThrottling(IEnumerable<NetworkAdapterModel> adapters, ProxyConfigModel config)
+    {
+        _throttler.UpdateConfiguration(adapters, config);
+    }
 
     public async Task StartAsync(int httpPort = 8080, int socksPort = 1080)
     {
@@ -327,7 +334,7 @@ public class ProxyEngine : IDisposable
                         await clientStream.ReadAsync(dummy.AsMemory(0, dummy.Length), token);
                     }
 
-                    using var udpRelay = new Socks5UdpRelay(_loadBalancer, _getAdapters, RecordBytes, AddAuditLog);
+                    using var udpRelay = new Socks5UdpRelay(_loadBalancer, _getAdapters, RecordBytes, AddAuditLog, _throttler);
                     int assignedRelayPort = udpRelay.StartRelay(clientUdpEndpoint);
 
                     // Send Success Reply: [0x05, 0x00 (Rep), 0x00 (Rsv), 0x01 (IPv4), BND.ADDR (127.0.0.1), BND.PORT (2 bytes)]
@@ -442,6 +449,7 @@ public class ProxyEngine : IDisposable
                     int read = await streamA.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
                     if (read <= 0) break;
 
+                    await _throttler.ThrottleUploadAsync(adapter, read, token);
                     await streamB.WriteAsync(buffer.AsMemory(0, read), token);
                     RecordBytes(adapter, 0, read);
                     Interlocked.Add(ref totalSessionBytes, read);
@@ -464,6 +472,7 @@ public class ProxyEngine : IDisposable
                     int read = await streamB.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
                     if (read <= 0) break;
 
+                    await _throttler.ThrottleDownloadAsync(adapter, read, token);
                     await streamA.WriteAsync(buffer.AsMemory(0, read), token);
                     RecordBytes(adapter, read, 0);
                     Interlocked.Add(ref totalSessionBytes, read);

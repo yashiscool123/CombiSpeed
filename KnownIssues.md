@@ -14,6 +14,7 @@
 | ISSUE-008 | Complicated manual installation or requirement for elevated UAC admin rights. | Deployment friction | **Resolved**: `Install-CombiSpeed.bat` deploys cleanly to `%LOCALAPPDATA%\Programs\CombiSpeed` without UAC prompts, auto-creates Desktop/Start Menu shortcuts, and integrates into Windows Apps & Features. |
 | ISSUE-009 | Proxy-only solutions require application-level proxy awareness and cannot bond system-wide traffic through a dedicated Windows network interface connection. | Speedy had no virtual adapter or VPN | **Resolved**: CombiSpeed v1.2.0 introduces the **Virtual Bonded Bridge & Adapter Connection** (`CombiSpeed Bonded Bridge`), creating a native Windows network connection in `ncpa.cpl` and Windows Settings that merges active physical adapters and multiplexes bandwidth based on the exact % set for each connection via Smooth Weighted Round Robin. |
 | ISSUE-010 | Adapter selections, customized percentage ratios, and combination profiles lost on restart or rescan. | Speedy had no persistence | **Resolved**: CombiSpeed v1.3.1 implements durable configuration persistence in `%LOCALAPPDATA%\CombiSpeed\adapter_settings.json` with debounced auto-save, MAC address binding, and combination profiles. |
+| ISSUE-011 | Connection-based round-robin multiplexing did not throttle actual byte transfer speeds or enforce bandwidth limits across combined adapters. | Speedy had no throttling or rate limiting | **Resolved**: CombiSpeed v1.3.2 implements high-performance asynchronous Token Bucket `BandwidthThrottler` across all TCP, UDP, and Virtual Bridge streams, enforcing strict proportional speed shaping and configurable bandwidth caps. |
 
 ## Feature Backlog
 - [x] One-Click Start, Stop & Installer scripts with CLI flags (`--start`, `--stop`, `--minimized`).
@@ -22,3 +23,4 @@
 - [x] Windows service mode for background headless execution without GUI.
 - [x] UDP associate relay support for SOCKS5 (gaming/streaming UDP acceleration).
 - [x] Adapter settings and combination profile persistence with debounced auto-save and startup restoration.
+- [x] Real-time bandwidth throttling & speed shaper enforcing proportional bandwidth and speed caps across combined connection adapters.

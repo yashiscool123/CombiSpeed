@@ -61,7 +61,9 @@ public class HeadlessEngine : IDisposable
             Console.WriteLine($"  - {a.Name} ({a.Address}) | Speed: {a.LinkSpeed} | Weight: {a.Weight}% ({a.EffectivePercentage:F1}% of pool)");
         }
 
-        // 2. Start Proxy Engine (HTTP 8080, SOCKS5 1080)
+        // 2. Start Proxy Engine (HTTP 8080, SOCKS5 1080) with Active Bandwidth Throttling
+        _proxyEngine.UpdateThrottling(adapters, _config);
+        Console.WriteLine($"[INFO] Bandwidth Throttler: {(_config.EnableBandwidthThrottling ? (_config.GlobalDownloadLimitBps > 0 ? $"Active ({_config.GlobalDownloadLimitBps / (1024 * 1024)} MB/s cap)" : "Active (Proportional % Shaping)") : "Disabled")}");
         Console.WriteLine($"[INFO] Starting Proxy Engine on HTTP:{_config.HttpPort}, SOCKS5:{_config.SocksPort}...");
         await _proxyEngine.StartAsync(_config.HttpPort, _config.SocksPort);
 
@@ -69,7 +71,7 @@ public class HeadlessEngine : IDisposable
         if (enableBridge)
         {
             Console.WriteLine($"[INFO] Starting Virtual Bonded Bridge Gateway on port {_config.VirtualBridgePort}...");
-            await _virtualBridgeManager.StartBridgeAsync(_config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached());
+            await _virtualBridgeManager.StartBridgeAsync(_config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached(), _proxyEngine.Throttler);
         }
 
         // 4. Optionally enable Windows Proxy / PAC

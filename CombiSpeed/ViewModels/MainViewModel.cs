@@ -79,6 +79,37 @@ public class MainViewModel : INotifyPropertyChanged
         set => SetField(ref _autoSaveStatusText, value);
     }
 
+    public ObservableCollection<string> ThrottlePresets { get; } = new()
+    {
+        "Unlimited (Proportional)",
+        "2 MB/s (16 Mbps)",
+        "5 MB/s (40 Mbps)",
+        "10 MB/s (80 Mbps)",
+        "20 MB/s (160 Mbps)",
+        "50 MB/s (400 Mbps)",
+        "100 MB/s (800 Mbps)"
+    };
+
+    private string _selectedThrottlePreset = "Unlimited (Proportional)";
+    public string SelectedThrottlePreset
+    {
+        get => _selectedThrottlePreset;
+        set
+        {
+            if (SetField(ref _selectedThrottlePreset, value))
+            {
+                ApplyThrottlePreset(value);
+            }
+        }
+    }
+
+    private string _throttleStatusText = "Throttling: Proportional % Shaping";
+    public string ThrottleStatusText
+    {
+        get => _throttleStatusText;
+        set => SetField(ref _throttleStatusText, value);
+    }
+
     private bool _isEngineRunning;
     public bool IsEngineRunning
     {
@@ -271,6 +302,26 @@ public class MainViewModel : INotifyPropertyChanged
         RefreshAdapters();
         _healthMonitor.Start(3500);
 
+        // Configure initial bandwidth throttling state
+        if (Config.GlobalDownloadLimitBps > 0)
+        {
+            long mb = Config.GlobalDownloadLimitBps / (1024 * 1024);
+            var match = ThrottlePresets.FirstOrDefault(p => p.StartsWith($"{mb} MB/s"));
+            _selectedThrottlePreset = match ?? "Custom";
+            _throttleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeed(Config.GlobalDownloadLimitBps)} Cap";
+        }
+        else if (Config.EnableBandwidthThrottling)
+        {
+            _selectedThrottlePreset = "Unlimited (Proportional)";
+            _throttleStatusText = "Throttling: Proportional % Shaping";
+        }
+        else
+        {
+            _selectedThrottlePreset = "Unlimited (Proportional)";
+            _throttleStatusText = "Throttling: Disabled";
+        }
+        _proxyEngine.UpdateThrottling(Adapters, Config);
+
         // Check if Windows Proxy is currently active in registry
         IsWindowsProxyActive = _proxyManager.GetSystemProxyStatus(out _);
     }
@@ -318,14 +369,58 @@ public class MainViewModel : INotifyPropertyChanged
 
         NetworkDetector.RecalculateEffectivePercentages(Adapters);
         UpdateMergedSummary();
+        _proxyEngine.UpdateThrottling(Adapters, Config);
     }
 
     private void OnAdapterWeightChanged()
     {
         NetworkDetector.RecalculateEffectivePercentages(Adapters);
         UpdateMergedSummary();
+        _proxyEngine.UpdateThrottling(Adapters, Config);
         _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
         AutoSaveStatusText = "Saving changes...";
+    }
+
+    private void ApplyThrottlePreset(string preset)
+    {
+        long limitBps = preset switch
+        {
+            "2 MB/s (16 Mbps)" => 2L * 1024 * 1024,
+            "5 MB/s (40 Mbps)" => 5L * 1024 * 1024,
+            "10 MB/s (80 Mbps)" => 10L * 1024 * 1024,
+            "20 MB/s (160 Mbps)" => 20L * 1024 * 1024,
+            "50 MB/s (400 Mbps)" => 50L * 1024 * 1024,
+            "100 MB/s (800 Mbps)" => 100L * 1024 * 1024,
+            _ => 0L
+        };
+
+        Config.GlobalDownloadLimitBps = limitBps;
+        Config.GlobalUploadLimitBps = limitBps > 0 ? (limitBps / 2) : 0L;
+        Config.EnableBandwidthThrottling = limitBps > 0 || Config.EnforceProportionalThrottling;
+        UpdateThrottlingState();
+    }
+
+    public void UpdateThrottlingState()
+    {
+        _proxyEngine.UpdateThrottling(Adapters, Config);
+        if (_virtualBridgeManager.Server != null)
+        {
+            _virtualBridgeManager.Server.Throttler.UpdateConfiguration(Adapters, Config);
+        }
+
+        if (Config.GlobalDownloadLimitBps > 0)
+        {
+            ThrottleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeed(Config.GlobalDownloadLimitBps)} Cap";
+        }
+        else if (Config.EnableBandwidthThrottling)
+        {
+            ThrottleStatusText = "Throttling: Proportional % Shaping";
+        }
+        else
+        {
+            ThrottleStatusText = "Throttling: Disabled";
+        }
+        _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
     }
 
     private void UpdateMergedSummary()
@@ -365,13 +460,14 @@ public class MainViewModel : INotifyPropertyChanged
         {
             _loadBalancer.Mode = Config.RoutingMode;
             _loadBalancer.PrimaryAdapterId = Config.PrimaryAdapterId;
+            _proxyEngine.UpdateThrottling(Adapters, Config);
 
             await _proxyEngine.StartAsync(Config.HttpPort, Config.SocksPort);
             IsEngineRunning = true;
 
             if (Config.EnableVirtualBridge)
             {
-                await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached());
+                await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached(), _proxyEngine.Throttler);
             }
 
             if (Config.EnablePac)
@@ -395,7 +491,8 @@ public class MainViewModel : INotifyPropertyChanged
         }
         else
         {
-            await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached());
+            _proxyEngine.UpdateThrottling(Adapters, Config);
+            await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached(), _proxyEngine.Throttler);
         }
     }
 

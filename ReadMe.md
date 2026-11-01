@@ -21,7 +21,14 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🚀 Key Features
 
-1. **Adapter Settings & Combination Profiles Persistence (NEW in v1.3.1)**:
+1. **Real-Time Bandwidth Throttling & Speed Shaper (NEW in v1.3.2)**:
+   - High-performance asynchronous Token Bucket rate limiting in `BandwidthThrottler.cs` actively throttles byte throughput across combined connection adapters.
+   - **Proportional Traffic Shaping**: Enforces exact percentage bandwidth ratios on live byte throughput (e.g. 70% Ethernet / 30% Wi-Fi), preventing faster lines from drowning out slower lines or violating target ratios.
+   - **Configurable Speed Caps**: 1-Click speed throttle presets (`Unlimited`, `2 MB/s`, `5 MB/s`, `10 MB/s`, `20 MB/s`, `50 MB/s`, `100 MB/s`, or Custom) and per-adapter speed limits to prevent exceeding metered mobile data caps.
+   - Full integration across **HTTP, HTTPS CONNECT, SOCKS5 TCP, SOCKS5 UDP Associate, and Windows Virtual Bonded Bridge** streams.
+   - Real-time `⚡ Bandwidth Throttling` toolbar in `MainWindow.xaml` and dedicated settings in `SettingsWindow.xaml`.
+
+2. **Adapter Settings & Combination Profiles Persistence**:
    - Automatically saves all selected adapter states (`IsEnabled`) and custom percentage weights (`Weight`) to disk (`%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`).
    - Restores exact adapter selections and bandwidth allocations upon application restart or adapter rescan.
    - **Multi-Attribute Adapter Binding**: Uses the permanent hardware MAC address as primary key with name fallback, guaranteeing that configurations stay stably bound even across dynamic DHCP IP re-assignments.
@@ -30,7 +37,7 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - Dedicated Cyberpunk `InputDialog` for creating and saving new combination profiles on the fly.
    - Real-time `💾 Auto-Saved: HH:mm:ss` status badge directly on the adapter combination toolbar.
 
-2. **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem**:
+3. **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem**:
    - Provisions a native Windows adapter connection: **`CombiSpeed Bonded Bridge`** (`CombiSpeed Virtual Adapter`).
    - Registers directly in Windows Network Connections (`ncpa.cpl`) and Windows Settings -> Network & Internet -> VPN using the Windows user-mode phonebook (`rasphone.pbk`), requiring zero driver signing or UAC elevation.
    - Unified virtual interface that merges physical network adapters (Ethernet, Wi-Fi, Cellular) into a single virtual pipe.
@@ -95,8 +102,9 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET v1.3.1) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v1.3.2) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
+| **Real-Time Bandwidth Throttling** | **Token Bucket asynchronous rate limiter with proportional shaping & speed caps** | None (Unrestricted, no rate limiting) | None (Line rate only) |
 | **Adapter Settings & Profiles** | **Durable Persistence (`adapter_settings.json`), MAC binding, debounced auto-save & presets** | None (Lost on restart) | None (Default metric reset) |
 | **Virtual Bridge / Adapter Connection** | **Native Windows VPN & Virtual Adapter (`CombiSpeed Bonded Bridge`)** in `ncpa.cpl` & Windows Settings | None (Speedy is purely an isolated local SOCKS proxy) | Rigid single physical adapter binding |
 | **Percentage Bandwidth Utilization** | **Smooth Weighted Round Robin (SWRR)** enforcing exact % ratios (e.g. 70%/30%) without clustering | None (No bandwidth allocation or weighting) | 100% to single lowest metric adapter |
@@ -238,6 +246,7 @@ Double-click `Stop-CombiSpeed.bat` for instant, fail-safe shutdown:
 | `--service-start` | *(none)* | Starts `CombiSpeedService` via Service Control Manager. |
 | `--service-stop` | *(none)* | Stops `CombiSpeedService` via Service Control Manager. |
 | `--verify-persistence` | *(none)* | Runs automated self-test suite verifying adapter settings, profiles, and persistence engine. |
+| `--verify-throttling` | *(none)* | Runs automated self-test suite verifying Token Bucket rate limiting and proportional traffic shaping. |
 
 ---
 

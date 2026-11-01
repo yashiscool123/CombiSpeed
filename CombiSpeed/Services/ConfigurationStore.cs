@@ -119,7 +119,8 @@ public class ConfigurationStore
                         MacAddress = adapter.MacAddress,
                         Description = adapter.Description,
                         IsEnabled = adapter.IsEnabled,
-                        Weight = adapter.Weight
+                        Weight = adapter.Weight,
+                        SpeedLimitBps = adapter.SpeedLimitBps
                     };
                 }
 
@@ -180,6 +181,7 @@ public class ConfigurationStore
                 {
                     adapter.IsEnabled = setting.IsEnabled;
                     adapter.Weight = Math.Clamp(setting.Weight, 0, 100);
+                    adapter.SpeedLimitBps = Math.Max(0, setting.SpeedLimitBps);
                     anyApplied = true;
                 }
             }
@@ -221,6 +223,7 @@ public class ConfigurationStore
                 {
                     adapter.IsEnabled = setting.IsEnabled;
                     adapter.Weight = setting.Weight;
+                    adapter.SpeedLimitBps = setting.SpeedLimitBps;
                 }
             }
 
@@ -265,7 +268,8 @@ public class ConfigurationStore
                 MacAddress = a.MacAddress,
                 Description = a.Description,
                 IsEnabled = a.IsEnabled,
-                Weight = a.Weight
+                Weight = a.Weight,
+                SpeedLimitBps = a.SpeedLimitBps
             };
         }
     }
@@ -279,3 +283,4 @@ public class ConfigurationStore
         return $"name_{adapter.Name.Replace(" ", "_").ToLowerInvariant()}";
     }
 }
+

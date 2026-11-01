@@ -111,6 +111,30 @@
           "progress": "All tasks completed successfully."
         }
       ]
+    },
+    {
+      "taskId": "TASK-2026-007",
+      "userQuery": "Ensure that the application actually throttles the bandwidth and speed after combining connection adapters.",
+      "status": "completed",
+      "createdAt": "2026-11-01T22:27:00+05:30",
+      "updatedAt": "2026-11-01T22:42:00+05:30",
+      "progress": "Implemented and verified real-time asynchronous Token Bucket Bandwidth Throttler (BandwidthThrottler.cs) across ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, with proportional byte rate shaping, global speed caps, per-adapter limits, dashboard controls toolbar, settings UI, and automated regression testing.",
+      "checkpoints": [
+        {
+          "checkpointId": "CP-701",
+          "timestamp": "2026-11-01T22:27:00+05:30",
+          "inputs": "User requested: 'Ensure that the application actually throttles the bandwidth and speed after combining connection adapters.'",
+          "outputs": "Designed BandwidthThrottler (Token Bucket algorithm) integrated into ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, supporting both Proportional Bandwidth Shaping (enforcing exact % byte allocation across adapters) and absolute speed rate limiting (global limit + per-adapter limit).",
+          "progress": "Architecture and design phase completed."
+        },
+        {
+          "checkpointId": "CP-702",
+          "timestamp": "2026-11-01T22:42:00+05:30",
+          "inputs": "Implementation of BandwidthThrottler, integration into ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, MainViewModel presets and status text, MainWindow toolbar with speed cap presets, adapter card throttling badges, SettingsWindow throttling options, and automated --verify-throttling test.",
+          "outputs": "Built and published CombiSpeed v1.3.2 (versionCode 7) with 0 warnings and 0 errors. Passed 100% of bandwidth throttling, delay enforcement, and proportional shaping tests. Updated all documentation, installers, and version records.",
+          "progress": "All tasks completed successfully."
+        }
+      ]
     }
   ]
 }

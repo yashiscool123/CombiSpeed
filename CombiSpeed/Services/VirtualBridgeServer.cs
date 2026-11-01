@@ -12,6 +12,7 @@ public class VirtualBridgeServer : IDisposable
     private readonly LoadBalancerEngine _loadBalancer;
     private readonly Func<List<NetworkAdapterModel>> _getAdapters;
     private readonly VirtualBridgeModel _model;
+    private readonly BandwidthThrottler _throttler;
 
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
@@ -20,14 +21,16 @@ public class VirtualBridgeServer : IDisposable
 
     public bool IsRunning { get; private set; }
     public VirtualBridgeModel Model => _model;
+    public BandwidthThrottler Throttler => _throttler;
 
     public event Action<AuditLogModel>? OnAuditLog;
 
-    public VirtualBridgeServer(LoadBalancerEngine loadBalancer, Func<List<NetworkAdapterModel>> getAdapters, VirtualBridgeModel model)
+    public VirtualBridgeServer(LoadBalancerEngine loadBalancer, Func<List<NetworkAdapterModel>> getAdapters, VirtualBridgeModel model, BandwidthThrottler? throttler = null)
     {
         _loadBalancer = loadBalancer;
         _getAdapters = getAdapters;
         _model = model;
+        _throttler = throttler ?? new BandwidthThrottler();
     }
 
     public async Task StartAsync(int port = 8443)
@@ -258,6 +261,7 @@ public class VirtualBridgeServer : IDisposable
                     int read = await streamA.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
                     if (read <= 0) break;
 
+                    await _throttler.ThrottleUploadAsync(adapter, read, token);
                     await streamB.WriteAsync(buffer.AsMemory(0, read), token);
                     RecordBytes(adapter, 0, read);
                     Interlocked.Add(ref totalSessionBytes, read);
@@ -280,6 +284,7 @@ public class VirtualBridgeServer : IDisposable
                     int read = await streamB.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
                     if (read <= 0) break;
 
+                    await _throttler.ThrottleDownloadAsync(adapter, read, token);
                     await streamA.WriteAsync(buffer.AsMemory(0, read), token);
                     RecordBytes(adapter, read, 0);
                     Interlocked.Add(ref totalSessionBytes, read);

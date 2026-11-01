@@ -18,6 +18,7 @@ public class Socks5UdpRelay : IDisposable
     private readonly Func<List<NetworkAdapterModel>> _getAdapters;
     private readonly Action<NetworkAdapterModel, long, long> _recordBytes;
     private readonly Action<AuditLogModel> _logAction;
+    private readonly BandwidthThrottler? _throttler;
 
     private Socket? _clientUdpSocket;
     private IPEndPoint? _clientExpectedEndpoint;
@@ -31,12 +32,14 @@ public class Socks5UdpRelay : IDisposable
         LoadBalancerEngine loadBalancer,
         Func<List<NetworkAdapterModel>> getAdapters,
         Action<NetworkAdapterModel, long, long> recordBytes,
-        Action<AuditLogModel> logAction)
+        Action<AuditLogModel> logAction,
+        BandwidthThrottler? throttler = null)
     {
         _loadBalancer = loadBalancer;
         _getAdapters = getAdapters;
         _recordBytes = recordBytes;
         _logAction = logAction;
+        _throttler = throttler;
     }
 
     /// <summary>
@@ -168,6 +171,11 @@ public class Socks5UdpRelay : IDisposable
                 return sock;
             });
 
+            if (_throttler != null && payload.Length > 0)
+            {
+                await _throttler.ThrottleUploadAsync(chosenAdapter, payload.Length, token);
+            }
+
             await outboundSocket.SendToAsync(payload, SocketFlags.None, targetEndpoint);
             _recordBytes(chosenAdapter, 0, payload.Length);
 
@@ -220,6 +228,11 @@ public class Socks5UdpRelay : IDisposable
                 socksPacket[9] = (byte)(sourceEp.Port & 0xFF);
 
                 Buffer.BlockCopy(recvBuffer, 0, socksPacket, 10, length);
+
+                if (_throttler != null && length > 0)
+                {
+                    await _throttler.ThrottleDownloadAsync(adapter, length, token);
+                }
 
                 // Send encapsulated reply to client
                 await _clientUdpSocket.SendToAsync(socksPacket, SocketFlags.None, clientEp);

@@ -20,4 +20,10 @@ public class ProxyConfigModel
     public string VirtualAdapterName { get; set; } = "CombiSpeed Bonded Bridge";
     public int VirtualBridgePort { get; set; } = 8443;
     public string? PrimaryAdapterId { get; set; }
+
+    // Bandwidth Throttling & Traffic Shaping
+    public bool EnableBandwidthThrottling { get; set; } = true;
+    public bool EnforceProportionalThrottling { get; set; } = true;
+    public long GlobalDownloadLimitBps { get; set; } = 0; // 0 = Unlimited / Dynamic Proportional
+    public long GlobalUploadLimitBps { get; set; } = 0;
 }

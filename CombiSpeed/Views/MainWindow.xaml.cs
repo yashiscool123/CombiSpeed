@@ -76,6 +76,7 @@ public partial class MainWindow : Window
         };
         if (win.ShowDialog() == true)
         {
+            ViewModel.UpdateThrottlingState();
             ViewModel.SaveCurrentCombinationImmediate();
         }
     }
