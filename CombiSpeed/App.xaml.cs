@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using CombiSpeed.Services;
@@ -212,6 +212,20 @@ public partial class App : Application
                 return;
             }
 
+            Shutdown(0);
+            return;
+        }
+
+        if (e.Args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) ||
+                             a.Equals("-v", StringComparison.OrdinalIgnoreCase) ||
+                             a.Equals("/version", StringComparison.OrdinalIgnoreCase)))
+        {
+            AttachConsole(-1);
+            var ver = typeof(App).Assembly.GetName().Version;
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.4";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 9)");
+            Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
+            Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Shutdown(0);
             return;
         }

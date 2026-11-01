@@ -24,3 +24,4 @@
 - [x] UDP associate relay support for SOCKS5 (gaming/streaming UDP acceleration).
 - [x] Adapter settings and combination profile persistence with debounced auto-save and startup restoration.
 - [x] Real-time bandwidth throttling & speed shaper enforcing proportional bandwidth and speed caps across combined connection adapters.
+- [x] Application version display in main window titlebar badge, glassmorphic footer status bar, and --version CLI flag.

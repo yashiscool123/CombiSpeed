@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -78,6 +78,27 @@ public class MainViewModel : INotifyPropertyChanged
         get => _autoSaveStatusText;
         set => SetField(ref _autoSaveStatusText, value);
     }
+
+    public string AppVersion
+    {
+        get
+        {
+            var ver = typeof(MainViewModel).Assembly.GetName().Version;
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.4";
+        }
+    }
+
+    public string AppVersionFull
+    {
+        get
+        {
+            var ver = typeof(MainViewModel).Assembly.GetName().Version;
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.4";
+            return $"{verStr} (Build 9)";
+        }
+    }
+
+    public string WindowTitle => $"CombiSpeed {AppVersion} - Multi-WAN Channel Bonding & Bandwidth Aggregator";
 
     public ObservableCollection<string> ThrottlePresets { get; } = new()
     {

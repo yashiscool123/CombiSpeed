@@ -28,7 +28,14 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - Full integration across **HTTP, HTTPS CONNECT, SOCKS5 TCP, SOCKS5 UDP Associate, and Windows Virtual Bonded Bridge** streams.
    - Real-time `⚡ Bandwidth Throttling` toolbar in `MainWindow.xaml` and dedicated settings in `SettingsWindow.xaml`.
 
-2. **Adapter Settings & Combination Profiles Persistence**:
+2. **Application Window Version Visibility & Pinned Cyberpunk Glass Footer (NEW in v1.3.4)**:
+   - Dynamic assembly and build metadata binding in `MainViewModel.cs` exposing `AppVersion` (`v1.3.4`) and `AppVersionFull` (`v1.3.4 (Build 9)`).
+   - **Custom TitleBar Cyberpunk Badge**: Prominently displays the active version badge directly next to the COMBISPEED neon logo, ensuring visibility across all window states.
+   - **Pinned Glassmorphic Footer Status Bar**: Pinned bottom status bar displaying complete build attribution (`v1.3.4 (Build 9)`), engine description, real-time configuration auto-sync status, and target runtime environment (`Windows x64 (.NET 8.0)`).
+   - **Dynamic OS Window Title**: Sets `Title="{Binding WindowTitle}"` to synchronize OS Taskbar, Task Manager, and Alt-Tab switcher with current release branding.
+   - **CLI Version Flags**: Built-in `--version`, `-v`, and `/version` support for instant terminal output.
+
+3. **Adapter Settings & Combination Profiles Persistence**:
    - Automatically saves all selected adapter states (`IsEnabled`) and custom percentage weights (`Weight`) to disk (`%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`).
    - Restores exact adapter selections and bandwidth allocations upon application restart or adapter rescan.
    - **Multi-Attribute Adapter Binding**: Uses the permanent hardware MAC address as primary key with name fallback, guaranteeing that configurations stay stably bound even across dynamic DHCP IP re-assignments.
@@ -37,35 +44,35 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - Dedicated Cyberpunk `InputDialog` for creating and saving new combination profiles on the fly.
    - Real-time `💾 Auto-Saved: HH:mm:ss` status badge directly on the adapter combination toolbar.
 
-3. **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem**:
+4. **Virtual VPN / Adapter Connection & Bonded Bridge Subsystem**:
    - Provisions a native Windows adapter connection: **`CombiSpeed Bonded Bridge`** (`CombiSpeed Virtual Adapter`).
    - Registers directly in Windows Network Connections (`ncpa.cpl`) and Windows Settings -> Network & Internet -> VPN using the Windows user-mode phonebook (`rasphone.pbk`), requiring zero driver signing or UAC elevation.
    - Unified virtual interface that merges physical network adapters (Ethernet, Wi-Fi, Cellular) into a single virtual pipe.
    - Dedicated dashboard card with live connection status (`BONDED & ACTIVE`), Windows adapter name, Virtual IP (`10.254.1.2`), Gateway (`10.254.1.1`), and 1-click controls to toggle the bridge or inspect in `ncpa.cpl`.
 
-3. **Strict % Bandwidth Utilization (Smooth Weighted Round Robin)**:
+5. **Strict % Bandwidth Utilization (Smooth Weighted Round Robin)**:
    - Implements mathematically provable **Smooth Weighted Round Robin (SWRR)** in `LoadBalancerEngine.cs`.
    - Distributes outgoing traffic across physical network adapters strictly according to user-configured percentage weights (e.g. 70% Wi-Fi, 30% Ethernet) with zero clustering or burstiness.
    - Real-time **Dynamic Multi-Color Segmented Bandwidth Distribution Bar** visualizing each physical adapter's proportion of the total bonded pool.
    - Per-adapter `BANDWIDTH: XX.X% of Bonded Pool` indicator dynamically updated whenever sliders change.
 
-4. **RFC 1928 SOCKS5 UDP Associate Relay (Gaming & UDP Acceleration)**:
+6. **RFC 1928 SOCKS5 UDP Associate Relay (Gaming & UDP Acceleration)**:
    - Full implementation of SOCKS5 `UDP ASSOCIATE` (Command `0x03`).
    - Binds outbound UDP sockets directly to physical adapter IPs (`Socket.Bind(new IPEndPoint(adapterIp, 0))`), accelerating multiplayer gaming (Valorant, CS2, CoD, Steam), Discord/VoIP voice channels, DNS queries, and WebRTC video across bonded connections.
    - Encapsulates and returns UDP replies back to the client.
 
-5. **PAC (Proxy Auto-Config) Domain-Based Interface Routing**:
+7. **PAC (Proxy Auto-Config) Domain-Based Interface Routing**:
    - Dynamically compiles RFC-compliant JavaScript `FindProxyForURL(url, host)` scripts.
    - Built-in PAC server serving `http://127.0.0.1:8080/proxy.pac` directly on the proxy port without port conflicts.
    - Granular domain and subnet bypass rules (e.g. banking portals, corporate intranet `192.168.*`, `10.*` -> Direct; all other web traffic -> Bonded).
    - Automated 1-click Windows `AutoConfigURL` registry and WinINet integration.
 
-6. **Windows Service & Headless Background Mode**:
+8. **Windows Service & Headless Background Mode**:
    - Runs headless as a background Windows Service without requiring active user logon or open GUI (`--service`, `--headless`).
    - CLI service management: `--service-install`, `--service-uninstall`, `--service-start`, `--service-stop`.
    - 1-click scripts: `Install-Service.bat` and `Uninstall-Service.bat` registering `CombiSpeedService` in Windows Service Control Manager with automatic crash recovery.
 
-6. **Native C# High-Performance Sockets**:
+9. **Native C# High-Performance Sockets**:
    - Outgoing sockets are explicitly bound to adapter local IPv4 addresses using `Socket.Bind(new IPEndPoint(localIp, 0))`.
    - Zero-overhead bi-directional streaming using .NET `ArrayPool<byte>` memory management.
 
@@ -102,7 +109,7 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET v1.3.3) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v1.3.4) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
 | **Real-Time Bandwidth Throttling** | **Token Bucket asynchronous rate limiter with proportional shaping & speed caps** | None (Unrestricted, no rate limiting) | None (Line rate only) |
 | **Adapter Settings & Profiles** | **Durable Persistence (`adapter_settings.json`), MAC binding, debounced auto-save & presets** | None (Lost on restart) | None (Default metric reset) |

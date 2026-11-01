@@ -1,5 +1,19 @@
-# Release Notes
+﻿# Release Notes
 
+## [1.3.4] - 2026-11-01 - Application Version Visibility & TitleBar / Footer Status Bar Release
+
+### 🚀 Highlights & Features
+- **Application Window Version Visibility**:
+  - Dynamically exposes and renders the current application version (1.3.4) and full build identification (1.3.4 (Build 9)) directly in the WPF desktop window.
+  - **Custom TitleBar Cyberpunk Badge**: Prominently highlights the installed release version (1.3.4) next to the COMBISPEED neon logo with dedicated tooltips, visible across all view states.
+  - **Pinned Glassmorphic Footer Status Bar**: Integrated a bottom status bar displaying AppVersionFull (1.3.4 (Build 9)), engine attribution, real-time configuration auto-sync feedback, and Windows x64 runtime environment.
+  - **Dynamic Taskbar & Window Title**: Synchronized Title="{Binding WindowTitle}" to reflect the active version in Windows Taskbar, Task Manager, and Alt-Tab switcher.
+  - **CLI Version Flag**: Added --version, -v, and /version command-line argument support, printing detailed build and runtime metadata to stdout.
+- **Production Package Synchronization**:
+  - Automated version incrementation to 1.3.4 (patch update) and ersionCode: 9 across CombiSpeed.csproj, ersion.json, and one-click installer scripts.
+  - Re-generated release distribution package publish/CombiSpeed-v1.3.4-win-x64.zip.
+
+---
 ## [1.3.3] - 2026-11-01 - Production Multi-WAN Channel Bonding & Bandwidth Aggregator Release
 
 ### 🚀 Highlights & Features

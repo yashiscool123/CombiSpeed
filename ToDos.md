@@ -110,3 +110,15 @@
 - [x] Run automated regression test suites (`--verify-persistence`, `--verify-throttling`) and confirm 100% pass rates.
 - [x] Synchronize documentation (`ReadMe.md`, `ReleaseNotes.md`, `KnownIssues.md`, `ToDos.md`).
 - [x] Commit changes to git and create release tag `v1.3.3`.
+
+## Milestone 10: Application Version Visibility & v1.3.4 Release [COMPLETED]
+- [x] Increment version to 1.3.4 and ersionCode: 9 in CombiSpeed.csproj and ersion.json.
+- [x] Expose AppVersion, AppVersionFull, and WindowTitle in MainViewModel.cs.
+- [x] Add Cyberpunk version badge to custom TitleBar in MainWindow.xaml next to application branding.
+- [x] Integrate pinned glassmorphic footer status bar in MainWindow.xaml displaying full build attribution, auto-sync status, and runtime environment.
+- [x] Add --version, -v, and /version CLI argument flags in App.xaml.cs.
+- [x] Execute clean build and publish release binaries to publish/ with 0 warnings and 0 errors.
+- [x] Create standalone zipped release archive (publish/CombiSpeed-v1.3.4-win-x64.zip).
+- [x] Validate automated test suites (--verify-throttling, --verify-persistence) and verify 100% pass rates.
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, 	ask_log.json).
+- [x] Commit changes to git and create release tag 1.3.4.
