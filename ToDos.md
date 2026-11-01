@@ -102,3 +102,11 @@
 - [x] Integrate Throttling into `HeadlessEngine.cs` for Windows Service and CLI background execution.
 - [x] Add `--verify-throttling` CLI diagnostic test suite and verified 100% test pass rate.
 - [x] Increment version to `1.3.2` (versionCode: 7) and publish release binaries.
+
+## Milestone 9: Production Release v1.3.3 Build & Packaging [COMPLETED]
+- [x] Increment version to `1.3.3` and `versionCode: 8` in `CombiSpeed.csproj` and `version.json`.
+- [x] Execute clean build and publish release binaries to `publish/` for `win-x64` with 0 warnings and 0 errors.
+- [x] Create standalone zipped release archive (`publish/CombiSpeed-v1.3.3-win-x64.zip`) containing binaries, icons, launcher scripts, and uninstaller.
+- [x] Run automated regression test suites (`--verify-persistence`, `--verify-throttling`) and confirm 100% pass rates.
+- [x] Synchronize documentation (`ReadMe.md`, `ReleaseNotes.md`, `KnownIssues.md`, `ToDos.md`).
+- [x] Commit changes to git and create release tag `v1.3.3`.

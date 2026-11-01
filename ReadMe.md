@@ -102,7 +102,7 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET v1.3.2) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v1.3.3) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
 | **Real-Time Bandwidth Throttling** | **Token Bucket asynchronous rate limiter with proportional shaping & speed caps** | None (Unrestricted, no rate limiting) | None (Line rate only) |
 | **Adapter Settings & Profiles** | **Durable Persistence (`adapter_settings.json`), MAC binding, debounced auto-save & presets** | None (Lost on restart) | None (Default metric reset) |
