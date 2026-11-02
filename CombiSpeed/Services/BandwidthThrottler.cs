@@ -5,9 +5,9 @@ using CombiSpeed.Models;
 namespace CombiSpeed.Services;
 
 /// <summary>
-/// High-performance Token Bucket rate limiter and bandwidth traffic shaper.
+/// High-performance Token Bucket rate limiter and dynamic bandwidth traffic shaper.
 /// Actively throttles network byte transfer rates and speeds across combined adapters
-/// in real-time, enforcing global speed limits and proportional bandwidth ratios.
+/// in real-time, supporting Maximum Bandwidth, Lowest Latency (Anti-Bufferbloat), and Balanced modes.
 /// </summary>
 public class BandwidthThrottler
 {
@@ -23,6 +23,7 @@ public class BandwidthThrottler
         private double _bucketCapacity;
 
         public double BytesPerSecond => _bytesPerSecond;
+        public double AvailableTokens { get { lock (_sync) return _tokens; } }
 
         public TokenBucket(double bytesPerSecond, double burstSeconds = 0.05)
         {
@@ -37,9 +38,28 @@ public class BandwidthThrottler
             {
                 _bytesPerSecond = Math.Max(0, bytesPerSecond);
                 _bucketCapacity = _bytesPerSecond > 0 
-                    ? Math.Max(32 * 1024, _bytesPerSecond * burstSeconds) 
+                    ? Math.Max(16 * 1024, _bytesPerSecond * burstSeconds) 
                     : double.MaxValue;
                 if (_tokens > _bucketCapacity) _tokens = _bucketCapacity;
+            }
+        }
+
+        public bool TryConsume(int bytes)
+        {
+            if (_bytesPerSecond <= 0) return true;
+            lock (_sync)
+            {
+                long now = Stopwatch.GetTimestamp();
+                double elapsedSeconds = (double)(now - _lastTimestamp) / Stopwatch.Frequency;
+                _lastTimestamp = now;
+                _tokens = Math.Min(_bucketCapacity, _tokens + (elapsedSeconds * _bytesPerSecond));
+
+                if (_tokens >= bytes)
+                {
+                    _tokens -= bytes;
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -85,6 +105,21 @@ public class BandwidthThrottler
     public long GlobalUploadLimitBps { get; set; } = 0;
     public bool EnforceProportionalThrottling { get; set; } = true;
 
+    public SpeedShaperMode ShaperMode { get; set; } = SpeedShaperMode.MaximumBandwidth;
+    public bool EnableDynamicShaping { get; set; } = true;
+    public double ActiveBurstSeconds { get; private set; } = 0.05;
+
+    public double CalculateOptimalBurstSeconds(ProxyConfigModel config)
+    {
+        return config.ShaperMode switch
+        {
+            SpeedShaperMode.LowestLatency => 0.02, // 20ms anti-bufferbloat window
+            SpeedShaperMode.MaximumBandwidth => Math.Max(0.15, config.BurstToleranceSeconds > 0 ? config.BurstToleranceSeconds : 0.15), // 150-200ms TCP window expansion
+            SpeedShaperMode.BalancedDynamic => config.BurstToleranceSeconds > 0 ? config.BurstToleranceSeconds : 0.05,
+            _ => 0.05
+        };
+    }
+
     /// <summary>
     /// Recalculates and configures active rate limiters for all combined adapters.
     /// </summary>
@@ -94,15 +129,17 @@ public class BandwidthThrottler
         GlobalDownloadLimitBps = config.GlobalDownloadLimitBps;
         GlobalUploadLimitBps = config.GlobalUploadLimitBps;
         EnforceProportionalThrottling = config.EnforceProportionalThrottling;
+        ShaperMode = config.ShaperMode;
+        EnableDynamicShaping = config.EnableDynamicShaping;
 
-        double burstSeconds = config.BurstToleranceSeconds > 0 ? config.BurstToleranceSeconds : 0.05;
+        ActiveBurstSeconds = CalculateOptimalBurstSeconds(config);
 
         if (!IsThrottlingEnabled)
         {
-            _globalRxBucket.SetRate(0, burstSeconds);
-            _globalTxBucket.SetRate(0, burstSeconds);
-            foreach (var b in _rxBuckets.Values) b.SetRate(0, burstSeconds);
-            foreach (var b in _txBuckets.Values) b.SetRate(0, burstSeconds);
+            _globalRxBucket.SetRate(0, ActiveBurstSeconds);
+            _globalTxBucket.SetRate(0, ActiveBurstSeconds);
+            foreach (var b in _rxBuckets.Values) b.SetRate(0, ActiveBurstSeconds);
+            foreach (var b in _txBuckets.Values) b.SetRate(0, ActiveBurstSeconds);
 
             foreach (var adapter in adapters)
             {
@@ -111,26 +148,72 @@ public class BandwidthThrottler
             return;
         }
 
-        _globalRxBucket.SetRate(GlobalDownloadLimitBps, burstSeconds);
-        _globalTxBucket.SetRate(GlobalUploadLimitBps, burstSeconds);
+        _globalRxBucket.SetRate(GlobalDownloadLimitBps, ActiveBurstSeconds);
+        _globalTxBucket.SetRate(GlobalUploadLimitBps, ActiveBurstSeconds);
 
         var adapterList = adapters.Where(a => a.IsEnabled && a.Weight > 0).ToList();
-        double totalWeight = adapterList.Sum(a => a.Weight);
+        if (adapterList.Count == 0) return;
+
+        // Calculate dynamic weights across connections based on ShaperMode
+        var dynamicWeights = new Dictionary<string, double>();
+        if (EnableDynamicShaping && ShaperMode == SpeedShaperMode.LowestLatency)
+        {
+            // Dynamic Latency Scoring: prioritize low pings, penalize loss & degradation
+            foreach (var adapter in adapterList)
+            {
+                int ping = adapter.PingMs > 0 ? adapter.PingMs : 50;
+                double latencyWeight = 1000.0 / Math.Max(5, ping);
+                if (adapter.PacketLossPercent > 0)
+                {
+                    latencyWeight *= Math.Max(0.05, 1.0 - (adapter.PacketLossPercent / 100.0));
+                }
+                if (adapter.Status == AdapterStatus.Degraded)
+                {
+                    latencyWeight *= 0.5;
+                }
+                double combined = (adapter.Weight * 0.25) + (latencyWeight * 0.75);
+                dynamicWeights[adapter.Id] = Math.Max(1.0, combined);
+            }
+        }
+        else if (EnableDynamicShaping && ShaperMode == SpeedShaperMode.MaximumBandwidth)
+        {
+            // Maximum Throughput Mode: maximize bandwidth utilization
+            foreach (var adapter in adapterList)
+            {
+                double lossMultiplier = adapter.PacketLossPercent > 20 ? 0.5 : 1.0;
+                dynamicWeights[adapter.Id] = Math.Max(5.0, adapter.Weight * lossMultiplier);
+            }
+        }
+        else
+        {
+            foreach (var adapter in adapterList)
+            {
+                dynamicWeights[adapter.Id] = Math.Max(1.0, adapter.Weight);
+            }
+        }
+
+        double totalDynamicWeight = dynamicWeights.Values.Sum();
 
         foreach (var adapter in adapters)
         {
-            var rxBucket = _rxBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0, burstSeconds));
-            var txBucket = _txBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0, burstSeconds));
+            var rxBucket = _rxBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0, ActiveBurstSeconds));
+            var txBucket = _txBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0, ActiveBurstSeconds));
 
             if (!adapter.IsEnabled || adapter.Weight <= 0)
             {
-                rxBucket.SetRate(0, burstSeconds);
-                txBucket.SetRate(0, burstSeconds);
+                rxBucket.SetRate(0, ActiveBurstSeconds);
+                txBucket.SetRate(0, ActiveBurstSeconds);
                 adapter.ThrottledBandwidthBps = 0;
                 continue;
             }
 
-            double proportion = totalWeight > 0 ? (double)adapter.Weight / totalWeight : 1.0;
+            double weight = dynamicWeights.TryGetValue(adapter.Id, out double dw) ? dw : adapter.Weight;
+            double proportion = totalDynamicWeight > 0 ? weight / totalDynamicWeight : 1.0;
+
+            if (EnableDynamicShaping && totalDynamicWeight > 0)
+            {
+                adapter.EffectivePercentage = Math.Round(proportion * 100.0, 1);
+            }
 
             // 1. Adapter specific limit if set
             double adapterRxRate = adapter.SpeedLimitBps > 0 ? adapter.SpeedLimitBps : 0;
@@ -149,14 +232,24 @@ public class BandwidthThrottler
                 adapterTxRate = adapterTxRate > 0 ? Math.Min(adapterTxRate, proportionalRate) : proportionalRate;
             }
 
-            rxBucket.SetRate(adapterRxRate, burstSeconds);
-            txBucket.SetRate(adapterTxRate, burstSeconds);
+            rxBucket.SetRate(adapterRxRate, ActiveBurstSeconds);
+            txBucket.SetRate(adapterTxRate, ActiveBurstSeconds);
             adapter.ThrottledBandwidthBps = (long)adapterRxRate;
         }
     }
 
     /// <summary>
+    /// Dynamically adapts rates in real-time as adapter health/telemetry changes without resetting tokens.
+    /// </summary>
+    public void AdaptDynamically(IEnumerable<NetworkAdapterModel> adapters, ProxyConfigModel config)
+    {
+        if (!IsThrottlingEnabled || !EnableDynamicShaping) return;
+        UpdateConfiguration(adapters, config);
+    }
+
+    /// <summary>
     /// Throttles download (Rx) traffic through the specified adapter and global rate limiters.
+    /// Supports dynamic cross-connection capacity borrowing in MaximumBandwidth mode.
     /// </summary>
     public async ValueTask ThrottleDownloadAsync(NetworkAdapterModel? adapter, int bytes, CancellationToken token = default)
     {
@@ -165,7 +258,18 @@ public class BandwidthThrottler
         // 1. Adapter-specific / proportional bucket
         if (adapter != null && _rxBuckets.TryGetValue(adapter.Id, out var adapterBucket))
         {
-            await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+            if (EnableDynamicShaping && ShaperMode == SpeedShaperMode.MaximumBandwidth &&
+                adapterBucket.BytesPerSecond > 0 && _globalRxBucket.AvailableTokens >= bytes)
+            {
+                if (!adapterBucket.TryConsume(bytes))
+                {
+                    await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+            }
         }
 
         // 2. Global combined bucket
@@ -185,7 +289,18 @@ public class BandwidthThrottler
         // 1. Adapter-specific / proportional bucket
         if (adapter != null && _txBuckets.TryGetValue(adapter.Id, out var adapterBucket))
         {
-            await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+            if (EnableDynamicShaping && ShaperMode == SpeedShaperMode.MaximumBandwidth &&
+                adapterBucket.BytesPerSecond > 0 && _globalTxBucket.AvailableTokens >= bytes)
+            {
+                if (!adapterBucket.TryConsume(bytes))
+                {
+                    await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+            }
         }
 
         // 2. Global combined bucket
@@ -223,8 +338,15 @@ public class BandwidthThrottler
         {
             return (bytesPerSec / (1024.0 * 1024.0), "MB/s");
         }
-        // Default to Mbps
         double mbps = (bytesPerSec * 8.0) / 1_000_000.0;
         return (mbps, "Mbps");
     }
+
+    public static string GetModeDescription(SpeedShaperMode mode) => mode switch
+    {
+        SpeedShaperMode.MaximumBandwidth => "🚀 Max Bandwidth (High Throughput)",
+        SpeedShaperMode.LowestLatency => "⚡ Lowest Latency (Anti-Bufferbloat)",
+        SpeedShaperMode.BalancedDynamic => "⚖ Balanced Dynamic (Proportional)",
+        _ => "Standard"
+    };
 }

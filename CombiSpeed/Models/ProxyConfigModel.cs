@@ -8,6 +8,13 @@ public enum RoutingMode
     Failover
 }
 
+public enum SpeedShaperMode
+{
+    MaximumBandwidth,   // Optimizes for peak aggregate throughput, window expansion & dynamic capacity sharing
+    LowestLatency,      // Optimizes for minimum ping, gaming, VoIP & anti-bufferbloat jitter reduction
+    BalancedDynamic     // Dynamic balanced shaping between high throughput and low latency
+}
+
 public class ProxyConfigModel
 {
     public int HttpPort { get; set; } = 8080;
@@ -28,4 +35,6 @@ public class ProxyConfigModel
     public long GlobalUploadLimitBps { get; set; } = 0;
     public double BurstToleranceSeconds { get; set; } = 0.05; // 50ms default Token Bucket burst window
     public string CustomThrottleUnit { get; set; } = "Mbps"; // "Mbps", "MB/s"
+    public SpeedShaperMode ShaperMode { get; set; } = SpeedShaperMode.MaximumBandwidth;
+    public bool EnableDynamicShaping { get; set; } = true;
 }

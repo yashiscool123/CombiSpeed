@@ -133,5 +133,25 @@
 - [x] Add CustomSpeedLimitMbps to NetworkAdapterModel.cs for direct two-way per-adapter speed limit editing.
 - [x] Update --verify-throttling test suite with 500 Mbps cap validation, parameter conversion checks, and per-adapter overrides (100% pass rate).
 - [x] Package release distribution publish/CombiSpeed-v1.3.5-win-x64.zip.
-- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, 	ask_log.json).
-- [x] Commit changes to git and create release tag 1.3.5.
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v1.3.5.
+
+## Milestone 12: Dynamic Cross-Connection Speed Shaper & Latency Modes [COMPLETED]
+- [x] Increment version to 1.3.6 and versionCode: 11 in CombiSpeed.csproj, version.json, MainViewModel.cs, and App.xaml.cs.
+- [x] Define SpeedShaperMode enum (MaximumBandwidth, LowestLatency, BalancedDynamic) and wire into ProxyConfigModel.cs.
+- [x] Implement real-time dynamic traffic shaping across connections in BandwidthThrottler.cs:
+  - Mode-driven burst buffer sizing (CalculateOptimalBurstSeconds): 150ms-250ms for MaximumBandwidth (TCP congestion window expansion), 20ms for LowestLatency (anti-bufferbloat pacing).
+  - Dynamic inverse-latency scoring (1000.0 / PingMs) shifting capacity toward lower-ping interfaces when in LowestLatency mode.
+  - Throughput-weighted capacity allocation prioritizing higher-bandwidth lines when in MaximumBandwidth mode.
+  - Dynamic cross-connection capacity borrowing: fast connections borrow idle headroom from the global token pool.
+  - Dynamic real-time adaptation hook AdaptDynamically(...) called on live telemetry updates.
+- [x] Integrate dynamic shaper mode into LoadBalancerEngine.cs for smooth latency-weighted SWRR connection routing.
+- [x] Connect MainViewModel.cs to _healthMonitor.HealthUpdated to trigger real-time dynamic shaper adaptation as RTT latency and packet loss fluctuate.
+- [x] Add dynamic speed shaper mode selector ComboBox (🚀 Maximum Bandwidth, ⚡ Lowest Latency / Ping, ⚖ Balanced Dynamic) to the Bandwidth Throttling toolbar in MainWindow.xaml.
+- [x] Update CustomThrottleDialog.xaml and CustomThrottleDialog.xaml.cs with dedicated DYNAMIC SPEED SHAPER OPTIMIZATION MODE section, mode radio buttons, automatic burst window alignment, and dynamic cross-connection adaptation checkbox.
+- [x] Update SettingsWindow.xaml and SettingsWindow.xaml.cs with shaper mode and dynamic adaptation persistence.
+- [x] Implement automated verification tests in App.xaml.cs (--verify-throttling step verifying burst expansion, anti-bufferbloat, cross-connection dynamic adaptation, and persistence). Verified 100% pass rate.
+- [x] Execute clean build and publish release binaries to publish/ with 0 warnings and 0 errors.
+- [x] Create standalone zipped release archive (publish/CombiSpeed-v1.3.6-win-x64.zip).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v1.3.6.

@@ -9,6 +9,7 @@ public class LoadBalancerEngine
     private readonly object _lock = new();
 
     public RoutingMode Mode { get; set; } = RoutingMode.Weighted;
+    public SpeedShaperMode ShaperMode { get; set; } = SpeedShaperMode.MaximumBandwidth;
     public string? PrimaryAdapterId { get; set; }
 
     public NetworkAdapterModel? GetNextAdapter(List<NetworkAdapterModel> adapters)
@@ -53,19 +54,34 @@ public class LoadBalancerEngine
                         return pool[_currentIndex];
                     }
 
+                    int GetAdapterWeight(NetworkAdapterModel adapter)
+                    {
+                        if (ShaperMode == SpeedShaperMode.LowestLatency)
+                        {
+                            int ping = adapter.PingMs > 0 ? adapter.PingMs : 50;
+                            int latencyScore = (int)Math.Clamp(1000.0 / Math.Max(5, ping) * 5.0, 5, 200);
+                            if (adapter.PacketLossPercent > 0)
+                            {
+                                latencyScore = (int)(latencyScore * Math.Max(0.1, 1.0 - (adapter.PacketLossPercent / 100.0)));
+                            }
+                            return Math.Max(1, (int)((adapter.Weight * 0.25) + (latencyScore * 0.75)));
+                        }
+                        return Math.Max(1, adapter.Weight);
+                    }
+
                     // Smooth Weighted Round Robin (SWRR):
-                    // Guarantees mathematically optimal, smoothly interleaved dispatch strictly proportional to weights.
-                    int totalWeight = weightedPool.Sum(a => a.Weight);
+                    int totalWeight = weightedPool.Sum(GetAdapterWeight);
                     NetworkAdapterModel? selected = null;
                     int maxCurrentWeight = int.MinValue;
 
                     foreach (var adapter in weightedPool)
                     {
+                        int effectiveWeight = GetAdapterWeight(adapter);
                         if (!_currentWeights.TryGetValue(adapter.Id, out int current))
                         {
                             current = 0;
                         }
-                        current += adapter.Weight;
+                        current += effectiveWeight;
                         _currentWeights[adapter.Id] = current;
 
                         if (current > maxCurrentWeight)

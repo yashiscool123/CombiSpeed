@@ -394,15 +394,19 @@
                             <Border Background="#080C14" CornerRadius="8" Padding="12,8" Margin="0,0,0,12" BorderBrush="#1E293B" BorderThickness="1">
                                 <Grid>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="⚡ BANDWIDTH THROTTLING &amp; SPEED SHAPER:" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="⚡ SPEED SHAPER:" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <Border Background="#131D33" CornerRadius="4" Padding="6,2" BorderBrush="#00F0FF" BorderThickness="0.5">
                                             <TextBlock Text="{Binding ThrottleStatusText}" FontSize="10" Foreground="#38BDF8" FontFamily="Consolas"/>
                                         </Border>
                                     </StackPanel>
 
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <TextBlock Text="Speed Throttle Cap:" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                        <ComboBox ItemsSource="{Binding ThrottlePresets}" SelectedItem="{Binding SelectedThrottlePreset}" Width="180" Height="24" FontSize="10" Background="#080C14" Foreground="Black" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Mode:" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <ComboBox ItemsSource="{Binding ShaperModes}" SelectedItem="{Binding SelectedShaperMode}" Width="160" Height="24" FontSize="10" Background="#080C14" Foreground="Black" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="Select Speed Shaper Mode: Maximum Bandwidth (Throughput) or Lowest Latency (Gaming/VoIP pings)"/>
+
+                                        <TextBlock Text="Cap:" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <ComboBox ItemsSource="{Binding ThrottlePresets}" SelectedItem="{Binding SelectedThrottlePreset}" Width="160" Height="24" FontSize="10" Background="#080C14" Foreground="Black" VerticalAlignment="Center" ToolTip="Set Speed Throttle Cap (up to 500 Mbps or Custom)"/>
+
                                         <Button Content="⚙ Custom..." Click="CustomThrottle_Click" Style="{StaticResource CyberButton}" Margin="6,0,0,0" Padding="8,2" FontSize="10" ToolTip="Configure custom speed limits up to 500+ Mbps, burst window &amp; per-adapter caps"/>
                                     </StackPanel>
                                 </Grid>

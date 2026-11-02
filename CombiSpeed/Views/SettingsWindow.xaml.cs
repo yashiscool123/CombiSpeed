@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using CombiSpeed.Models;
@@ -23,6 +23,16 @@ public partial class SettingsWindow : Window
         ChkEnablePac.IsChecked = config.EnablePac;
         ChkEnableThrottling.IsChecked = config.EnableBandwidthThrottling;
         ChkProportionalThrottling.IsChecked = config.EnforceProportionalThrottling;
+
+        foreach (ComboBoxItem item in CmbShaperMode.Items)
+        {
+            if (item.Tag?.ToString() == config.ShaperMode.ToString())
+            {
+                item.IsSelected = true;
+                break;
+            }
+        }
+        ChkDynamicShaping.IsChecked = config.EnableDynamicShaping;
 
         if (config.GlobalDownloadLimitBps > 0)
         {
@@ -129,6 +139,12 @@ public partial class SettingsWindow : Window
         _config.EnableVirtualBridge = ChkAutoVirtualBridge.IsChecked == true;
         _config.EnableWindowsProxy = ChkAutoWindowsProxy.IsChecked == true;
         _config.EnablePac = ChkEnablePac.IsChecked == true;
+
+        if (CmbShaperMode.SelectedItem is ComboBoxItem shaperItem && Enum.TryParse<SpeedShaperMode>(shaperItem.Tag?.ToString(), out var shaperMode))
+        {
+            _config.ShaperMode = shaperMode;
+        }
+        _config.EnableDynamicShaping = ChkDynamicShaping.IsChecked == true;
 
         _config.EnableBandwidthThrottling = ChkEnableThrottling.IsChecked == true;
         _config.EnforceProportionalThrottling = ChkProportionalThrottling.IsChecked == true;

@@ -85,7 +85,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.5";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.6";
         }
     }
 
@@ -94,8 +94,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.5";
-            return $"{verStr} (Build 10)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.6";
+            return $"{verStr} (Build 11)";
         }
     }
 
@@ -115,6 +115,33 @@ public class MainViewModel : INotifyPropertyChanged
     };
 
     public ICommand OpenCustomThrottleCommand => new RelayCommand(OpenCustomThrottleDialog);
+
+    public ObservableCollection<string> ShaperModes { get; } = new()
+    {
+        "🚀 Maximum Bandwidth",
+        "⚡ Lowest Latency / Ping",
+        "⚖ Balanced Dynamic"
+    };
+
+    private string _selectedShaperMode = "🚀 Maximum Bandwidth";
+    public string SelectedShaperMode
+    {
+        get => _selectedShaperMode;
+        set
+        {
+            if (SetField(ref _selectedShaperMode, value))
+            {
+                Config.ShaperMode = value switch
+                {
+                    "⚡ Lowest Latency / Ping" or "Lowest Latency" => SpeedShaperMode.LowestLatency,
+                    "⚖ Balanced Dynamic" or "Balanced Dynamic" => SpeedShaperMode.BalancedDynamic,
+                    _ => SpeedShaperMode.MaximumBandwidth
+                };
+                _loadBalancer.ShaperMode = Config.ShaperMode;
+                UpdateThrottlingState();
+            }
+        }
+    }
 
     private string _selectedThrottlePreset = "Unlimited (Proportional)";
     public string SelectedThrottlePreset
@@ -327,8 +354,21 @@ public class MainViewModel : INotifyPropertyChanged
         // Initial scan
         RefreshAdapters();
         _healthMonitor.Start(3500);
+        _healthMonitor.HealthUpdated += _ =>
+        {
+            if (Config.EnableDynamicShaping)
+            {
+                Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+                {
+                    _proxyEngine.Throttler.AdaptDynamically(Adapters, Config);
+                    _virtualBridgeManager.Server?.Throttler.AdaptDynamically(Adapters, Config);
+                    UpdateMergedSummary();
+                }));
+            }
+        };
 
         // Configure initial bandwidth throttling state
+        SyncSelectedShaperMode();
         SyncSelectedThrottlePreset();
         UpdateThrottlingState();
 
@@ -495,21 +535,40 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(SelectedThrottlePreset));
     }
 
+    public void SyncSelectedShaperMode()
+    {
+        _selectedShaperMode = Config.ShaperMode switch
+        {
+            SpeedShaperMode.LowestLatency => "⚡ Lowest Latency / Ping",
+            SpeedShaperMode.BalancedDynamic => "⚖ Balanced Dynamic",
+            _ => "🚀 Maximum Bandwidth"
+        };
+        OnPropertyChanged(nameof(SelectedShaperMode));
+    }
+
     public void UpdateThrottlingState()
     {
+        _loadBalancer.ShaperMode = Config.ShaperMode;
         _proxyEngine.UpdateThrottling(Adapters, Config);
         if (_virtualBridgeManager.Server != null)
         {
             _virtualBridgeManager.Server.Throttler.UpdateConfiguration(Adapters, Config);
         }
 
+        string modeTag = Config.ShaperMode switch
+        {
+            SpeedShaperMode.LowestLatency => "⚡ Lowest Ping",
+            SpeedShaperMode.MaximumBandwidth => "🚀 Max Bandwidth",
+            _ => "⚖ Balanced"
+        };
+
         if (Config.GlobalDownloadLimitBps > 0)
         {
-            ThrottleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeedWithBits(Config.GlobalDownloadLimitBps)} Cap";
+            ThrottleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeedWithBits(Config.GlobalDownloadLimitBps)} Cap ({modeTag})";
         }
         else if (Config.EnableBandwidthThrottling)
         {
-            ThrottleStatusText = "Throttling: Proportional % Shaping";
+            ThrottleStatusText = $"Shaping: {modeTag} (Dynamic)";
         }
         else
         {

@@ -1,212 +1,236 @@
 {
-    "tasks":  [
-                  {
-                      "taskId":  "TASK-2026-001",
-                      "userQuery":  "using \"https://github.com/RezaRafia/Speedy\" as reference create a windows application that will combine multiple network connection adapters on the OS to combine the speeds of the connection and give a greater \u0026 faster bandwidths.",
-                      "status":  "completed",
-                      "createdAt":  "2026-10-29T14:30:45+05:30",
-                      "updatedAt":  "2026-10-29T14:54:30+05:30",
-                      "progress":  "Completed initial reference analysis and Electron prototype."
-                  },
-                  {
-                      "taskId":  "TASK-2026-002",
-                      "userQuery":  "create the application in C# .net and it should be a windows application",
-                      "status":  "completed",
-                      "createdAt":  "2026-10-29T16:34:23+05:30",
-                      "updatedAt":  "2026-10-29T16:46:00+05:30",
-                      "progress":  "Completed native C# .NET 8.0 WPF Windows application with socket binding and proxy aggregation."
-                  },
-                  {
-                      "taskId":  "TASK-2026-003",
-                      "userQuery":  "create a one click start, stop \u0026 installer",
-                      "status":  "completed",
-                      "createdAt":  "2026-10-29T16:55:48+05:30",
-                      "updatedAt":  "2026-10-29T17:06:00+05:30",
-                      "progress":  "Completed One-Click Start (Start-CombiSpeed.bat), Stop with fail-safe proxy restoration (Stop-CombiSpeed.bat), Installer deploying to %LOCALAPPDATA% with Desktop and Start Menu shortcuts and Add/Remove Programs registry entry (Install-CombiSpeed.bat), and clean uninstaller (Uninstall-CombiSpeed.bat).",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-301",
-                                              "timestamp":  "2026-10-29T16:56:15+05:30",
-                                              "inputs":  "User requested one click start, stop \u0026 installer.",
-                                              "outputs":  "Planned CLI command arguments (--start, --stop, --minimized), batch wrappers, PowerShell installer with Start Menu \u0026 Desktop shortcuts and registry uninstall registration.",
-                                              "progress":  "Initialization complete."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-302",
-                                              "timestamp":  "2026-10-29T17:06:00+05:30",
-                                              "inputs":  "Implementation and end-to-end verification of scripts and application.",
-                                              "outputs":  "Created Start-CombiSpeed.bat, Stop-CombiSpeed.bat, Install-CombiSpeed.bat, Uninstall-CombiSpeed.bat; embedded app.ico into binaries; verified execution, proxy toggling, and clean shutdown.",
-                                              "progress":  "All tasks completed successfully."
-                                          }
-                                      ]
-                  },
-                  {
-                      "taskId":  "TASK-2026-004",
-                      "userQuery":  "Application should create a new VPN / adapter connection / bridge that merges the other network adapters and utillizes their bandwidth based on the % set for each connection to be utilized.",
-                      "status":  "completed",
-                      "createdAt":  "2026-10-30T12:14:30+05:30",
-                      "updatedAt":  "2026-10-30T12:30:50+05:30",
-                      "progress":  "Implemented Virtual VPN / Adapter Connection \u0026 Bonded Bridge subsystem (\u0027CombiSpeed Bonded Bridge\u0027) registered in Windows Network Connections (ncpa.cpl) and Windows Settings, with Smooth Weighted Round Robin strictly utilizing physical adapter bandwidth according to user-configured percentage weights, dynamic multi-color bandwidth distribution bar, per-adapter effective % pool allocation indicators, and 1-click bridge controls.",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-401",
-                                              "timestamp":  "2026-10-30T12:14:30+05:30",
-                                              "inputs":  "User requested creation of a new VPN / adapter connection / bridge merging other network adapters and utilizing their bandwidth based on % set for each connection.",
-                                              "outputs":  "Analyzed existing network interfaces, Windows VPN and TAP adapter APIs, and designed VirtualBridgeManager and VpnAdapterService to create and manage the bonded adapter connection in Windows with dynamic weighted % load balancing.",
-                                              "progress":  "Initialization and architecture design completed."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-402",
-                                              "timestamp":  "2026-10-30T12:30:50+05:30",
-                                              "inputs":  "Complete implementation of VirtualBridgeModel, VirtualBridgeManager, VirtualBridgeServer, Smooth Weighted Round Robin in LoadBalancerEngine, UI card in MainWindow.xaml with segmented distribution bar and per-adapter effective % badges, batch scripts and documentation.",
-                                              "outputs":  "Built and published CombiSpeed v1.2.0 (versionCode 4). Verified zero build warnings/errors, clean start/stop/disconnect flows, and updated all documentation.",
-                                              "progress":  "All implementation, testing, and documentation completed successfully."
-                                          }
-                                      ]
-                  },
-                  {
-                      "taskId":  "TASK-2026-005",
-                      "userQuery":  "implement all the pending feature backlogs.",
-                      "status":  "completed",
-                      "createdAt":  "2026-10-30T12:32:00+05:30",
-                      "updatedAt":  "2026-10-30T12:43:40+05:30",
-                      "progress":  "Successfully implemented all pending feature backlogs from KnownIssues.md: (1) PAC Rule Generator \u0026 Built-in PAC Server on port 8080 with WinINet AutoConfigURL integration, (2) Windows Service \u0026 Headless Background Execution Mode with Install-Service.bat / Uninstall-Service.bat, and (3) RFC 1928 SOCKS5 UDP Associate Relay Engine for gaming/streaming UDP acceleration.",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-501",
-                                              "timestamp":  "2026-10-30T12:32:00+05:30",
-                                              "inputs":  "User requested implementation of all pending feature backlogs from KnownIssues.md.",
-                                              "outputs":  "Identified pending backlog items: PAC rule generator, Windows service mode, and SOCKS5 UDP associate relay. Architected the complete implementation plan.",
-                                              "progress":  "Task initialized and architecture planned."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-502",
-                                              "timestamp":  "2026-10-30T12:43:40+05:30",
-                                              "inputs":  "Implemented PacRuleModel, PacConfigModel, PAC serving on ProxyEngine, WindowsProxyManager PAC registry hooks, SettingsWindow PAC editor, Socks5UdpRelay, HeadlessEngine, service CLI arguments, Install-Service.bat, Uninstall-Service.bat, and updated documentation.",
-                                              "outputs":  "Built and published CombiSpeed v1.3.0 (versionCode 5) with zero warnings/errors. Verified all backlog items completed.",
-                                              "progress":  "All backlog features implemented and verified successfully."
-                                          }
-                                      ]
-                  },
-                  {
-                      "taskId":  "TASK-2026-006",
-                      "userQuery":  "The application should save the selected adapter settings and adapters for combinations.",
-                      "status":  "completed",
-                      "createdAt":  "2026-10-30T12:45:00+05:30",
-                      "updatedAt":  "2026-10-30T12:57:00+05:30",
-                      "progress":  "Implemented durable Adapter Settings \u0026 Combination Profiles persistence subsystem (%LOCALAPPDATA%\\CombiSpeed\\adapter_settings.json) with MAC address primary key matching, debounced auto-save (400ms), combination profile presets and switching, UI toolbar with real-time auto-save indicator, headless/service restoration, and automated verification tests.",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-601",
-                                              "timestamp":  "2026-10-30T12:45:00+05:30",
-                                              "inputs":  "User requested: \u0027The application should save the selected adapter settings and adapters for combinations.\u0027",
-                                              "outputs":  "Designed ConfigurationStore \u0026 AdapterSettingsPersistence service saving adapter selection (IsEnabled), weight ratios, priority, combination profiles, and proxy/bridge configuration to %LOCALAPPDATA%\\CombiSpeed\\adapter_settings.json with automated debounced disk writes.",
-                                              "progress":  "Initialization and design completed."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-602",
-                                              "timestamp":  "2026-10-30T12:57:00+05:30",
-                                              "inputs":  "Implementation of AdapterProfileModel, ConfigurationStore, MainViewModel integration with auto-save \u0026 profiles, InputDialog for custom combination profiles, MainWindow toolbar with auto-save badge and profile switcher, HeadlessEngine integration, and regression testing with --verify-persistence.",
-                                              "outputs":  "Built and published CombiSpeed v1.3.1 (versionCode 6) with 0 warnings and 0 errors. Passed 100% of persistence, adapter reload, and profile switching tests. Updated all documentation, installers, and version records.",
-                                              "progress":  "All tasks completed successfully."
-                                          }
-                                      ]
-                  },
-                  {
-                      "taskId":  "TASK-2026-007",
-                      "userQuery":  "Ensure that the application actually throttles the bandwidth and speed after combining connection adapters.",
-                      "status":  "completed",
-                      "createdAt":  "2026-11-01T22:27:00+05:30",
-                      "updatedAt":  "2026-11-01T22:42:00+05:30",
-                      "progress":  "Implemented and verified real-time asynchronous Token Bucket Bandwidth Throttler (BandwidthThrottler.cs) across ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, with proportional byte rate shaping, global speed caps, per-adapter limits, dashboard controls toolbar, settings UI, and automated regression testing.",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-701",
-                                              "timestamp":  "2026-11-01T22:27:00+05:30",
-                                              "inputs":  "User requested: \u0027Ensure that the application actually throttles the bandwidth and speed after combining connection adapters.\u0027",
-                                              "outputs":  "Designed BandwidthThrottler (Token Bucket algorithm) integrated into ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, supporting both Proportional Bandwidth Shaping (enforcing exact % byte allocation across adapters) and absolute speed rate limiting (global limit + per-adapter limit).",
-                                              "progress":  "Architecture and design phase completed."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-702",
-                                              "timestamp":  "2026-11-01T22:42:00+05:30",
-                                              "inputs":  "Implementation of BandwidthThrottler, integration into ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, MainViewModel presets and status text, MainWindow toolbar with speed cap presets, adapter card throttling badges, SettingsWindow throttling options, and automated --verify-throttling test.",
-                                              "outputs":  "Built and published CombiSpeed v1.3.2 (versionCode 7) with 0 warnings and 0 errors. Passed 100% of bandwidth throttling, delay enforcement, and proportional shaping tests. Updated all documentation, installers, and version records.",
-                                              "progress":  "All tasks completed successfully."
-                                          }
-                                      ]
-                  },
-                  {
-                      "taskId":  "TASK-2026-008",
-                      "userQuery":  "Create a build and release",
-                      "status":  "completed",
-                      "createdAt":  "2026-11-01T23:11:00+05:30",
-                      "updatedAt":  "2026-11-01T23:14:30+05:30",
-                      "progress":  "Executed production release pipeline for CombiSpeed v1.3.3 (versionCode: 8): binary compilation, self-test verification, release packaging, documentation synchronization, and git release tagging.",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-801",
-                                              "timestamp":  "2026-11-01T23:11:00+05:30",
-                                              "inputs":  "User requested: \u0027Create a build and release\u0027",
-                                              "outputs":  "Initiated production build and release lifecycle: incrementing patch version to 1.3.3 and versionCode to 8, preparing binary packages and release notes.",
-                                              "progress":  "Release pipeline initiated."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-802",
-                                              "timestamp":  "2026-11-01T23:14:30+05:30",
-                                              "inputs":  "Compiled release binaries for net8.0-windows win-x64, validated 100% test pass on --verify-throttling and --verify-persistence, packaged publish/CombiSpeed-v1.3.3-win-x64.zip, updated documentation and version files.",
-                                              "outputs":  "Produced publish/CombiSpeed.exe and publish/CombiSpeed-v1.3.3-win-x64.zip with 0 warnings and 0 errors. Created Release Notes for v1.3.3. Git committed and tagged v1.3.3.",
-                                              "progress":  "All build and release tasks completed successfully."
-                                          }
-                                      ]
-                  },
-                  {
-                      "taskId":  "TASK-2026-009",
-                      "userQuery":  "show application version in the application window",
-                      "status":  "completed",
-                      "createdAt":  "2026-11-01T23:15:30+05:30",
-                      "updatedAt":  "2026-11-01T23:25:00+05:30",
-                      "progress":  "Exposed dynamic version metadata (AppVersion, AppVersionFull, WindowTitle) in MainViewModel.cs, rendered active version badge in custom TitleBar, added pinned glassmorphic footer status bar in MainWindow.xaml, supported --version CLI flag in App.xaml.cs, verified 100% test pass on regression suites, published release v1.3.4 (versionCode: 9), packaged release archive, and synchronized all documentation.",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-901",
-                                              "timestamp":  "2026-11-01T23:15:30+05:30",
-                                              "inputs":  "User requested: \u0027show application version in the application window\u0027",
-                                              "outputs":  "Designed dynamic AppVersion property binding in MainViewModel and added visual version badges to MainWindow.xaml titlebar and footer.",
-                                              "progress":  "Initialization and design completed."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-902",
-                                              "timestamp":  "2026-11-01T23:25:00+05:30",
-                                              "inputs":  "Implementation of AppVersion/AppVersionFull in MainViewModel, MainWindow.xaml titlebar badge \u0026 footer status bar, WindowTitle binding, App.xaml.cs --version CLI flag, regression testing, release packaging, and documentation update.",
-                                              "outputs":  "Built and published CombiSpeed v1.3.4 (versionCode 9) with 0 warnings and 0 errors. Passed 100% self-test suites (--verify-throttling, --verify-persistence). Packaged publish/CombiSpeed-v1.3.4-win-x64.zip. Updated ToDos.md, KnownIssues.md, ReadMe.md, and ReleaseNotes.md.",
-                                              "progress":  "All tasks completed successfully."
-                                          }
-                                      ]
-                  },
-                  {
-                      "taskId":  "TASK-2026-010",
-                      "userQuery":  "Increase the throttling cap to upto 500 Mbps speeds. Allow users to entering custom throttling parameters.",
-                      "status":  "completed",
-                      "createdAt":  "2026-11-02T14:15:00+05:30",
-                      "updatedAt":  "2026-11-02T14:25:00+05:30",
-                      "progress":  "Successfully increased the throttling cap to 500 Mbps with expanded presets, implemented CustomThrottleDialog.xaml for arbitrary numerical rates, multi-unit support (Mbps, MB/s, Kbps, KB/s), configurable burst tolerance window, per-adapter limits, toolbar and Settings integration, automated regression testing, and released v1.3.5.",
-                      "checkpoints":  [
-                                          {
-                                              "checkpointId":  "CP-1001",
-                                              "timestamp":  "2026-11-02T14:15:00+05:30",
-                                              "inputs":  "User requested: \u0027Increase the throttling cap to upto 500 Mbps speeds. Allow users to entering custom throttling parameters.\u0027",
-                                              "outputs":  "Architecture plan: (1) Expand ThrottlePresets up to 500 Mbps (62.5 MB/s) with clean Mbps \u0026 MB/s labels, (2) Create CustomThrottleDialog.xaml for interactive custom parameter entry (custom Mbps/MB/s download \u0026 upload, burst window, proportional shaping, and per-adapter limits), (3) Wire toolbar button and \u0027Custom...\u0027 preset to open CustomThrottleDialog, (4) Update SettingsWindow.xaml for custom Mbps/MB/s inputs and burst window, (5) Update BandwidthThrottler to support configurable burst window, (6) Ensure auto-save persistence.",
-                                              "progress":  "Design and architecture phase completed."
-                                          },
-                                          {
-                                              "checkpointId":  "CP-1002",
-                                              "timestamp":  "2026-11-02T14:25:00+05:30",
-                                              "inputs":  "Full implementation and verification of 500 Mbps speed cap, CustomThrottleDialog.xaml, MainWindow toolbar integration, SettingsWindow updates, BandwidthThrottler burst window support, unit conversion methods, NetworkAdapterModel CustomSpeedLimitMbps, and test suite updates.",
-                                              "outputs":  "Built and published CombiSpeed v1.3.5 (versionCode 10) with 0 warnings and 0 errors. Passed 100% of --verify-throttling and --verify-persistence self-test suites. Packaged publish/CombiSpeed-v1.3.5-win-x64.zip. Synchronized ReleaseNotes.md, ReadMe.md, ToDos.md, and KnownIssues.md.",
-                                              "progress":  "All tasks completed successfully."
-                                          }
-                                      ]
-                  }
-              ]
+    "tasks": [
+        {
+            "taskId": "TASK-2026-001",
+            "userQuery": "using \"https://github.com/RezaRafia/Speedy\" as reference create a windows application that will combine multiple network connection adapters on the OS to combine the speeds of the connection and give a greater & faster bandwidths.",
+            "status": "completed",
+            "createdAt": "2026-10-29T14:30:45+05:30",
+            "updatedAt": "2026-10-29T14:54:30+05:30",
+            "progress": "Completed initial reference analysis and Electron prototype."
+        },
+        {
+            "taskId": "TASK-2026-002",
+            "userQuery": "create the application in C# .net and it should be a windows application",
+            "status": "completed",
+            "createdAt": "2026-10-29T16:34:23+05:30",
+            "updatedAt": "2026-10-29T16:46:00+05:30",
+            "progress": "Completed native C# .NET 8.0 WPF Windows application with socket binding and proxy aggregation."
+        },
+        {
+            "taskId": "TASK-2026-003",
+            "userQuery": "create a one click start, stop & installer",
+            "status": "completed",
+            "createdAt": "2026-10-29T16:55:48+05:30",
+            "updatedAt": "2026-10-29T17:06:00+05:30",
+            "progress": "Completed One-Click Start (Start-CombiSpeed.bat), Stop with fail-safe proxy restoration (Stop-CombiSpeed.bat), Installer deploying to %LOCALAPPDATA% with Desktop and Start Menu shortcuts and Add/Remove Programs registry entry (Install-CombiSpeed.bat), and clean uninstaller (Uninstall-CombiSpeed.bat).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-301",
+                    "timestamp": "2026-10-29T16:56:15+05:30",
+                    "inputs": "User requested one click start, stop & installer.",
+                    "outputs": "Planned CLI command arguments (--start, --stop, --minimized), batch wrappers, PowerShell installer with Start Menu & Desktop shortcuts and registry uninstall registration.",
+                    "progress": "Initialization complete."
+                },
+                {
+                    "checkpointId": "CP-302",
+                    "timestamp": "2026-10-29T17:06:00+05:30",
+                    "inputs": "Implementation and end-to-end verification of scripts and application.",
+                    "outputs": "Created Start-CombiSpeed.bat, Stop-CombiSpeed.bat, Install-CombiSpeed.bat, Uninstall-CombiSpeed.bat; embedded app.ico into binaries; verified execution, proxy toggling, and clean shutdown.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-004",
+            "userQuery": "Application should create a new VPN / adapter connection / bridge that merges the other network adapters and utillizes their bandwidth based on the % set for each connection to be utilized.",
+            "status": "completed",
+            "createdAt": "2026-10-30T12:14:30+05:30",
+            "updatedAt": "2026-10-30T12:30:50+05:30",
+            "progress": "Implemented Virtual VPN / Adapter Connection & Bonded Bridge subsystem ('CombiSpeed Bonded Bridge') registered in Windows Network Connections (ncpa.cpl) and Windows Settings, with Smooth Weighted Round Robin strictly utilizing physical adapter bandwidth according to user-configured percentage weights, dynamic multi-color bandwidth distribution bar, per-adapter effective % pool allocation indicators, and 1-click bridge controls.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-401",
+                    "timestamp": "2026-10-30T12:14:30+05:30",
+                    "inputs": "User requested creation of a new VPN / adapter connection / bridge merging other network adapters and utilizing their bandwidth based on % set for each connection.",
+                    "outputs": "Analyzed existing network interfaces, Windows VPN and TAP adapter APIs, and designed VirtualBridgeManager and VpnAdapterService to create and manage the bonded adapter connection in Windows with dynamic weighted % load balancing.",
+                    "progress": "Initialization and architecture design completed."
+                },
+                {
+                    "checkpointId": "CP-402",
+                    "timestamp": "2026-10-30T12:30:50+05:30",
+                    "inputs": "Complete implementation of VirtualBridgeModel, VirtualBridgeManager, VirtualBridgeServer, Smooth Weighted Round Robin in LoadBalancerEngine, UI card in MainWindow.xaml with segmented distribution bar and per-adapter effective % badges, batch scripts and documentation.",
+                    "outputs": "Built and published CombiSpeed v1.2.0 (versionCode 4). Verified zero build warnings/errors, clean start/stop/disconnect flows, and updated all documentation.",
+                    "progress": "All implementation, testing, and documentation completed successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-005",
+            "userQuery": "implement all the pending feature backlogs.",
+            "status": "completed",
+            "createdAt": "2026-10-30T12:32:00+05:30",
+            "updatedAt": "2026-10-30T12:43:40+05:30",
+            "progress": "Successfully implemented all pending feature backlogs from KnownIssues.md: (1) PAC Rule Generator & Built-in PAC Server on port 8080 with WinINet AutoConfigURL integration, (2) Windows Service & Headless Background Execution Mode with Install-Service.bat / Uninstall-Service.bat, and (3) RFC 1928 SOCKS5 UDP Associate Relay Engine for gaming/streaming UDP acceleration.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-501",
+                    "timestamp": "2026-10-30T12:32:00+05:30",
+                    "inputs": "User requested implementation of all pending feature backlogs from KnownIssues.md.",
+                    "outputs": "Identified pending backlog items: PAC rule generator, Windows service mode, and SOCKS5 UDP associate relay. Architected the complete implementation plan.",
+                    "progress": "Task initialized and architecture planned."
+                },
+                {
+                    "checkpointId": "CP-502",
+                    "timestamp": "2026-10-30T12:43:40+05:30",
+                    "inputs": "Implemented PacRuleModel, PacConfigModel, PAC serving on ProxyEngine, WindowsProxyManager PAC registry hooks, SettingsWindow PAC editor, Socks5UdpRelay, HeadlessEngine, service CLI arguments, Install-Service.bat, Uninstall-Service.bat, and updated documentation.",
+                    "outputs": "Built and published CombiSpeed v1.3.0 (versionCode 5) with zero warnings/errors. Verified all backlog items completed.",
+                    "progress": "All backlog features implemented and verified successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-006",
+            "userQuery": "The application should save the selected adapter settings and adapters for combinations.",
+            "status": "completed",
+            "createdAt": "2026-10-30T12:45:00+05:30",
+            "updatedAt": "2026-10-30T12:57:00+05:30",
+            "progress": "Implemented durable Adapter Settings & Combination Profiles persistence subsystem (%LOCALAPPDATA%\\CombiSpeed\\adapter_settings.json) with MAC address primary key matching, debounced auto-save (400ms), combination profile presets and switching, UI toolbar with real-time auto-save indicator, headless/service restoration, and automated verification tests.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-601",
+                    "timestamp": "2026-10-30T12:45:00+05:30",
+                    "inputs": "User requested: 'The application should save the selected adapter settings and adapters for combinations.'",
+                    "outputs": "Designed ConfigurationStore & AdapterSettingsPersistence service saving adapter selection (IsEnabled), weight ratios, priority, combination profiles, and proxy/bridge configuration to %LOCALAPPDATA%\\CombiSpeed\\adapter_settings.json with automated debounced disk writes.",
+                    "progress": "Initialization and design completed."
+                },
+                {
+                    "checkpointId": "CP-602",
+                    "timestamp": "2026-10-30T12:57:00+05:30",
+                    "inputs": "Implementation of AdapterProfileModel, ConfigurationStore, MainViewModel integration with auto-save & profiles, InputDialog for custom combination profiles, MainWindow toolbar with auto-save badge and profile switcher, HeadlessEngine integration, and regression testing with --verify-persistence.",
+                    "outputs": "Built and published CombiSpeed v1.3.1 (versionCode 6) with 0 warnings and 0 errors. Passed 100% of persistence, adapter reload, and profile switching tests. Updated all documentation, installers, and version records.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-007",
+            "userQuery": "Ensure that the application actually throttles the bandwidth and speed after combining connection adapters.",
+            "status": "completed",
+            "createdAt": "2026-11-01T22:27:00+05:30",
+            "updatedAt": "2026-11-01T22:42:00+05:30",
+            "progress": "Implemented and verified real-time asynchronous Token Bucket Bandwidth Throttler (BandwidthThrottler.cs) across ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, with proportional byte rate shaping, global speed caps, per-adapter limits, dashboard controls toolbar, settings UI, and automated regression testing.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-701",
+                    "timestamp": "2026-11-01T22:27:00+05:30",
+                    "inputs": "User requested: 'Ensure that the application actually throttles the bandwidth and speed after combining connection adapters.'",
+                    "outputs": "Designed BandwidthThrottler (Token Bucket algorithm) integrated into ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, supporting both Proportional Bandwidth Shaping (enforcing exact % byte allocation across adapters) and absolute speed rate limiting (global limit + per-adapter limit).",
+                    "progress": "Architecture and design phase completed."
+                },
+                {
+                    "checkpointId": "CP-702",
+                    "timestamp": "2026-11-01T22:42:00+05:30",
+                    "inputs": "Implementation of BandwidthThrottler, integration into ProxyEngine, VirtualBridgeServer, and Socks5UdpRelay, MainViewModel presets and status text, MainWindow toolbar with speed cap presets, adapter card throttling badges, SettingsWindow throttling options, and automated --verify-throttling test.",
+                    "outputs": "Built and published CombiSpeed v1.3.2 (versionCode 7) with 0 warnings and 0 errors. Passed 100% of bandwidth throttling, delay enforcement, and proportional shaping tests. Updated all documentation, installers, and version records.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-008",
+            "userQuery": "Create a build and release",
+            "status": "completed",
+            "createdAt": "2026-11-01T23:11:00+05:30",
+            "updatedAt": "2026-11-01T23:14:30+05:30",
+            "progress": "Executed production release pipeline for CombiSpeed v1.3.3 (versionCode: 8): binary compilation, self-test verification, release packaging, documentation synchronization, and git release tagging.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-801",
+                    "timestamp": "2026-11-01T23:11:00+05:30",
+                    "inputs": "User requested: 'Create a build and release'",
+                    "outputs": "Initiated production build and release lifecycle: incrementing patch version to 1.3.3 and versionCode to 8, preparing binary packages and release notes.",
+                    "progress": "Release pipeline initiated."
+                },
+                {
+                    "checkpointId": "CP-802",
+                    "timestamp": "2026-11-01T23:14:30+05:30",
+                    "inputs": "Compiled release binaries for net8.0-windows win-x64, validated 100% test pass on --verify-throttling and --verify-persistence, packaged publish/CombiSpeed-v1.3.3-win-x64.zip, updated documentation and version files.",
+                    "outputs": "Produced publish/CombiSpeed.exe and publish/CombiSpeed-v1.3.3-win-x64.zip with 0 warnings and 0 errors. Created Release Notes for v1.3.3. Git committed and tagged v1.3.3.",
+                    "progress": "All build and release tasks completed successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-009",
+            "userQuery": "show application version in the application window",
+            "status": "completed",
+            "createdAt": "2026-11-01T23:15:30+05:30",
+            "updatedAt": "2026-11-01T23:25:00+05:30",
+            "progress": "Exposed dynamic version metadata (AppVersion, AppVersionFull, WindowTitle) in MainViewModel.cs, rendered active version badge in custom TitleBar, added pinned glassmorphic footer status bar in MainWindow.xaml, supported --version CLI flag in App.xaml.cs, verified 100% test pass on regression suites, published release v1.3.4 (versionCode: 9), packaged release archive, and synchronized all documentation.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-901",
+                    "timestamp": "2026-11-01T23:15:30+05:30",
+                    "inputs": "User requested: 'show application version in the application window'",
+                    "outputs": "Designed dynamic AppVersion property binding in MainViewModel and added visual version badges to MainWindow.xaml titlebar and footer.",
+                    "progress": "Initialization and design completed."
+                },
+                {
+                    "checkpointId": "CP-902",
+                    "timestamp": "2026-11-01T23:25:00+05:30",
+                    "inputs": "Implementation of AppVersion/AppVersionFull in MainViewModel, MainWindow.xaml titlebar badge & footer status bar, WindowTitle binding, App.xaml.cs --version CLI flag, regression testing, release packaging, and documentation update.",
+                    "outputs": "Built and published CombiSpeed v1.3.4 (versionCode 9) with 0 warnings and 0 errors. Passed 100% self-test suites (--verify-throttling, --verify-persistence). Packaged publish/CombiSpeed-v1.3.4-win-x64.zip. Updated ToDos.md, KnownIssues.md, ReadMe.md, and ReleaseNotes.md.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-010",
+            "userQuery": "Increase the throttling cap to upto 500 Mbps speeds. Allow users to entering custom throttling parameters.",
+            "status": "completed",
+            "createdAt": "2026-11-02T14:15:00+05:30",
+            "updatedAt": "2026-11-02T14:25:00+05:30",
+            "progress": "Successfully increased the throttling cap to 500 Mbps with expanded presets, implemented CustomThrottleDialog.xaml for arbitrary numerical rates, multi-unit support (Mbps, MB/s, Kbps, KB/s), configurable burst tolerance window, per-adapter limits, toolbar and Settings integration, automated regression testing, and released v1.3.5.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-1001",
+                    "timestamp": "2026-11-02T14:15:00+05:30",
+                    "inputs": "User requested: 'Increase the throttling cap to upto 500 Mbps speeds. Allow users to entering custom throttling parameters.'",
+                    "outputs": "Architecture plan: (1) Expand ThrottlePresets up to 500 Mbps (62.5 MB/s) with clean Mbps & MB/s labels, (2) Create CustomThrottleDialog.xaml for interactive custom parameter entry (custom Mbps/MB/s download & upload, burst window, proportional shaping, and per-adapter limits), (3) Wire toolbar button and 'Custom...' preset to open CustomThrottleDialog, (4) Update SettingsWindow.xaml for custom Mbps/MB/s inputs and burst window, (5) Update BandwidthThrottler to support configurable burst window, (6) Ensure auto-save persistence.",
+                    "progress": "Design and architecture phase completed."
+                },
+                {
+                    "checkpointId": "CP-1002",
+                    "timestamp": "2026-11-02T14:25:00+05:30",
+                    "inputs": "Full implementation and verification of 500 Mbps speed cap, CustomThrottleDialog.xaml, MainWindow toolbar integration, SettingsWindow updates, BandwidthThrottler burst window support, unit conversion methods, NetworkAdapterModel CustomSpeedLimitMbps, and test suite updates.",
+                    "outputs": "Built and published CombiSpeed v1.3.5 (versionCode 10) with 0 warnings and 0 errors. Passed 100% of --verify-throttling and --verify-persistence self-test suites. Packaged publish/CombiSpeed-v1.3.5-win-x64.zip. Synchronized ReleaseNotes.md, ReadMe.md, ToDos.md, and KnownIssues.md.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
+        },
+        {
+            "taskId": "TASK-2026-011",
+            "userQuery": "Allow Speed Shaper to be Dynamic across connections. Give option to select Speed Shaper mode to be for Maximum Bandwidth or Lowest Pings / Latency modes. Also, optimise the Speed Shaper for optimal bandwidth / pings / latencies as selected in the mode. Ensure that all the options are saved persistently.",
+            "status": "completed",
+            "createdAt": "2026-11-02T14:35:00+05:30",
+            "updatedAt": "2026-11-02T14:48:00+05:30",
+            "progress": "Successfully implemented dynamic cross-connection Speed Shaper engine with selectable Maximum Bandwidth, Lowest Latency (anti-bufferbloat), and Balanced Dynamic modes, live RTT ping adaptation, dynamic cross-connection capacity borrowing, toolbar and dialog UI integration, persistent storage, and published v1.3.6 (Build 11).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-1101",
+                    "timestamp": "2026-11-02T14:35:00+05:30",
+                    "inputs": "User requested: Dynamic cross-connection Speed Shaper, Maximum Bandwidth mode, Lowest Pings/Latency mode, optimization for optimal bandwidth/pings/latency, and persistent saving.",
+                    "outputs": "Architected SpeedShaperMode enum, dynamic adaptation algorithms in BandwidthThrottler, live ping feedback integration with HealthMonitor, LoadBalancer synchronization, toolbar and dialog mode selectors, and persistent serialization in ConfigurationStore.",
+                    "progress": "Design and architecture completed."
+                },
+                {
+                    "checkpointId": "CP-1102",
+                    "timestamp": "2026-11-02T14:48:00+05:30",
+                    "inputs": "Implementation and verification of SpeedShaperMode enum, BandwidthThrottler dynamic weighting and capacity borrowing, LoadBalancerEngine latency-weighted routing, MainViewModel live adaptation hook on HealthUpdated, MainWindow toolbar mode selector, CustomThrottleDialog and SettingsWindow UI, App.xaml.cs --verify-throttling suite, documentation updates, and v1.3.6 release packaging.",
+                    "outputs": "Built and published CombiSpeed v1.3.6 (versionCode 11) with 0 warnings and 0 errors. Passed 100% of --verify-throttling and --verify-persistence self-test suites. Packaged publish/CombiSpeed-v1.3.6-win-x64.zip. Synchronized ReleaseNotes.md, ReadMe.md, ToDos.md, and KnownIssues.md.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
+        }
+    ]
 }

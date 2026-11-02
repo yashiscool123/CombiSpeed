@@ -1,5 +1,27 @@
 ﻿# Release Notes
 
+## [1.3.6] - 2026-11-02 - Dynamic Cross-Connection Speed Shaper & Latency Modes Release
+
+### 🚀 Highlights & Features
+- **Dynamic Speed Shaping Across Connections**:
+  - `BandwidthThrottler.cs` actively monitors connection metrics and dynamically adapts token bucket rates and capacity allocations across physical network adapters in real time.
+  - Dynamically redistributes bandwidth without stream disruption or connection drops when link conditions fluctuate.
+- **Selectable Speed Shaper Optimization Modes**:
+  - **`🚀 Maximum Bandwidth Mode`**: Optimizes for peak aggregate throughput and bulk transfer volume (file downloads, torrents, multi-connection streaming). Automatically scales Token Bucket burst buffers to 150ms-200ms for full TCP congestion window expansion and enables dynamic capacity borrowing across active streams.
+  - **`⚡ Lowest Latency / Ping Mode`**: Tailored for competitive online multiplayer gaming, Discord voice channels, and WebRTC streaming. Implements tight anti-bufferbloat packet pacing (clamped to 20ms burst window) to eliminate local interface queue latency, and dynamically weights token allocations and SWRR stream dispatching inversely proportional to live RTT ping measurements.
+  - **`⚖ Balanced Dynamic Mode`**: Proportional cross-adapter shaping balancing aggregate throughput and low-jitter queue pacing.
+- **Real-Time Live Telemetry Adaptation**:
+  - Connected directly to `HealthMonitor.HealthUpdated`: when an adapter experiences latency spikes or packet loss, the dynamic shaper immediately dials down its allocation and shifts traffic to healthier, lower-ping connections.
+- **Toolbar & Dialog UI Integration**:
+  - Added dedicated `Mode` selector ComboBox (`🚀 Maximum Bandwidth`, `⚡ Lowest Latency / Ping`, `⚖ Balanced Dynamic`) directly to the Speed Shaper toolbar in `MainWindow.xaml`.
+  - Updated `CustomThrottleDialog.xaml` with a dedicated Speed Shaper Optimization Mode card and `Enable Dynamic Real-Time Adaptation` toggle.
+  - Synchronized options in `SettingsWindow.xaml`.
+- **Durable Persistence & Diagnostic Test Verification**:
+  - Full persistence of `ShaperMode` and `EnableDynamicShaping` in `%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`.
+  - Enhanced `--verify-throttling` automated self-test suite validating Maximum Bandwidth burst window expansion, Lowest Latency anti-bufferbloat pacing, dynamic cross-connection adaptation, and persistence (100% OK).
+  - Published release archive `publish/CombiSpeed-v1.3.6-win-x64.zip`.
+
+---
 ## [1.3.5] - 2026-11-02 - 500 Mbps Throttling Cap & Custom Throttling Parameters Release
 
 ### 🚀 Highlights & Features

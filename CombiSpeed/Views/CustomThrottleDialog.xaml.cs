@@ -17,6 +17,10 @@ public partial class CustomThrottleDialog : Window
         _config = config;
         _adapters = adapters;
 
+        // Populate Shaper Mode
+        SelectShaperMode(config.ShaperMode);
+        ChkDynamicShaping.IsChecked = config.EnableDynamicShaping;
+
         // Populate Download
         if (config.GlobalDownloadLimitBps > 0)
         {
@@ -55,6 +59,54 @@ public partial class CustomThrottleDialog : Window
         UpdateEquivalents();
     }
 
+    private void SelectShaperMode(SpeedShaperMode mode)
+    {
+        foreach (ComboBoxItem item in CmbShaperMode.Items)
+        {
+            if (item.Tag?.ToString() == mode.ToString())
+            {
+                item.IsSelected = true;
+                break;
+            }
+        }
+        UpdateShaperModeDescription(mode);
+    }
+
+    private void UpdateShaperModeDescription(SpeedShaperMode mode)
+    {
+        if (TxtShaperModeDescription == null) return;
+        TxtShaperModeDescription.Text = mode switch
+        {
+            SpeedShaperMode.LowestLatency => "Optimizes for online multiplayer gaming, Discord voice & video calls. Anti-bufferbloat tight pacing (20ms) with real-time ping-weighted priority and jitter dampening.",
+            SpeedShaperMode.BalancedDynamic => "Dynamically balances aggregate bandwidth across adapters while maintaining smooth latency response and proportional queue pacing.",
+            _ => "Optimizes TCP window expansion, large burst buffers (150-200ms), and dynamic cross-adapter capacity sharing for peak download & upload speeds."
+        };
+    }
+
+    private void ShaperMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CmbShaperMode?.SelectedItem is ComboBoxItem item && Enum.TryParse<SpeedShaperMode>(item.Tag?.ToString(), out var mode))
+        {
+            UpdateShaperModeDescription(mode);
+            // Automatically align burst window to optimal mode profile
+            if (CmbBurstWindow != null)
+            {
+                switch (mode)
+                {
+                    case SpeedShaperMode.LowestLatency:
+                        SelectBurstWindow(0.02);
+                        break;
+                    case SpeedShaperMode.MaximumBandwidth:
+                        SelectBurstWindow(0.25);
+                        break;
+                    case SpeedShaperMode.BalancedDynamic:
+                        SelectBurstWindow(0.05);
+                        break;
+                }
+            }
+        }
+    }
+
     private void SelectUnit(ComboBox cmb, string unit)
     {
         foreach (ComboBoxItem item in cmb.Items)
@@ -80,7 +132,6 @@ public partial class CustomThrottleDialog : Window
                 }
             }
         }
-        // Default to 50ms
         CmbBurstWindow.SelectedIndex = 1;
     }
 
@@ -165,7 +216,14 @@ public partial class CustomThrottleDialog : Window
 
     private void ApplyButton_Click(object sender, RoutedEventArgs e)
     {
-        // 1. Download
+        // 1. Shaper Mode & Dynamic Adaptation
+        if (CmbShaperMode.SelectedItem is ComboBoxItem modeItem && Enum.TryParse<SpeedShaperMode>(modeItem.Tag?.ToString(), out var mode))
+        {
+            _config.ShaperMode = mode;
+        }
+        _config.EnableDynamicShaping = ChkDynamicShaping.IsChecked == true;
+
+        // 2. Download
         if (double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl) && dl > 0)
         {
             string unit = (CmbDownloadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
@@ -177,7 +235,7 @@ public partial class CustomThrottleDialog : Window
             _config.GlobalDownloadLimitBps = 0;
         }
 
-        // 2. Upload
+        // 3. Upload
         if (double.TryParse(TxtUploadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double ul) && ul > 0)
         {
             string unit = (CmbUploadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
@@ -188,11 +246,11 @@ public partial class CustomThrottleDialog : Window
             _config.GlobalUploadLimitBps = 0;
         }
 
-        // 3. Policies
+        // 4. Policies
         _config.EnableBandwidthThrottling = ChkEnableThrottling.IsChecked == true;
         _config.EnforceProportionalThrottling = ChkProportional.IsChecked == true;
 
-        // 4. Burst Window
+        // 5. Burst Window
         if (CmbBurstWindow.SelectedItem is ComboBoxItem burstItem && burstItem.Tag != null &&
             double.TryParse(burstItem.Tag.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double burst))
         {

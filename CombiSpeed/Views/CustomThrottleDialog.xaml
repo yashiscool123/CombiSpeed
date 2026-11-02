@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Custom Bandwidth Throttling &amp; Speed Shaper"
         Icon="pack://application:,,,/Assets/app.ico"
-        Height="700" Width="640"
+        Height="720" Width="660"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
         Foreground="#F1F5F9"
@@ -27,7 +27,7 @@
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Custom Bandwidth Throttling &amp; Speed Shaper" FontSize="15" FontWeight="Bold" Foreground="#F1F5F9"/>
-                        <TextBlock Text="Set custom rate limits up to 500+ Mbps, burst window &amp; per-adapter speed caps" FontSize="11" Foreground="#94A3B8"/>
+                        <TextBlock Text="Dynamic cross-connection shaping for Maximum Bandwidth or Lowest Pings" FontSize="11" Foreground="#94A3B8"/>
                     </StackPanel>
                 </StackPanel>
                 <Button Content="✕" Width="28" Height="28" HorizontalAlignment="Right" Click="CancelButton_Click" Style="{StaticResource CyberButton}" Padding="0"/>
@@ -36,6 +36,23 @@
             <!-- Form Content -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
                 <StackPanel>
+                    <!-- Speed Shaper Mode & Dynamic Optimization -->
+                    <TextBlock Text="DYNAMIC SPEED SHAPER OPTIMIZATION MODE" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
+                    <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="12" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="Select Optimization Objective:" FontSize="11" Foreground="#CBD5E1" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <ComboBox x:Name="CmbShaperMode" Background="#131D33" Foreground="Black" Padding="8,6" FontSize="11" SelectionChanged="ShaperMode_SelectionChanged" Margin="0,0,0,8">
+                                <ComboBoxItem Content="🚀 Maximum Bandwidth (Throughput &amp; Window Expansion)" Tag="MaximumBandwidth" IsSelected="True"/>
+                                <ComboBoxItem Content="⚡ Lowest Latency / Ping (Anti-Bufferbloat &amp; Real-Time RTT Priority)" Tag="LowestLatency"/>
+                                <ComboBoxItem Content="⚖ Balanced Dynamic (Smooth Pacing &amp; Proportional)" Tag="BalancedDynamic"/>
+                            </ComboBox>
+                            <TextBlock x:Name="TxtShaperModeDescription" Text="Optimizes TCP window expansion, large burst buffers (150-200ms), and dynamic cross-adapter capacity sharing for peak download/upload speeds." FontSize="10" Foreground="#38BDF8" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <CheckBox x:Name="ChkDynamicShaping" Content="Enable Dynamic Real-Time Shaper Adaptation across connections" Foreground="#F1F5F9" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                            <TextBlock Text="Continuously monitors live adapter ping, throughput, and packet loss, dynamically shifting token rates and routing weights to optimize performance." FontSize="10" Foreground="#64748B" TextWrapping="Wrap" Margin="20,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Global Speed Caps -->
                     <TextBlock Text="GLOBAL BANDWIDTH LIMITS" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     

@@ -224,6 +224,55 @@ public partial class App : Application
                 }
                 Console.WriteLine("[PASS] Per-adapter custom speed cap override verified: Adapter 2 clamped to 10 MB/s.");
 
+                // Test Maximum Bandwidth Mode Optimization
+                config.EnableBandwidthThrottling = true;
+                config.ShaperMode = Models.SpeedShaperMode.MaximumBandwidth;
+                config.EnableDynamicShaping = true;
+                config.GlobalDownloadLimitBps = limit500Mbps;
+                throttler.UpdateConfiguration(mockAdapters, config);
+                if (throttler.ActiveBurstSeconds < 0.10)
+                {
+                    throw new Exception("Maximum Bandwidth mode failed to expand burst window!");
+                }
+                Console.WriteLine($"[PASS] Maximum Bandwidth mode verified: Burst Window={throttler.ActiveBurstSeconds * 1000}ms for maximum TCP throughput.");
+
+                // Test Lowest Latency Mode & Dynamic Ping-Weighted Shaper Optimization
+                mockAdapters[1].SpeedLimitBps = 0; // Clear per-adapter override
+                config.ShaperMode = Models.SpeedShaperMode.LowestLatency;
+                mockAdapters[0].PingMs = 15;
+                mockAdapters[1].PingMs = 120;
+                throttler.UpdateConfiguration(mockAdapters, config);
+
+                if (throttler.ActiveBurstSeconds > 0.03)
+                {
+                    throw new Exception("Lowest Latency mode failed to enforce anti-bufferbloat burst window!");
+                }
+                if (mockAdapters[0].ThrottledBandwidthBps <= mockAdapters[1].ThrottledBandwidthBps)
+                {
+                    throw new Exception("Lowest Latency mode failed to prioritize lowest ping connection!");
+                }
+                Console.WriteLine($"[PASS] Lowest Latency mode verified: Burst Window={throttler.ActiveBurstSeconds * 1000}ms (Anti-Bufferbloat), Fiber (15ms) allocated {mockAdapters[0].ThrottledBandwidthBps / 125_000} Mbps vs Cellular (120ms) allocated {mockAdapters[1].ThrottledBandwidthBps / 125_000} Mbps.");
+
+                // Test Real-Time Dynamic Cross-Connection Adaptation
+                mockAdapters[0].PingMs = 180;
+                mockAdapters[1].PingMs = 25;
+                throttler.AdaptDynamically(mockAdapters, config);
+                if (mockAdapters[1].ThrottledBandwidthBps <= mockAdapters[0].ThrottledBandwidthBps)
+                {
+                    throw new Exception("Dynamic cross-connection adaptation failed to adapt to latency changes!");
+                }
+                Console.WriteLine($"[PASS] Dynamic cross-connection adaptation verified: Shaper dynamically shifted priority to Wi-Fi ({mockAdapters[1].ThrottledBandwidthBps / 125_000} Mbps) over high-ping line ({mockAdapters[0].ThrottledBandwidthBps / 125_000} Mbps).");
+
+                // Test Persistent Serialization of ShaperMode & DynamicShaping
+                var store = new ConfigurationStore();
+                store.SaveImmediate(mockAdapters, config, "Dynamic Latency Test");
+                var reloaded = new ConfigurationStore().Load();
+                if (reloaded.Config.ShaperMode != Models.SpeedShaperMode.LowestLatency || !reloaded.Config.EnableDynamicShaping)
+                {
+                    throw new Exception("Persistent saving/loading of ShaperMode & DynamicShaping failed!");
+                }
+                Console.WriteLine($"[PASS] Persistence verified: SpeedShaperMode.{reloaded.Config.ShaperMode} and EnableDynamicShaping={reloaded.Config.EnableDynamicShaping} saved & loaded.");
+
                 // Test unthrottled mode
                 config.EnableBandwidthThrottling = false;
                 mockAdapters[1].SpeedLimitBps = 0;
@@ -260,8 +309,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.5";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 10)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.6";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 11)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Shutdown(0);
