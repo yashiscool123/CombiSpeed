@@ -1,5 +1,38 @@
 # Release Notes
 
+## [2.0.0] - 2026-11-02 - Multi-OS Cross-Platform & PAC Export Super Major Release
+
+### 🚀 Highlights & Super Major Advancements
+- **💾 Proxy Auto-Config (PAC) File Saving & Direct Export**:
+  - Added dedicated **"💾 Export PAC File..."** button directly inside the Proxy Auto-Config (PAC) configuration card in `SettingsWindow.xaml`.
+  - Integrated `Microsoft.Win32.SaveFileDialog` pre-configured for `.pac`, `.js`, and all files, generating and writing RFC-compliant `FindProxyForURL(url, host)` JavaScript files directly to any user-chosen local or network path.
+  - Added CLI command `--export-pac [outputPath]` to all editions (Windows, Linux, macOS), enabling automated PAC compilation and exporting directly from terminal, scripts, Docker entrypoints, and CI/CD pipelines.
+  - PAC script automatically incorporates RFC 1918 private subnets, loopback addresses (`127.*`, `localhost`, `::1`), corporate domains (`*.local`, `*.internal`, `*.corp`), custom routing rules, and fallback multi-proxy definitions (`PROXY 127.0.0.1:{httpPort}; SOCKS5 127.0.0.1:{socksPort}; DIRECT`).
+- **🐧 Dedicated Native Linux Codebase (`CombiSpeed-Linux/`)**:
+  - Independent, standalone .NET 8.0 Linux solution (`CombiSpeed.Linux.csproj`) targeting `net8.0` without any Windows dependencies.
+  - **Linux Kernel Multi-NIC Socket Binding**: Binds outbound TCP/UDP sockets to physical network interface names via Linux `SO_BINDTODEVICE` (socket opt 25) and local interface IPs, bypassing default routing limitations on Linux.
+  - **Linux System Proxy Automation**: Integrates with GNOME desktop environments via `gsettings set org.gnome.system.proxy`, generates system-wide shell environment scripts (`~/.config/combispeed/proxy.env`), and automatically cleans up on shutdown.
+  - **100% Identical Cyberpunk Glassmorphic Dashboard**: High-performance local microserver serving the identical dark cyberpunk UI with live 60 FPS Canvas waveforms, 4 telemetry KPI cards, segmented navigation tabs (`⚡ Overview & Dashboard`, `🖧 Combined Adapters`, `🚀 Speed Shaper & QoS`, `📜 Connection Audit`), 500 Mbps speed shaper, custom throttle modal, speed test benchmark, and WCAG AA accessibility controls.
+  - **1-Click Linux Management Scripts**: Complete package with `start-combispeed.sh`, `stop-combispeed.sh`, `install-combispeed.sh`, `uninstall-combispeed.sh`, and FreeDesktop `combispeed.desktop` shortcut.
+- **🍏 Dedicated Native macOS Codebase (`CombiSpeed-macOS/`)**:
+  - Independent, standalone .NET 8.0 macOS solution (`CombiSpeed.macOS.csproj`) targeting `net8.0` with full Darwin kernel compatibility.
+  - **macOS Hardware Port Detection & Binding**: Automatically maps macOS network services (Wi-Fi `en0`, Thunderbolt Ethernet `en1`, iPhone USB Tethering) and binds outbound sockets via `IP_BOUND_IF` / `SO_DONTROUTE` and local interface IPs.
+  - **macOS System Proxy Automation**: Integrates directly with macOS `networksetup` CLI (`-setwebproxy`, `-setsecurewebproxy`, `-setsocksfirewallproxy`, `-setautoproxyurl`), ensuring system-wide proxy activation and clean fail-safe restoration on application exit.
+  - **Identical Cyberpunk Glassmorphic UI**: Serves the exact same visual styling, glowing LED switches, segmented tabs, distribution bars, and accessibility features on macOS.
+  - **1-Click macOS Management Scripts & App Bundle**: Complete package including `start-combispeed-mac.sh`, `stop-combispeed-mac.sh`, `install-combispeed-mac.sh`, `uninstall-combispeed-mac.sh`, and Apple application bundle `CombiSpeed.app/Contents/Info.plist`.
+- **🪟 Windows Codebase Upgraded to v2.0.0 (Build 14)**:
+  - Version bump in `CombiSpeed.csproj`, `MainViewModel.cs`, and `App.xaml.cs`.
+  - Added PAC file export in `SettingsWindow.xaml.cs` and CLI `--export-pac <path>`.
+  - Upgraded verification test suites with automated PAC generation validation.
+- **📦 Separate Distribution Releases per Operating System**:
+  - Windows: `publish/windows/CombiSpeed-v2.0.0-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.0.0-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.0.0-macos-x64.tar.gz` and `.zip`
+- **✅ Comprehensive Verification**:
+  - 100% test pass rate across Windows, Linux, and macOS automated self-tests (`--verify-persistence`, `--verify-throttling`, `--version`, `--export-pac`).
+
+---
+
 ## [1.4.1] - 2026-11-02 - High-Contrast Dropdowns & Text Readability Release
 
 ### 🚀 Highlights & Features

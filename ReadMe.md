@@ -1,29 +1,47 @@
-# ⚡ CombiSpeed (Native C# .NET Windows Network Adapter Channel Bonding & Multi-WAN Bandwidth Aggregator)
+# ⚡ CombiSpeed (Multi-OS Network Adapter Channel Bonding & Multi-WAN Bandwidth Aggregator)
 
-![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D7?style=for-the-badge&logo=windows)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011%20(x64)-0078D7?style=for-the-badge&logo=windows)
+![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Architecture](https://img.shields.io/badge/Architecture-WPF%20%7C%20C%23%2012-10B981?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-v1.4.1%20(Build%2013)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.0.0%20(Build%2014)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
-**CombiSpeed** is an ultra-fast, native **C# .NET Windows application** that combines multiple network adapters (Wi-Fi, Gigabit Ethernet, 4G/5G Cellular USB dongles, Mobile Hotspots, and LAN connections) into a single, high-speed aggregate connection. 
+**CombiSpeed** is an ultra-fast, multi-OS application that combines multiple network adapters (Wi-Fi, Gigabit Ethernet, 4G/5G Cellular USB dongles, Mobile Hotspots, Thunderbolt bridges, and LAN connections) into a single, high-speed aggregate connection with dynamic traffic shaping.
 
-Built with **C# 12 and .NET 8.0 WPF**, CombiSpeed runs directly on the Windows TCP/IP stack with low-level socket binding (`Socket.Bind(new IPEndPoint(adapterIp, 0))`), delivering zero runtime overhead, instant startup (<200ms), and minimal memory consumption (~25 MB RAM).
+Featuring dedicated, separate native codebases for **Windows 10/11 (`CombiSpeed/`)**, **Linux (`CombiSpeed-Linux/`)**, and **macOS (`CombiSpeed-macOS/`)**, CombiSpeed runs directly on each OS kernel's network stack with native low-level socket binding, delivering zero runtime overhead, instant startup (<200ms), and an identical, accessible dark cyberpunk glassmorphic dashboard across all platforms!
 
 ---
 
 ## 🌟 Application Summary
 
-When a Windows machine is connected to multiple internet sources simultaneously (e.g. Fiber broadband via Ethernet, 5G phone hotspot via Wi-Fi, or secondary office Wi-Fi), the standard Windows routing table restricts all traffic to a single default route with the lowest metric. The secondary connections sit 100% idle!
+When a computer is connected to multiple internet sources simultaneously (e.g. Fiber broadband via Ethernet, 5G phone hotspot via Wi-Fi, or secondary office Wi-Fi), standard OS routing tables restrict all traffic to a single default route with the lowest metric. The secondary connections sit 100% idle!
 
-**CombiSpeed eliminates this bottleneck.** It acts as a local high-performance asynchronous multi-threaded aggregation engine. By intercepting connections via dual-mode SOCKS5 & HTTP/HTTPS forward proxies or native Virtual Bridge adapter, it binds each outgoing TCP socket directly to individual network adapter IP addresses (`Socket.Bind(new IPEndPoint(adapterIp, 0))`). This bypasses the default route limitation and forces traffic simultaneously across all active adapters, combining their speeds into a single supercharged pipeline.
+**CombiSpeed eliminates this bottleneck.** It acts as a local high-performance asynchronous multi-threaded aggregation engine. By intercepting connections via dual-mode SOCKS5 & HTTP/HTTPS forward proxies or native virtual bonded bridges, it binds each outgoing TCP/UDP socket directly to individual physical network adapter interfaces:
+- **Windows**: `Socket.Bind(new IPEndPoint(adapterIp, 0))` + WinINet proxy & Virtual Bridge
+- **Linux**: `Socket.Bind` + `SO_BINDTODEVICE` (socket opt 25) + `gsettings` & shell proxy environment
+- **macOS**: `Socket.Bind` + `IP_BOUND_IF` / `SO_DONTROUTE` + `networksetup` proxy automation
+
+This bypasses default routing limitations and forces traffic simultaneously across all active adapters, combining their speeds into a single supercharged pipeline.
 
 ---
 
 ## 🚀 Key Features
 
-1. **Modern Segmented UI/UX Redesign, High-Contrast Dropdowns & Text Readability (NEW in v1.4.1)**:
+1. **Proxy Auto-Config (PAC) File Saving & Direct Export (NEW in v2.0.0)**:
+   - **One-Click PAC Export Button**: Built directly into the PAC routing configuration section in `SettingsWindow.xaml` and the Linux/macOS dashboard.
+   - **Interactive File Save Dialog**: Pre-configured with `.pac`, `.js`, and all-files filters, compiling RFC-compliant `FindProxyForURL(url, host)` JavaScript files directly to disk.
+   - **Command-Line PAC Export**: Built-in `--export-pac [outputPath]` CLI command on all operating systems for automated deployment, browser provisioning, and headless server environments.
+   - **RFC-Compliant Intranet Bypass**: Automatically bypasses intranet ranges (RFC 1918 `10.*`, `172.16.*`, `192.168.*`), localhost (`127.*`, `localhost`, `::1`), and custom domains (`*.local`, `*.internal`, `*.corp`), while aggregating all internet traffic.
+
+2. **Multi-OS Compatibility with Separate Standalone Codebases (NEW in v2.0.0)**:
+   - **`CombiSpeed/` (Windows Codebase)**: Native .NET 8.0 WPF application (`net8.0-windows`) with hardware-accelerated DirectX rendering, WinINet registry integration, and Windows Virtual Bonded Bridge phonebook (`rasphone.pbk`).
+   - **`CombiSpeed-Linux/` (Linux Codebase)**: Independent .NET 8.0 Linux application (`net8.0`) with `SO_BINDTODEVICE` interface binding, GNOME `gsettings` proxy automation, shell environment generation (`~/.config/combispeed/proxy.env`), and 1-click launch scripts (`start-combispeed.sh`, `stop-combispeed.sh`, `install-combispeed.sh`).
+   - **`CombiSpeed-macOS/` (macOS Codebase)**: Independent .NET 8.0 macOS application (`net8.0`) with `IP_BOUND_IF` socket binding, `networksetup` proxy configuration, 1-click launch scripts (`start-combispeed-mac.sh`, `stop-combispeed-mac.sh`, `install-combispeed-mac.sh`), and Apple application bundle `CombiSpeed.app/Contents/Info.plist`.
+   - **100% Consistent UI/UX Across All Platforms**: Identical dark cyberpunk glassmorphic visual aesthetic, glowing master LED switches, live 60 FPS bandwidth waveform graphs, segmented navigation tabs, 500 Mbps sliders, custom throttle dialogs, speed benchmarks, and WCAG 2.1 AA accessibility.
+
+3. **Modern Segmented UI/UX Redesign, High-Contrast Dropdowns & Text Readability**:
    - **Custom Accessible Dark `ComboBox` ControlTemplate**: Replaces the platform default Windows Aero2 template with an accessible dark template featuring a high-contrast toggle button (`#131D33`), dedicated split border with glowing cyan chevron (`#00F0FF`), dark popup border (`#0B1120`), and explicit white selection text (`#FFFFFF`), completely resolving white-on-white and black-on-dark display defects.
    - **Global Anti-Fallback Text Styling**: Registered default styles for `TextBlock` and `Label` with `Foreground="#F8FAFC"`, preventing Windows light theme from causing text to fall back to black on dark surfaces.
    - **Application-Wide Text Contrast Upgrade**: Replaced low-luminance and dim text colors (`#94A3B8`, `#334155`) across all cards, dialogs, and tables with high-luminance, crystal-clear colors (`#FFFFFF` pure white, `#38BDF8` sky cyan, `#F1F5F9` crisp slate, and `#CBD5E1` bright silver), achieving 14:1+ contrast ratios.
@@ -214,68 +232,65 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ---
 
-## 📦 Building and Publishing
+## 📦 Building and Separate Multi-OS Publishing
 
 ### Prerequisites
-- Windows 10 / 11 (x64)
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- Windows 10 / 11 (x64), Linux (Ubuntu, Debian, Fedora, Arch x64/arm64), or macOS 10.15+ (x64/arm64)
 
-### Build Release
-```powershell
-# Restore & Compile
-dotnet build CombiSpeed/CombiSpeed.csproj -c Release
+### Build & Publish Commands per OS
 
-# Publish self-contained or framework-dependent release
-dotnet publish CombiSpeed/CombiSpeed.csproj -c Release -o publish
+```bash
+# 1. Windows (WPF Native)
+dotnet publish CombiSpeed/CombiSpeed.csproj -c Release -r win-x64 --self-contained false -o publish/windows/bin
+
+# 2. Linux (Native Console & Embedded Cyberpunk UI)
+dotnet publish CombiSpeed-Linux/CombiSpeed.Linux.csproj -c Release -r linux-x64 --self-contained false -o publish/linux/bin
+
+# 3. macOS (Darwin Native & Embedded Cyberpunk UI)
+dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --self-contained false -o publish/macos/bin
 ```
 
-The compiled standalone executable is located at `publish/CombiSpeed.exe` (~150 KB).
+### Published Packages
+- **Windows**: `publish/windows/CombiSpeed-v2.0.0-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.0.0-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.0.0-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.0.0-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.0.0-macos-x64.zip`
 
 ---
 
-## ⚡ One-Click Start, Stop & Installer
+## ⚡ One-Click Start, Stop & Installers per OS
 
-CombiSpeed includes zero-configuration one-click scripts for seamless daily operation and installation:
+### 🪟 Windows 10 / 11
+- **Install**: Run `Install-CombiSpeed.bat` (installs to `%LOCALAPPDATA%\Programs\CombiSpeed`, creates Start Menu & Desktop shortcuts, registers in Installed Apps).
+- **Start**: Run `Start-CombiSpeed.bat` (launches WPF UI and engages channel bonding).
+- **Stop**: Run `Stop-CombiSpeed.bat` (halts processes and resets Windows WinINet proxy).
+- **Export PAC**: Run `CombiSpeed.exe --export-pac [outputPath]` or click **"💾 Export PAC File..."** in Settings.
 
-### 1. One-Click Installer (`Install-CombiSpeed.bat`)
-Installs CombiSpeed for the current user into `%LOCALAPPDATA%\Programs\CombiSpeed` without requiring administrative (UAC) elevation:
-- Automatically compiles release binaries if needed.
-- Creates **Desktop Shortcuts** (`CombiSpeed`, `Start CombiSpeed (Bonding)`, and `Stop CombiSpeed`).
-- Creates **Start Menu Folder** with app launcher, bonding launcher, stopper, and uninstaller.
-- Registers in Windows **Installed Apps** / **Add or Remove Programs** (`Settings > Apps > Installed apps`) with full uninstaller support.
-- Supports silent automated install via `Install-CombiSpeed.bat --silent --no-launch`.
+### 🐧 Linux (Ubuntu / Debian / Fedora / Arch)
+- **Install**: Run `./install-combispeed.sh` (installs to `~/.local/bin/combispeed` and creates `~/.local/share/applications/combispeed.desktop`).
+- **Start**: Run `./start-combispeed.sh` (launches engine and opens Cyberpunk Dashboard in default browser).
+- **Stop**: Run `./stop-combispeed.sh` (halts engine and resets GNOME / shell proxy settings).
+- **Export PAC**: Run `combispeed-linux --export-pac [outputPath]` or download from the web dashboard.
 
-### 2. One-Click Start (`Start-CombiSpeed.bat`)
-Double-click `Start-CombiSpeed.bat` to launch CombiSpeed and immediately engage multi-WAN network bonding:
-```cmd
-# Standard launch with auto-bonding
-Start-CombiSpeed.bat
+### 🍏 macOS (Intel & Apple Silicon)
+- **Install**: Run `./install-combispeed-mac.sh` (installs `CombiSpeed.app` into `/Applications` or `~/Applications` and creates `~/.local/bin/combispeed`).
+- **Start**: Run `./start-combispeed-mac.sh` or open `CombiSpeed.app` from Finder / Spotlight.
+- **Stop**: Run `./stop-combispeed-mac.sh` (halts engine and restores macOS `networksetup` proxies).
+- **Export PAC**: Run `combispeed-macos --export-pac [outputPath]` or download from the dashboard.
 
-# Launch directly into system tray / minimized
-Start-CombiSpeed.bat --minimized
-```
+---
 
-### 3. One-Click Stop (`Stop-CombiSpeed.bat`)
-Double-click `Stop-CombiSpeed.bat` for instant, fail-safe shutdown:
-- Sends graceful shutdown signal to running CombiSpeed instances.
-- Cleans up and shuts down local proxy servers.
-- **Fail-Safe Windows Proxy Reset**: Direct registry and WinINet API restore guarantees that Windows System Proxy is turned OFF, ensuring internet connectivity is never broken or left hanging.
-- Terminates any lingering processes.
-
-### 4. CLI Arguments Reference
+### 💻 CLI Arguments Reference (All Platforms)
 | Argument | Alias | Description |
 |---|---|---|
 | `--version` | `-v`, `/version` | Prints application version, build number, and target architecture to stdout. |
 | `--start` | `-s` | Starts CombiSpeed and automatically engages network bonding on launch. |
 | `--stop` | *(none)* | Signals any running CombiSpeed instance to shutdown and safely restores system proxy. |
-| `--minimized` | `-m` | Launches CombiSpeed in minimized window mode. |
-| `--service` / `--headless` | `-h` | Runs CombiSpeed in headless daemon mode or as a Windows background service. |
-| `--service-install` | *(none)* | Automatically registers and configures `CombiSpeedService` in Windows SCM. |
-| `--service-uninstall` | *(none)* | Stops and cleanly deletes `CombiSpeedService` from Windows SCM. |
-| `--service-start` | *(none)* | Starts `CombiSpeedService` via Service Control Manager. |
-| `--service-stop` | *(none)* | Stops `CombiSpeedService` via Service Control Manager. |
-| `--verify-persistence` | *(none)* | Runs automated self-test suite verifying adapter settings, profiles, accessibility, and persistence engine. |
-| `--verify-throttling` | *(none)* | Runs automated self-test suite verifying Token Bucket rate limiting and proportional traffic shaping. |
+| `--export-pac <path>` | `-export-pac` | Compiles and exports RFC-compliant PAC JavaScript script directly to the specified file path. |
+| `--minimized` | `-m` | Launches CombiSpeed in minimized window mode (Windows). |
+| `--service` / `--headless` / `--daemon` | `-h` | Runs CombiSpeed in headless daemon mode without opening GUI or browser. |
+| `--verify-persistence` | *(none)* | Runs automated self-test suite verifying adapter settings, profiles, accessibility, and PAC export. |
+| `--verify-throttling` | *(none)* | Runs automated self-test suite verifying Token Bucket rate limiting, 500 Mbps cap, and dynamic speed shaping. |
 
 ---
 

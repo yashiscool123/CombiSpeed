@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=CombiSpeed
+GenericName=Multi-WAN Bandwidth Aggregator
+Comment=Combine multiple network adapters for faster bandwidth and dynamic speed shaping
+Exec=combispeed --start
+Icon=network-wired
+Terminal=false
+Categories=Network;System;Utility;
+Keywords=network;bonding;vpn;proxy;speed;bandwidth;aggregate;shaper;
+StartupNotify=true

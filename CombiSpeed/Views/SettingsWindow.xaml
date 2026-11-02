@@ -191,8 +191,11 @@
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="10" Margin="0,0,0,16">
                         <StackPanel>
                             <Grid Margin="0,0,0,8">
-                                <TextBlock Text="Domain Routing Rules" FontSize="11" FontWeight="Bold" Foreground="#00F0FF"/>
-                                <Button Content="Preview PAC Script" Click="PreviewPac_Click" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" HorizontalAlignment="Right" AutomationProperties.Name="Preview Generated PAC Script"/>
+                                <TextBlock Text="Domain Routing Rules" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="Preview PAC Script" Click="PreviewPac_Click" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,6,0" AutomationProperties.Name="Preview Generated PAC Script"/>
+                                    <Button Content="💾 Export PAC File..." Click="ExportPac_Click" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" AutomationProperties.Name="Export PAC Script to File"/>
+                                </StackPanel>
                             </Grid>
 
                             <DataGrid x:Name="GridPacRules" Height="130" AutoGenerateColumns="False" CanUserAddRows="True" Background="Transparent" BorderThickness="0" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#131D33" Foreground="#FFFFFF">

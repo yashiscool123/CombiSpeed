@@ -186,3 +186,29 @@
 - [x] Create standalone zipped release archive (publish/CombiSpeed-v1.4.1-win-x64.zip).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v1.4.1.
+
+## Milestone 15: PAC Export & Multi-OS Separate Architecture (Windows, Linux, macOS) [COMPLETED]
+- [x] Increment version to 2.0.0 and versionCode: 14 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, MainViewModel.cs, App.xaml.cs, Install-CombiSpeed.bat, and Info.plist).
+- [x] Implement PAC (Proxy Auto-Config) file saving and direct exporting in Windows WPF SettingsWindow.xaml ("💾 Export PAC File..." button) and SettingsWindow.xaml.cs using SaveFileDialog (.pac, .js, *.* filters).
+- [x] Add CLI argument --export-pac <path> across Windows, Linux, and macOS engines allowing automated terminal and script PAC generation.
+- [x] Design and implement dedicated, independent Linux codebase (CombiSpeed-Linux/):
+  - Created CombiSpeed.Linux.csproj targeting net8.0.
+  - Implemented LinuxNetworkDetector.cs reading /sys/class/net and native interfaces.
+  - Implemented LinuxProxyEngine.cs with SO_BINDTODEVICE (socket opt 25) raw interface binding, SOCKS5 TCP/UDP, and HTTP/HTTPS CONNECT.
+  - Implemented LinuxLoadBalancer.cs and LinuxBandwidthThrottler.cs with SWRR %, 500 Mbps rate limiting, dynamic latency/bandwidth modes, and cross-connection borrowing.
+  - Implemented LinuxProxyManager.cs for GNOME gsettings and shell environment scripts (~/.config/combispeed/proxy.env).
+  - Implemented embedded Cyberpunk Glassmorphic Dashboard SPA matching exact colors, tabs, waveforms, and WCAG AA accessibility.
+  - Created Linux one-click scripts (start-combispeed.sh, stop-combispeed.sh, install-combispeed.sh, uninstall-combispeed.sh, combispeed.desktop).
+- [x] Design and implement dedicated, independent macOS codebase (CombiSpeed-macOS/):
+  - Created CombiSpeed.macOS.csproj targeting net8.0.
+  - Implemented MacNetworkDetector.cs and MacProxyEngine.cs with IP_BOUND_IF / SO_DONTROUTE socket binding.
+  - Implemented MacProxyManager.cs for macOS networksetup CLI proxy automation.
+  - Implemented embedded Cyberpunk Glassmorphic Dashboard SPA with exact visual styling.
+  - Created macOS one-click scripts (start-combispeed-mac.sh, stop-combispeed-mac.sh, install-combispeed-mac.sh, uninstall-combispeed-mac.sh) and Apple application bundle CombiSpeed.app/Contents/Info.plist.
+- [x] Publish and package separate distributions per OS in publish/:
+  - Windows: publish/windows/CombiSpeed-v2.0.0-win-x64.zip
+  - Linux: publish/linux/CombiSpeed-v2.0.0-linux-x64.tar.gz and .zip
+  - macOS: publish/macos/CombiSpeed-v2.0.0-macos-x64.tar.gz and .zip
+- [x] Validate automated self-test suites across all platforms (--verify-persistence, --verify-throttling, --version, --export-pac) with 100% pass rates.
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.0.0.

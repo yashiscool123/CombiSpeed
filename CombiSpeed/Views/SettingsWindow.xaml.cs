@@ -130,6 +130,34 @@ public partial class SettingsWindow : Window
         MessageBox.Show(pac, "Generated PAC Script Preview", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
+    private void ExportPac_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            int httpPort = int.TryParse(TxtHttpPort.Text, out int h) ? h : 8080;
+            int socksPort = int.TryParse(TxtSocksPort.Text, out int s) ? s : 1080;
+            string pac = PacConfigModel.Current.GeneratePacScript(httpPort, socksPort);
+
+            var saveDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "Export Proxy Auto-Config (PAC) File",
+                FileName = "proxy.pac",
+                DefaultExt = ".pac",
+                Filter = "PAC Script (*.pac)|*.pac|JavaScript (*.js)|*.js|All Files (*.*)|*.*"
+            };
+
+            if (saveDialog.ShowDialog(this) == true)
+            {
+                System.IO.File.WriteAllText(saveDialog.FileName, pac, System.Text.Encoding.UTF8);
+                MessageBox.Show($"PAC script successfully exported to:\n{saveDialog.FileName}", "Export PAC Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to export PAC file: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         if (int.TryParse(TxtHttpPort.Text, out int httpPort)) _config.HttpPort = httpPort;

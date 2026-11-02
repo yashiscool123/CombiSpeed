@@ -126,6 +126,17 @@ public partial class App : Application
                 }
                 Console.WriteLine("[PASS] Accessibility persistence verified: HighContrast=True, UiScale=115%, ReduceMotion=True saved & loaded.");
 
+                // Test 6: PAC Generation & Export Verification
+                string tempPac = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "test_combispeed_proxy.pac");
+                string pacScript = Models.PacConfigModel.Current.GeneratePacScript(8090, 1090);
+                System.IO.File.WriteAllText(tempPac, pacScript, System.Text.Encoding.UTF8);
+                if (!System.IO.File.Exists(tempPac) || !System.IO.File.ReadAllText(tempPac).Contains("FindProxyForURL"))
+                {
+                    throw new Exception("PAC file export verification failed.");
+                }
+                if (System.IO.File.Exists(tempPac)) System.IO.File.Delete(tempPac);
+                Console.WriteLine("[PASS] PAC file generation and export verification passed (FindProxyForURL verified).");
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL ADAPTER PERSISTENCE & COMBINATION TESTS PASSED (100% OK)       ");
                 Console.WriteLine("=====================================================================");
@@ -323,12 +334,42 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.1";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 13)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.0";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 14)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Shutdown(0);
             return;
+        }
+
+        int exportPacIdx = Array.FindIndex(e.Args, a => a.Equals("--export-pac", StringComparison.OrdinalIgnoreCase) ||
+                                                        a.Equals("-export-pac", StringComparison.OrdinalIgnoreCase));
+        if (exportPacIdx >= 0)
+        {
+            AttachConsole(-1);
+            string outputPath = exportPacIdx + 1 < e.Args.Length ? e.Args[exportPacIdx + 1] : "proxy.pac";
+            try
+            {
+                var pac = Models.PacConfigModel.Current.GeneratePacScript();
+                string fullPath = System.IO.Path.GetFullPath(outputPath);
+                string? dir = System.IO.Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                }
+                System.IO.File.WriteAllText(fullPath, pac, System.Text.Encoding.UTF8);
+                Console.WriteLine($"[CombiSpeed] Successfully exported PAC file to: {fullPath}");
+                Shutdown(0);
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[CombiSpeed] ERROR: Failed to export PAC file: {ex.Message}");
+                Console.ResetColor();
+                Shutdown(1);
+                return;
+            }
         }
 
         // Service Management Commands
