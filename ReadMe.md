@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.0.1%20(Build%2015)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.0.2%20(Build%2016)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -29,7 +29,13 @@ This bypasses default routing limitations and forces traffic simultaneously acro
 
 ## 🚀 Key Features
 
-1. **Speed Benchmark Multi-Stream Overhaul & Virtual Adapter Protection (NEW in v2.0.1)**:
+1. **Speed Combining & Unified Bandwidth Pooling (NEW in v2.0.2)**:
+   - **Combine Speeds Mode**: Bandwidth across all active connections and adapters is pooled additively ($TotalSpeed = Speed_{NIC1} + Speed_{NIC2} + \dots$). Eliminates artificial fractional slicing or partitioning where adapters were throttled to fractional percentages (e.g. 50% or 25%).
+   - **Unified Combined Speed Cap**: Configured bandwidth caps (e.g. 500 Mbps) enforce the combined aggregate total across all connections simultaneously. Individual connections have access to the full combined speed pool rather than being choked by split sub-limits.
+   - **Multi-NIC Parallel Range Chunk Speed Combiner**: Implemented in `ProxyEngine.cs` for HTTP file transfers. Detects chunkable resources ($\ge 512\text{ KB}$ with HTTP Range support) and streams byte chunks concurrently across all active physical adapters, combining the physical wire speeds of multiple adapters for a single file download!
+   - **Accessible UI & Preset Refresh**: Updated toolbar presets to "Unlimited (Combined Speed)" and status indicator to "Bandwidth: Combined Speed Aggregation (Active)".
+
+2. **Speed Benchmark Multi-Stream Overhaul & Virtual Adapter Protection (v2.0.1)**:
    - **Pre-Flight Latency & Routability Probing**: Automatically detects and isolates unroutable virtual host-only adapters (such as Hyper-V `vEthernet` or WSL bridges with IPs `172.19.96.1` / `172.31.0.1`). Conducts an instant 1500ms pre-flight probe; adapters exceeding 900ms or unreachable gateways are assigned 0 Mbps immediately, eliminating 21-42 second TCP SYN retransmission hangs.
    - **Proxy Bypass Isolation (`UseProxy = false`)**: Enforces direct physical interface routing during speed tests (`SocketsHttpHandler.UseProxy = false`, `Proxy = null`), preventing benchmark requests from incorrectly routing to loopback `127.0.0.1:8080` while bound to a physical adapter IP, resolving the `10049 WSAEADDRNOTAVAIL` socket rejection.
    - **Strict IPv4 DNS Resolution**: Integrated `ResolveHostIPv4Async` to eliminate IPv6 address family mismatches when attempting to connect from IPv4-bound physical sockets.
@@ -259,9 +265,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.0.1-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.0.1-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.0.1-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.0.1-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.0.1-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.0.2-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.0.2-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.0.2-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.0.2-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.0.2-macos-x64.zip`
 
 ---
 

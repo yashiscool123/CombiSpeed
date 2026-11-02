@@ -22,7 +22,7 @@ public partial class SettingsWindow : Window
         ChkAutoWindowsProxy.IsChecked = config.EnableWindowsProxy;
         ChkEnablePac.IsChecked = config.EnablePac;
         ChkEnableThrottling.IsChecked = config.EnableBandwidthThrottling;
-        ChkProportionalThrottling.IsChecked = config.EnforceProportionalThrottling;
+        ChkCombineSpeeds.IsChecked = config.CombineSpeedsMode;
 
         foreach (ComboBoxItem item in CmbShaperMode.Items)
         {
@@ -180,7 +180,8 @@ public partial class SettingsWindow : Window
         _config.EnableDynamicShaping = ChkDynamicShaping.IsChecked == true;
 
         _config.EnableBandwidthThrottling = ChkEnableThrottling.IsChecked == true;
-        _config.EnforceProportionalThrottling = ChkProportionalThrottling.IsChecked == true;
+        _config.CombineSpeedsMode = ChkCombineSpeeds.IsChecked == true;
+        _config.EnforceProportionalThrottling = !_config.CombineSpeedsMode;
 
         if (double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl) && dl > 0)
         {

@@ -111,7 +111,7 @@
                     <!-- Bandwidth Throttling & Speed Shaper -->
                     <TextBlock Text="BANDWIDTH THROTTLING &amp; SPEED SHAPER" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     <CheckBox x:Name="ChkEnableThrottling" Content="Enable Real-Time Bandwidth &amp; Speed Throttling" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Enable Real-Time Throttling"/>
-                    <CheckBox x:Name="ChkProportionalThrottling" Content="Strict Proportional Shaping (Enforce exact % bandwidth ratios on throughput)" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,8" AutomationProperties.Name="Strict Proportional Shaping"/>
+                    <CheckBox x:Name="ChkCombineSpeeds" Content="Combine Speeds Mode (Pool aggregate bandwidth without splitting across connections)" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,8" AutomationProperties.Name="Combine Speeds Mode"/>
 
                     <!-- Speed Shaper Mode & Dynamic Adaptation -->
                     <Grid Margin="0,0,0,12">

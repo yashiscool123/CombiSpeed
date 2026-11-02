@@ -170,46 +170,44 @@ public partial class App : Application
                     new() { Id = "adapter-2", Name = "Secondary Wi-Fi", IsEnabled = true, Weight = 25 }
                 };
 
-                // Combined 2 MB/s cap
+                // Combined 2 MB/s cap in Combine Speeds Mode (no splitting)
                 var config = new Models.ProxyConfigModel
                 {
                     EnableBandwidthThrottling = true,
-                    EnforceProportionalThrottling = true,
+                    CombineSpeedsMode = true,
+                    EnforceProportionalThrottling = false,
                     GlobalDownloadLimitBps = 2 * 1024 * 1024,
                     GlobalUploadLimitBps = 1 * 1024 * 1024
                 };
 
                 throttler.UpdateConfiguration(mockAdapters, config);
 
-                // Verify proportional allocation
-                long expectedAdapter1 = (long)(config.GlobalDownloadLimitBps * 0.75);
-                long expectedAdapter2 = (long)(config.GlobalDownloadLimitBps * 0.25);
-
-                if (mockAdapters[0].ThrottledBandwidthBps != expectedAdapter1)
+                // Verify Combine Speeds allocation: both adapters have access to the full combined pool
+                if (mockAdapters[0].ThrottledBandwidthBps != config.GlobalDownloadLimitBps)
                 {
-                    throw new Exception($"Adapter 1 allocated bandwidth mismatch: expected {expectedAdapter1}, got {mockAdapters[0].ThrottledBandwidthBps}");
+                    throw new Exception($"Adapter 1 combined bandwidth mismatch: expected {config.GlobalDownloadLimitBps}, got {mockAdapters[0].ThrottledBandwidthBps}");
                 }
-                if (mockAdapters[1].ThrottledBandwidthBps != expectedAdapter2)
+                if (mockAdapters[1].ThrottledBandwidthBps != config.GlobalDownloadLimitBps)
                 {
-                    throw new Exception($"Adapter 2 allocated bandwidth mismatch: expected {expectedAdapter2}, got {mockAdapters[1].ThrottledBandwidthBps}");
+                    throw new Exception($"Adapter 2 combined bandwidth mismatch: expected {config.GlobalDownloadLimitBps}, got {mockAdapters[1].ThrottledBandwidthBps}");
                 }
 
-                Console.WriteLine($"[PASS] Proportional allocation verified: Adapter 1={expectedAdapter1 / 1024} KB/s (75%), Adapter 2={expectedAdapter2 / 1024} KB/s (25%)");
+                Console.WriteLine($"[PASS] Combine Speeds Mode verified: Adapter 1={mockAdapters[0].ThrottledBandwidthBps / 1024} KB/s, Adapter 2={mockAdapters[1].ThrottledBandwidthBps / 1024} KB/s (Full Combined Capacity, Not Split).");
 
-                // Test live throttling delay
+                // Test live throttling delay on combined pool:
+                // Pump 1.5MB through the 2 MB/s combined pool (24 chunks of 65,536 bytes)
+                // 1.5MB at 2 MB/s with burst takes ~500-750ms
                 var sw = Stopwatch.StartNew();
-                // Pump 384KB through Adapter 2 (capped at 524,288 B/s ~ 0.5 MB/s)
-                // 384KB at 512KB/s takes ~600-700ms
                 for (int i = 0; i < 24; i++)
                 {
-                    throttler.ThrottleDownloadAsync(mockAdapters[1], 16384).AsTask().Wait();
+                    throttler.ThrottleDownloadAsync(mockAdapters[1], 65536).AsTask().Wait();
                 }
                 sw.Stop();
 
-                Console.WriteLine($"[PASS] Throttler enforced delay: {sw.ElapsedMilliseconds}ms for 384KB transfer (strictly rate-limited).");
+                Console.WriteLine($"[PASS] Throttler enforced delay: {sw.ElapsedMilliseconds}ms for 1.5MB transfer (strictly rate-limited at combined 2 MB/s).");
                 if (sw.ElapsedMilliseconds < 200)
                 {
-                    throw new Exception("Throttler failed to enforce delay on rate-limited adapter!");
+                    throw new Exception("Throttler failed to enforce delay on rate-limited combined pool!");
                 }
 
                 // Test 500 Mbps Throttling Cap
@@ -219,17 +217,17 @@ public partial class App : Application
                     throw new Exception($"500 Mbps conversion mismatch: expected 62500000, got {limit500Mbps}");
                 }
                 config.EnableBandwidthThrottling = true;
+                config.CombineSpeedsMode = true;
+                config.EnforceProportionalThrottling = false;
                 config.GlobalDownloadLimitBps = limit500Mbps;
                 config.BurstToleranceSeconds = 0.10;
                 throttler.UpdateConfiguration(mockAdapters, config);
 
-                long expected500_1 = (long)(limit500Mbps * 0.75);
-                long expected500_2 = (long)(limit500Mbps * 0.25);
-                if (mockAdapters[0].ThrottledBandwidthBps != expected500_1 || mockAdapters[1].ThrottledBandwidthBps != expected500_2)
+                if (mockAdapters[0].ThrottledBandwidthBps != limit500Mbps || mockAdapters[1].ThrottledBandwidthBps != limit500Mbps)
                 {
-                    throw new Exception("500 Mbps proportional allocation mismatch!");
+                    throw new Exception("500 Mbps Combine Speeds allocation mismatch! Expected adapters to pool full combined limit.");
                 }
-                Console.WriteLine($"[PASS] 500 Mbps cap verified: Adapter 1={expected500_1 / 125_000} Mbps (75%), Adapter 2={expected500_2 / 125_000} Mbps (25%)");
+                Console.WriteLine($"[PASS] 500 Mbps Combine Speeds cap verified: Both adapters combined into 500 Mbps ({limit500Mbps / 125_000} Mbps) aggregate pool.");
 
                 // Test Custom Parameter Unit Conversion
                 long custom350Mbps = BandwidthThrottler.ConvertToBytesPerSec(350, "Mbps");
@@ -334,8 +332,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.1";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 15)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.2";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 16)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Shutdown(0);

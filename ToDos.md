@@ -234,3 +234,29 @@
 - [x] Execute clean builds and validate 100% test pass rate across --verify-benchmark, --verify-persistence, --verify-throttling.
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.0.1.
+
+## Milestone 17: Speed Combining & Unified Bandwidth Pooling [COMPLETED]
+- [x] Increment version to 2.0.2 and versionCode: 16 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, MainViewModel.cs, App.xaml.cs, Install-CombiSpeed.bat, Info.plist, Program.cs, and CyberpunkSpa.cs).
+- [x] Implement Combine Speeds Mode across BandwidthThrottler.cs and ProxyConfigModel.cs:
+  - Add CombineSpeedsMode = true and set EnforceProportionalThrottling = false by default.
+  - Pool aggregate bandwidth additively ($TotalSpeed = Speed_{NIC1} + Speed_{NIC2} + \dots$) across all active adapters.
+  - Eliminate fractional bandwidth slicing where adapters were choked to sub-limits (e.g. 50% or 25%).
+  - Ensure every adapter has access to the full combined limit, while global Token Bucket regulates the aggregate cap.
+- [x] Implement Multi-NIC Parallel Range Chunk Speed Combiner in ProxyEngine.cs:
+  - Added TryCombinedRangeDownloadAsync for HTTP GET downloads ($\ge 512\text{ KB}$ with HTTP Range support).
+  - Fetches parallel byte-range chunks concurrently across all active physical adapters simultaneously, combining physical wire speeds for a single file download.
+  - Transparent fallback to standard pipe for non-range or dynamic HTTP requests.
+- [x] Update UI controls and preset text:
+  - Preset updated to "Unlimited (Combined Speed)".
+  - Status indicator updated to "Bandwidth: Combined Speed Aggregation (Active)".
+  - Switched checkbox in CustomThrottleDialog.xaml and SettingsWindow.xaml to "Combine Speeds Mode (Pool aggregate bandwidth without splitting across connections)".
+- [x] Update self-test test suites in App.xaml.cs:
+  - Verified Combine Speeds Mode allocation (both adapters receive full combined capacity).
+  - Verified live 1.5MB delay enforcement and 500 Mbps pool cap.
+  - 100% test pass rate across --verify-throttling, --verify-persistence, --verify-benchmark.
+- [x] Publish and package release artifacts in publish/:
+  - Windows: publish/windows/CombiSpeed-v2.0.2-win-x64.zip
+  - Linux: publish/linux/CombiSpeed-v2.0.2-linux-x64.tar.gz and .zip
+  - macOS: publish/macos/CombiSpeed-v2.0.2-macos-x64.tar.gz and .zip
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.0.2.

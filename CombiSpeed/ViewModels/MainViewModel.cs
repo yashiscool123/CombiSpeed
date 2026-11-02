@@ -105,7 +105,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.1";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.2";
         }
     }
 
@@ -114,8 +114,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.1";
-            return $"{verStr} (Build 15)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.2";
+            return $"{verStr} (Build 16)";
         }
     }
 
@@ -179,7 +179,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public ObservableCollection<string> ThrottlePresets { get; } = new()
     {
-        "Unlimited (Proportional)",
+        "Unlimited (Combined Speed)",
         "16 Mbps (2 MB/s)",
         "40 Mbps (5 MB/s)",
         "80 Mbps (10 MB/s)",
@@ -219,7 +219,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _selectedThrottlePreset = "Unlimited (Proportional)";
+    private string _selectedThrottlePreset = "Unlimited (Combined Speed)";
     public string SelectedThrottlePreset
     {
         get => _selectedThrottlePreset;
@@ -232,7 +232,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _throttleStatusText = "Throttling: Proportional % Shaping";
+    private string _throttleStatusText = "Bandwidth: Combined Speed Aggregation";
     public string ThrottleStatusText
     {
         get => _throttleStatusText;
@@ -576,7 +576,7 @@ public class MainViewModel : INotifyPropertyChanged
     {
         if (Config.GlobalDownloadLimitBps <= 0)
         {
-            _selectedThrottlePreset = "Unlimited (Proportional)";
+            _selectedThrottlePreset = "Unlimited (Combined Speed)";
             OnPropertyChanged(nameof(SelectedThrottlePreset));
             return;
         }
@@ -653,11 +653,11 @@ public class MainViewModel : INotifyPropertyChanged
 
         if (Config.GlobalDownloadLimitBps > 0)
         {
-            ThrottleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeedWithBits(Config.GlobalDownloadLimitBps)} Cap ({modeTag})";
+            ThrottleStatusText = $"Combined Cap: {NetworkAdapterModel.FormatSpeedWithBits(Config.GlobalDownloadLimitBps)} ({modeTag})";
         }
         else if (Config.EnableBandwidthThrottling)
         {
-            ThrottleStatusText = $"Shaping: {modeTag} (Dynamic)";
+            ThrottleStatusText = $"Bandwidth: Combined Speed Aggregation ({modeTag})";
         }
         else
         {
@@ -671,12 +671,12 @@ public class MainViewModel : INotifyPropertyChanged
         var enabled = Adapters.Where(a => a.IsEnabled && a.Weight > 0).ToList();
         if (enabled.Count == 0)
         {
-            VirtualBridge.MergedAdaptersSummary = "No Physical Adapters Merged (Enable adapters & set % weight > 0)";
+            VirtualBridge.MergedAdaptersSummary = "No Physical Adapters Combined (Enable adapters to combine speeds)";
         }
         else
         {
             string parts = string.Join(" + ", enabled.Select(a => $"{a.Name} ({a.EffectivePercentage:F0}%)"));
-            VirtualBridge.MergedAdaptersSummary = $"{enabled.Count} Adapters Merged: {parts}";
+            VirtualBridge.MergedAdaptersSummary = $"{enabled.Count} Adapters Combined: {parts}";
         }
     }
 

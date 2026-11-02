@@ -223,6 +223,30 @@
                     "progress": "All tasks completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-017",
+            "userQuery": "The application should combine the speeds and not split the bandwidth across connections.",
+            "status": "completed",
+            "createdAt": "2026-11-02T17:36:45+05:30",
+            "updatedAt": "2026-11-02T18:01:30+05:30",
+            "progress": "Delivered Combine Speeds Mode and Multi-NIC Parallel Range Chunk Aggregator: pooled bandwidth additively (Speed_total = Speed_1 + Speed_2 + ...), eliminated fractional bandwidth slicing where adapters were choked to sub-limits (e.g. 50% or 25%), added multi-adapter byte-range streaming for single downloads in ProxyEngine.cs, refreshed UI presets ('Unlimited (Combined Speed)' & 'Bandwidth: Combined Speed Aggregation'), and passed 100% self-test verifications.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-1701",
+                    "timestamp": "2026-11-02T17:36:45+05:30",
+                    "inputs": "User requested: The application should combine the speeds and not split the bandwidth across connections.",
+                    "outputs": "Architected Combine Speeds Mode (unified pooled bandwidth, elimination of proportional sub-slicing) and Multi-NIC parallel chunk aggregator for single-download speed combination.",
+                    "progress": "Task registered."
+                },
+                {
+                    "checkpointId": "CP-1702",
+                    "timestamp": "2026-11-02T18:01:30+05:30",
+                    "inputs": "Implementation, cross-platform compilation, self-test verification, separate publishing, and documentation.",
+                    "outputs": "Implemented CombineSpeedsMode in BandwidthThrottler.cs and ProxyConfigModel.cs. Implemented TryCombinedRangeDownloadAsync in ProxyEngine.cs. Updated UI in MainWindow.xaml, CustomThrottleDialog.xaml, SettingsWindow.xaml, and CyberpunkSpa.cs. Bumped version to v2.0.2 (Build 16). Published packages for Windows, Linux, and macOS.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
         }
     ]
 }

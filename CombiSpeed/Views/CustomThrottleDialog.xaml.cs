@@ -48,7 +48,7 @@ public partial class CustomThrottleDialog : Window
         }
 
         ChkEnableThrottling.IsChecked = config.EnableBandwidthThrottling;
-        ChkProportional.IsChecked = config.EnforceProportionalThrottling;
+        ChkCombineSpeeds.IsChecked = config.CombineSpeedsMode;
 
         // Burst Window
         SelectBurstWindow(config.BurstToleranceSeconds);
@@ -248,7 +248,8 @@ public partial class CustomThrottleDialog : Window
 
         // 4. Policies
         _config.EnableBandwidthThrottling = ChkEnableThrottling.IsChecked == true;
-        _config.EnforceProportionalThrottling = ChkProportional.IsChecked == true;
+        _config.CombineSpeedsMode = ChkCombineSpeeds.IsChecked == true;
+        _config.EnforceProportionalThrottling = !_config.CombineSpeedsMode;
 
         // 5. Burst Window
         if (CmbBurstWindow.SelectedItem is ComboBoxItem burstItem && burstItem.Tag != null &&

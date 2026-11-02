@@ -103,7 +103,8 @@ public class BandwidthThrottler
     public bool IsThrottlingEnabled { get; set; } = true;
     public long GlobalDownloadLimitBps { get; set; } = 0;
     public long GlobalUploadLimitBps { get; set; } = 0;
-    public bool EnforceProportionalThrottling { get; set; } = true;
+    public bool CombineSpeedsMode { get; set; } = true;
+    public bool EnforceProportionalThrottling { get; set; } = false;
 
     public SpeedShaperMode ShaperMode { get; set; } = SpeedShaperMode.MaximumBandwidth;
     public bool EnableDynamicShaping { get; set; } = true;
@@ -128,6 +129,7 @@ public class BandwidthThrottler
         IsThrottlingEnabled = config.EnableBandwidthThrottling;
         GlobalDownloadLimitBps = config.GlobalDownloadLimitBps;
         GlobalUploadLimitBps = config.GlobalUploadLimitBps;
+        CombineSpeedsMode = config.CombineSpeedsMode;
         EnforceProportionalThrottling = config.EnforceProportionalThrottling;
         ShaperMode = config.ShaperMode;
         EnableDynamicShaping = config.EnableDynamicShaping;
@@ -219,17 +221,36 @@ public class BandwidthThrottler
             double adapterRxRate = adapter.SpeedLimitBps > 0 ? adapter.SpeedLimitBps : 0;
             double adapterTxRate = adapter.SpeedLimitBps > 0 ? adapter.SpeedLimitBps : 0;
 
-            // 2. Proportional slice of global limit
-            if (GlobalDownloadLimitBps > 0 && EnforceProportionalThrottling)
+            if (ShaperMode == SpeedShaperMode.LowestLatency && EnableDynamicShaping && GlobalDownloadLimitBps > 0)
             {
-                double proportionalRate = GlobalDownloadLimitBps * proportion;
-                adapterRxRate = adapterRxRate > 0 ? Math.Min(adapterRxRate, proportionalRate) : proportionalRate;
+                // In Lowest Latency (Anti-Bufferbloat) mode: dynamic weighting prioritizes lowest ping connection
+                double prioritizedRate = GlobalDownloadLimitBps * proportion;
+                adapterRxRate = adapter.SpeedLimitBps > 0 ? Math.Min(adapter.SpeedLimitBps, prioritizedRate) : prioritizedRate;
+                adapterTxRate = adapter.SpeedLimitBps > 0 ? Math.Min(adapter.SpeedLimitBps, prioritizedRate) : prioritizedRate;
             }
-
-            if (GlobalUploadLimitBps > 0 && EnforceProportionalThrottling)
+            else if (CombineSpeedsMode || !EnforceProportionalThrottling)
             {
-                double proportionalRate = GlobalUploadLimitBps * proportion;
-                adapterTxRate = adapterTxRate > 0 ? Math.Min(adapterTxRate, proportionalRate) : proportionalRate;
+                // COMBINE SPEEDS MODE (Maximum Bandwidth & Balanced):
+                // Global limit applies to the combined aggregate throughput of all connections together.
+                // Adapters are NOT partitioned or sliced into fractions.
+                // Each adapter can burst up to the global limit (or full wire speed), pooling their bandwidth.
+                adapterRxRate = adapter.SpeedLimitBps > 0 ? adapter.SpeedLimitBps : GlobalDownloadLimitBps;
+                adapterTxRate = adapter.SpeedLimitBps > 0 ? adapter.SpeedLimitBps : GlobalUploadLimitBps;
+            }
+            else
+            {
+                // Legacy proportional slice of global limit (only if explicitly enabled)
+                if (GlobalDownloadLimitBps > 0)
+                {
+                    double proportionalRate = GlobalDownloadLimitBps * proportion;
+                    adapterRxRate = adapterRxRate > 0 ? Math.Min(adapterRxRate, proportionalRate) : proportionalRate;
+                }
+
+                if (GlobalUploadLimitBps > 0)
+                {
+                    double proportionalRate = GlobalUploadLimitBps * proportion;
+                    adapterTxRate = adapterTxRate > 0 ? Math.Min(adapterTxRate, proportionalRate) : proportionalRate;
+                }
             }
 
             rxBucket.SetRate(adapterRxRate, ActiveBurstSeconds);
@@ -249,30 +270,23 @@ public class BandwidthThrottler
 
     /// <summary>
     /// Throttles download (Rx) traffic through the specified adapter and global rate limiters.
-    /// Supports dynamic cross-connection capacity borrowing in MaximumBandwidth mode.
+    /// In Combine Speeds Mode, all adapters and connections pool their bandwidth additively.
     /// </summary>
     public async ValueTask ThrottleDownloadAsync(NetworkAdapterModel? adapter, int bytes, CancellationToken token = default)
     {
         if (!IsThrottlingEnabled || bytes <= 0) return;
 
-        // 1. Adapter-specific / proportional bucket
-        if (adapter != null && _rxBuckets.TryGetValue(adapter.Id, out var adapterBucket))
+        // 1. Adapter-specific cap if user explicitly restricted this specific adapter
+        if (adapter != null && adapter.SpeedLimitBps > 0 && _rxBuckets.TryGetValue(adapter.Id, out var adapterBucket))
         {
-            if (EnableDynamicShaping && ShaperMode == SpeedShaperMode.MaximumBandwidth &&
-                adapterBucket.BytesPerSecond > 0 && _globalRxBucket.AvailableTokens >= bytes)
-            {
-                if (!adapterBucket.TryConsume(bytes))
-                {
-                    await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
-            }
+            await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+        }
+        else if (EnforceProportionalThrottling && !CombineSpeedsMode && adapter != null && _rxBuckets.TryGetValue(adapter.Id, out var propBucket))
+        {
+            await propBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
         }
 
-        // 2. Global combined bucket
+        // 2. Global combined bucket - regulates aggregate bandwidth across all connections
         if (_globalRxBucket.BytesPerSecond > 0)
         {
             await _globalRxBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
@@ -281,29 +295,23 @@ public class BandwidthThrottler
 
     /// <summary>
     /// Throttles upload (Tx) traffic through the specified adapter and global rate limiters.
+    /// In Combine Speeds Mode, all adapters and connections pool their bandwidth additively.
     /// </summary>
     public async ValueTask ThrottleUploadAsync(NetworkAdapterModel? adapter, int bytes, CancellationToken token = default)
     {
         if (!IsThrottlingEnabled || bytes <= 0) return;
 
-        // 1. Adapter-specific / proportional bucket
-        if (adapter != null && _txBuckets.TryGetValue(adapter.Id, out var adapterBucket))
+        // 1. Adapter-specific cap if user explicitly restricted this specific adapter
+        if (adapter != null && adapter.SpeedLimitBps > 0 && _txBuckets.TryGetValue(adapter.Id, out var adapterBucket))
         {
-            if (EnableDynamicShaping && ShaperMode == SpeedShaperMode.MaximumBandwidth &&
-                adapterBucket.BytesPerSecond > 0 && _globalTxBucket.AvailableTokens >= bytes)
-            {
-                if (!adapterBucket.TryConsume(bytes))
-                {
-                    await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
-            }
+            await adapterBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
+        }
+        else if (EnforceProportionalThrottling && !CombineSpeedsMode && adapter != null && _txBuckets.TryGetValue(adapter.Id, out var propBucket))
+        {
+            await propBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
         }
 
-        // 2. Global combined bucket
+        // 2. Global combined bucket - regulates aggregate bandwidth across all connections
         if (_globalTxBucket.BytesPerSecond > 0)
         {
             await _globalTxBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);

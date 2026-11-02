@@ -30,8 +30,9 @@ public class ProxyConfigModel
 
     // Bandwidth Throttling & Traffic Shaping
     public bool EnableBandwidthThrottling { get; set; } = true;
-    public bool EnforceProportionalThrottling { get; set; } = true;
-    public long GlobalDownloadLimitBps { get; set; } = 0; // 0 = Unlimited / Dynamic Proportional
+    public bool CombineSpeedsMode { get; set; } = true; // True: combine connection speeds, never split bandwidth
+    public bool EnforceProportionalThrottling { get; set; } = false; // Legacy fallback; false when combining speeds
+    public long GlobalDownloadLimitBps { get; set; } = 0; // 0 = Unlimited / Dynamic Combined Pool
     public long GlobalUploadLimitBps { get; set; } = 0;
     public double BurstToleranceSeconds { get; set; } = 0.05; // 50ms default Token Bucket burst window
     public string CustomThrottleUnit { get; set; } = "Mbps"; // "Mbps", "MB/s"

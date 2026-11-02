@@ -506,7 +506,7 @@ public static class CyberpunkSpa
                 <p>MULTI-ADAPTER SPEED BONDING & QOS SHAPER</p>
             </div>
             <div class="header-badges">
-                <span class="badge badge-cyan">v2.0.1</span>
+                <span class="badge badge-cyan">v2.0.2</span>
                 <span class="badge">{{osName}}</span>
             </div>
         </div>

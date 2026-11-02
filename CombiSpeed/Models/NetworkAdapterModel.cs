@@ -80,7 +80,7 @@ public class NetworkAdapterModel : INotifyPropertyChanged
         }
     }
 
-    public string FormattedEffectivePercentage => $"{EffectivePercentage:F1}% of Bonded Pool";
+    public string FormattedEffectivePercentage => $"{EffectivePercentage:F1}% Load Share (Combined)";
     public double EffectivePercentageWidth => Math.Max(2.0, EffectivePercentage * 3.0);
 
     private long _speedLimitBps = 0;

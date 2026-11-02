@@ -1,5 +1,33 @@
 # Release Notes
 
+## [2.0.2] - 2026-11-02 - Speed Combining & Unified Bandwidth Pooling Release
+
+### 🚀 Highlights & Engineering Advancements
+- **⚡ Speed Combining & Elimination of Bandwidth Splitting**:
+  - Replaced legacy proportional rate partitioning with **Combine Speeds Mode** (`CombineSpeedsMode = true`).
+  - Speeds across all active network adapters and connections are pooled additively ($TotalSpeed = Speed_{NIC1} + Speed_{NIC2} + \dots$) into a unified high-speed pipeline.
+  - Eliminated artificial bandwidth slicing where adapters were clamped to fractional sub-limits (e.g. 50% or 25%). Every connection and adapter has access to the full combined speed pool.
+  - Configured rate limits (e.g. 500 Mbps) enforce the combined aggregate cap across all connections simultaneously rather than splitting the bandwidth into smaller fractions.
+- **🚀 Multi-NIC Parallel Range Chunk Speed Combiner**:
+  - Implemented `TryCombinedRangeDownloadAsync` in `ProxyEngine.cs` for HTTP downloads and file transfers.
+  - For sizable files ($\ge 512\text{ KB}$ with HTTP Range support), the proxy divides the transfer into parallel byte chunks and fetches them concurrently across all active physical adapters simultaneously.
+  - Sockets bound to Ethernet, Wi-Fi, and Cellular stream parts of the same file concurrently, actively combining the physical wire speeds of multiple connections for a single file download!
+  - Transparent fail-safe fallback to standard streaming for non-range or dynamic HTTP endpoints.
+- **🎛️ UI & Preset Enhancements**:
+  - Toolbar preset updated to **"Unlimited (Combined Speed)"**.
+  - Dynamic status bar indicator updated to **"Bandwidth: Combined Speed Aggregation (Active)"**.
+  - Updated `CustomThrottleDialog.xaml` and `SettingsWindow.xaml` with `Combine Speeds Mode (Pool aggregate bandwidth without splitting across connections)` checkbox, checked by default.
+  - Replaced "Bandwidth Share" label with "Speed Allocation: Load Share (Combined)".
+- **✅ Comprehensive Verification**:
+  - Updated `--verify-throttling` self-test suite to validate Combine Speeds allocation (both adapters pooling full combined capacity), 1.5MB live rate-limited delay, and 500 Mbps pool verification.
+  - 100% test pass rate across `--verify-throttling`, `--verify-persistence`, and `--verify-benchmark`.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.0.2-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.0.2-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.0.2-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.0.1] - 2026-11-02 - Speed Benchmark Overhaul & Virtual Adapter Routing Fix
 
 ### 🚀 Highlights & Engineering Advancements

@@ -27,6 +27,7 @@ public class ProxyConfigModel
     public double SpeedLimitMbps { get; set; } = 0;
     public double BurstToleranceSeconds { get; set; } = 0.10;
     public bool EnableDynamicAdaptation { get; set; } = true;
+    public bool CombineSpeedsMode { get; set; } = true; // True: combine speeds, never split bandwidth
     
     public bool EnableSystemProxy { get; set; } = false;
     public bool EnableVirtualBridge { get; set; } = false;

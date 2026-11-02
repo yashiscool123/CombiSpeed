@@ -128,8 +128,8 @@
                             <CheckBox x:Name="ChkEnableThrottling" Content="Enable Real-Time Bandwidth &amp; Speed Throttling" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" AutomationProperties.Name="Enable Real-Time Bandwidth Throttling"/>
                             <TextBlock Text="Actively enforces token-bucket rate limiting on all HTTP, HTTPS CONNECT, SOCKS5 TCP, UDP, and Bridge streams." FontSize="11" Foreground="#CBD5E1" Margin="20,0,0,10"/>
 
-                            <CheckBox x:Name="ChkProportional" Content="Strict Proportional Traffic Shaping" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4" AutomationProperties.Name="Strict Proportional Traffic Shaping"/>
-                            <TextBlock Text="Enforces exact % bandwidth ratios on throughput across combined adapters based on user weight sliders." FontSize="11" Foreground="#CBD5E1" Margin="20,0,0,10"/>
+                            <CheckBox x:Name="ChkCombineSpeeds" Content="Combine Speeds Mode (Pool aggregate bandwidth without splitting across connections)" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4" AutomationProperties.Name="Combine Speeds Mode"/>
+                            <TextBlock Text="Combines the throughput of all active adapters additively into a unified high-speed pool. Bandwidth is never split or partitioned into fractional slices." FontSize="11" Foreground="#CBD5E1" Margin="20,0,0,10"/>
 
                             <Grid Margin="0,4,0,0">
                                 <StackPanel>
@@ -148,7 +148,7 @@
                     <!-- Per-Adapter Custom Limits -->
                     <Grid Margin="0,0,0,8">
                         <TextBlock Text="PER-ADAPTER CUSTOM SPEED LIMITS (Mbps)" FontSize="11" FontWeight="Bold" Foreground="#00F0FF"/>
-                        <TextBlock Text="Set 0 for Auto / Proportional" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                        <TextBlock Text="Set 0 for Combined Pool Rate" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="12" Margin="0,0,0,8">

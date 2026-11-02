@@ -224,6 +224,20 @@ public class ProxyEngine : IDisposable
                     targetHost = uri.Host;
                     targetPort = uri.Port > 0 ? uri.Port : 80;
 
+                    var activeAdapters = adapters.Where(a => a.IsEnabled && a.Status != AdapterStatus.Down && !string.IsNullOrWhiteSpace(a.Address)).ToList();
+
+                    // Multi-NIC Parallel Range Chunk Speed Combiner: combine adapter speeds for single downloads
+                    if (method == "GET" && activeAdapters.Count >= 2 && !headerText.Contains("Range:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var (combinedSuccess, transferred) = await TryCombinedRangeDownloadAsync(clientStream, uri, targetHost, targetPort, headerText, activeAdapters, token);
+                        if (combinedSuccess)
+                        {
+                            bytesSession = transferred;
+                            ArrayPool<byte>.Shared.Return(buffer);
+                            return;
+                        }
+                    }
+
                     using var targetSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     targetSocket.Bind(new IPEndPoint(localIp, 0)); // BIND SOCKET TO ADAPTER IP!
 
@@ -539,6 +553,185 @@ public class ProxyEngine : IDisposable
         _auditLogs.Enqueue(log);
         while (_auditLogs.Count > _maxLogs && _auditLogs.TryDequeue(out _)) { }
         OnAuditLog?.Invoke(log);
+    }
+
+    private static int FindHeaderEnd(byte[] buffer, int length)
+    {
+        for (int i = 0; i <= length - 4; i++)
+        {
+            if (buffer[i] == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' && buffer[i + 3] == '\n')
+            {
+                return i + 4;
+            }
+        }
+        return -1;
+    }
+
+    private async Task<(bool success, long bytesTransferred)> TryCombinedRangeDownloadAsync(
+        NetworkStream clientStream,
+        Uri uri,
+        string targetHost,
+        int targetPort,
+        string originalHeader,
+        List<NetworkAdapterModel> activeAdapters,
+        CancellationToken token)
+    {
+        try
+        {
+            var primaryAdapter = activeAdapters[0];
+            if (!IPAddress.TryParse(primaryAdapter.Address, out var primaryIp)) return (false, 0);
+
+            using var probeSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            probeSocket.Bind(new IPEndPoint(primaryIp, 0));
+            using var connectCts = new CancellationTokenSource(3000);
+            await probeSocket.ConnectAsync(targetHost, targetPort, connectCts.Token);
+
+            using var probeStream = new NetworkStream(probeSocket, ownsSocket: false);
+            byte[] reqBytes = Encoding.ASCII.GetBytes(originalHeader);
+            await probeStream.WriteAsync(reqBytes, token);
+
+            byte[] headerBuf = new byte[16384];
+            int readTotal = 0;
+            int headerEnd = -1;
+
+            while (readTotal < headerBuf.Length)
+            {
+                int r = await probeStream.ReadAsync(headerBuf.AsMemory(readTotal, headerBuf.Length - readTotal), token);
+                if (r <= 0) break;
+                readTotal += r;
+                headerEnd = FindHeaderEnd(headerBuf, readTotal);
+                if (headerEnd >= 0) break;
+            }
+
+            if (headerEnd < 0) return (false, 0);
+
+            string respHeader = Encoding.ASCII.GetString(headerBuf, 0, headerEnd);
+            var headerLines = respHeader.Split("\r\n");
+            if (headerLines.Length == 0 || !headerLines[0].Contains("200")) return (false, 0);
+
+            long contentLength = -1;
+            bool acceptRanges = false;
+            foreach (var line in headerLines)
+            {
+                if (line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+                {
+                    long.TryParse(line.Substring(15).Trim(), out contentLength);
+                }
+                else if (line.StartsWith("Accept-Ranges:", StringComparison.OrdinalIgnoreCase) && line.Contains("bytes", StringComparison.OrdinalIgnoreCase))
+                {
+                    acceptRanges = true;
+                }
+            }
+
+            // Only engage chunk aggregation for sizable downloads that support range queries
+            if (contentLength < 512 * 1024 || !acceptRanges)
+            {
+                await clientStream.WriteAsync(headerBuf.AsMemory(0, readTotal), token);
+                RecordBytes(primaryAdapter, readTotal, 0);
+                await _throttler.ThrottleDownloadAsync(primaryAdapter, readTotal, token);
+                long remainingPiped = await PipeBiDirectionalAsync(clientStream, probeStream, primaryAdapter, token);
+                return (true, readTotal + remainingPiped);
+            }
+
+            // Forward the original response headers to client
+            await clientStream.WriteAsync(headerBuf.AsMemory(0, headerEnd), token);
+
+            // Write any initial body bytes already read
+            int initialBodyBytes = readTotal - headerEnd;
+            long deliveredBytes = 0;
+            if (initialBodyBytes > 0)
+            {
+                await clientStream.WriteAsync(headerBuf.AsMemory(headerEnd, initialBodyBytes), token);
+                RecordBytes(primaryAdapter, initialBodyBytes, 0);
+                await _throttler.ThrottleDownloadAsync(primaryAdapter, initialBodyBytes, token);
+                deliveredBytes += initialBodyBytes;
+            }
+
+            // Parallel Multi-NIC Range Chunk Aggregator: fetch remaining bytes across ALL active adapters simultaneously!
+            int chunkSize = 512 * 1024; // 512 KB per chunk
+            string pathAndQuery = uri.PathAndQuery;
+
+            while (deliveredBytes < contentLength && !token.IsCancellationRequested)
+            {
+                int chunksInBatch = Math.Min(activeAdapters.Count * 2, (int)Math.Ceiling((double)(contentLength - deliveredBytes) / chunkSize));
+                var batchTasks = new Task<(int index, byte[] data, NetworkAdapterModel adapter)>[chunksInBatch];
+
+                for (int b = 0; b < chunksInBatch; b++)
+                {
+                    int chunkIdx = b;
+                    long chunkStart = deliveredBytes + (b * (long)chunkSize);
+                    long chunkEnd = Math.Min(contentLength - 1, chunkStart + chunkSize - 1);
+                    var adapter = activeAdapters[b % activeAdapters.Count];
+
+                    batchTasks[b] = Task.Run(async () =>
+                    {
+                        if (!IPAddress.TryParse(adapter.Address, out var localIp)) return (chunkIdx, Array.Empty<byte>(), adapter);
+                        using var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                        s.Bind(new IPEndPoint(localIp, 0));
+                        using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                        cts.CancelAfter(8000);
+                        await s.ConnectAsync(targetHost, targetPort, cts.Token);
+
+                        string rangeReq = $"GET {pathAndQuery} HTTP/1.1\r\nHost: {targetHost}\r\nRange: bytes={chunkStart}-{chunkEnd}\r\nConnection: close\r\n\r\n";
+                        byte[] reqData = Encoding.ASCII.GetBytes(rangeReq);
+                        using var ns = new NetworkStream(s, ownsSocket: true);
+                        await ns.WriteAsync(reqData, cts.Token);
+
+                        byte[] chunkHeaderBuf = new byte[4096];
+                        int rTot = 0;
+                        int cHeadEnd = -1;
+                        while (rTot < chunkHeaderBuf.Length)
+                        {
+                            int r = await ns.ReadAsync(chunkHeaderBuf.AsMemory(rTot, chunkHeaderBuf.Length - rTot), cts.Token);
+                            if (r <= 0) break;
+                            rTot += r;
+                            cHeadEnd = FindHeaderEnd(chunkHeaderBuf, rTot);
+                            if (cHeadEnd >= 0) break;
+                        }
+
+                        if (cHeadEnd < 0) return (chunkIdx, Array.Empty<byte>(), adapter);
+
+                        int expectedBytes = (int)(chunkEnd - chunkStart + 1);
+                        byte[] resultData = new byte[expectedBytes];
+                        int written = 0;
+
+                        int initialFromHead = rTot - cHeadEnd;
+                        if (initialFromHead > 0)
+                        {
+                            int copyLen = Math.Min(initialFromHead, expectedBytes);
+                            Array.Copy(chunkHeaderBuf, cHeadEnd, resultData, 0, copyLen);
+                            written += copyLen;
+                        }
+
+                        while (written < expectedBytes)
+                        {
+                            int r = await ns.ReadAsync(resultData.AsMemory(written, expectedBytes - written), cts.Token);
+                            if (r <= 0) break;
+                            written += r;
+                        }
+
+                        return (chunkIdx, resultData, adapter);
+                    }, token);
+                }
+
+                var completedBatch = await Task.WhenAll(batchTasks);
+                foreach (var item in completedBatch.OrderBy(x => x.index))
+                {
+                    if (item.data.Length == 0) return (false, deliveredBytes); // fallback if a chunk fails
+
+                    await clientStream.WriteAsync(item.data, token);
+                    RecordBytes(item.adapter, item.data.Length, 0);
+                    await _throttler.ThrottleDownloadAsync(item.adapter, item.data.Length, token);
+                    deliveredBytes += item.data.Length;
+                }
+            }
+
+            return (true, deliveredBytes);
+        }
+        catch
+        {
+            return (false, 0);
+        }
     }
 
     public void Dispose()
