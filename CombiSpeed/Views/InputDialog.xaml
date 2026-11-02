@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Save Combination Profile"
         Icon="pack://application:,,,/Assets/app.ico"
-        Height="220" Width="420"
+        Height="230" Width="440"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
-        Foreground="#F1F5F9"
+        Foreground="#F8FAFC"
         WindowStyle="None"
         AllowsTransparency="True"
         BorderBrush="#1E293B"
@@ -25,7 +25,7 @@
                     <TextBlock Text="💾" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00F0FF"/>
                 </Border>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtTitle" Text="Save Combination Profile" FontSize="13" FontWeight="Bold" Foreground="#F1F5F9"/>
+                    <TextBlock x:Name="TxtTitle" Text="Save Combination Profile" FontSize="13" FontWeight="Bold" Foreground="#F8FAFC"/>
                     <TextBlock x:Name="TxtSubtitle" Text="Enter a name for this adapter &amp; bandwidth combination" FontSize="10" Foreground="#94A3B8"/>
                 </StackPanel>
             </StackPanel>
@@ -33,15 +33,14 @@
             <!-- Input Field -->
             <StackPanel Grid.Row="1" VerticalAlignment="Center">
                 <TextBlock x:Name="TxtPrompt" Text="Profile Name:" FontSize="11" Foreground="#CBD5E1" Margin="0,0,0,6"/>
-                <TextBox x:Name="TxtInput" Text="My Combination" Background="#080C14" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="10,6" FontSize="12" FontFamily="Consolas"/>
+                <TextBox x:Name="TxtInput" Text="My Combination" Background="#080C14" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="10,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Profile Name Input"/>
             </StackPanel>
 
             <!-- Actions -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                <Button Content="Cancel" Click="CancelButton_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,4"/>
-                <Button Content="Save Profile" Click="OkButton_Click" Style="{StaticResource PrimaryCyanButton}" Padding="16,4"/>
+                <Button Content="Cancel" Click="CancelButton_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,4" AutomationProperties.Name="Cancel Profile Creation"/>
+                <Button Content="Save Profile" Click="OkButton_Click" Style="{StaticResource PrimaryCyanButton}" Padding="16,4" AutomationProperties.Name="Confirm Save Profile"/>
             </StackPanel>
         </Grid>
     </Border>
 </Window>
-

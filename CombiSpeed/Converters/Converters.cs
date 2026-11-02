@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using CombiSpeed.Models;
@@ -57,6 +58,54 @@ public class InverseBooleanConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         return value is bool b ? !b : false;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+public class EqualityToBooleanConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null) return false;
+        return value.ToString() == parameter.ToString();
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool b && b && parameter != null)
+        {
+            if (targetType == typeof(int) && int.TryParse(parameter.ToString(), out int intVal))
+                return intVal;
+            if (targetType == typeof(double) && double.TryParse(parameter.ToString(), CultureInfo.InvariantCulture, out double dVal))
+                return dVal;
+            return parameter;
+        }
+        return Binding.DoNothing;
+    }
+}
+
+public class ScaleToPercentStringConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is double scale)
+        {
+            return $"{Math.Round(scale * 100)}%";
+        }
+        return "100%";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+public class EqualityToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null) return Visibility.Collapsed;
+        bool match = string.Equals(value.ToString(), parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+        return match ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();

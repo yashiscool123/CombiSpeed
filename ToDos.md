@@ -155,3 +155,20 @@
 - [x] Create standalone zipped release archive (publish/CombiSpeed-v1.3.6-win-x64.zip).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v1.3.6.
+
+## Milestone 13: UI/UX Redesign & Accessibility (WCAG 2.1 AA) [COMPLETED]
+- [x] Increment version to 1.4.0 and versionCode: 12 in CombiSpeed.csproj, version.json, MainViewModel.cs, App.xaml.cs, and Install-CombiSpeed.bat.
+- [x] Implement Modern Segmented Tabbed Navigation Bar (⚡ Overview & Dashboard, 🖧 Combined Adapters, 🚀 Speed Shaper & QoS, 📜 Connection Audit).
+- [x] Implement WCAG 2.1 AA Accessible High Contrast Mode with dynamic theme brush updates (#030712 deep black, #38BDF8 stark cyan borders, #FFFFFF high-luminance text).
+- [x] Implement Dynamic UI & Font Scaling (100%, 115%, 130%) using root LayoutTransform scale transforms for zero text clipping on high-DPI displays.
+- [x] Implement Reduce Motion mode for vestibular safety, disabling pulsing LED animations and smoothing waveform redraws.
+- [x] Implement Screen Reader Optimization with comprehensive AutomationProperties.Name and help texts across all controls.
+- [x] Add high-visibility keyboard focus rings (FocusVisualStyle) and global access key bindings (Space, Alt+P, Alt+B, Alt+W, Alt+R, Alt+A, Alt+S, Alt+H, Ctrl+1-4).
+- [x] Create dedicated AccessibilityDialog.xaml and AccessibilityDialog.xaml.cs modal window.
+- [x] Add Accessibility & Display Preferences section in SettingsWindow.xaml and SettingsWindow.xaml.cs.
+- [x] Create custom accessible dark ComboBox and Slider styles replacing default Windows classic controls.
+- [x] Add automated accessibility persistence test suite in App.xaml.cs (--verify-persistence) and verify 100% test pass rate.
+- [x] Execute clean build and publish release binaries to publish/ with 0 warnings and 0 errors.
+- [x] Create standalone zipped release archive (publish/CombiSpeed-v1.4.0-win-x64.zip).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v1.4.0.

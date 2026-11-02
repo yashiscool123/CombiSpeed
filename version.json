@@ -1,9 +1,9 @@
 {
   "name": "combispeed",
-  "version": "1.3.6",
-  "versionCode": 11,
-  "releaseName": "CombiSpeed v1.3.6 - Dynamic Cross-Connection Speed Shaper & Latency Modes Release",
-  "buildDate": "2026-11-02T14:40:00+05:30",
+  "version": "1.4.0",
+  "versionCode": 12,
+  "releaseName": "CombiSpeed v1.4.0 - Accessible UI/UX Redesign Release",
+  "buildDate": "2026-11-02T15:00:00+05:30",
   "platform": "win32",
   "arch": "x64",
   "runtime": ".NET 8.0 Windows Desktop (WPF)"

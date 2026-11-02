@@ -6,7 +6,7 @@
         Height="720" Width="660"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
-        Foreground="#F1F5F9"
+        Foreground="#F8FAFC"
         WindowStyle="None"
         AllowsTransparency="True"
         BorderBrush="#1E293B"
@@ -26,11 +26,11 @@
                         <TextBlock Text="⚡" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00F0FF"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Custom Bandwidth Throttling &amp; Speed Shaper" FontSize="15" FontWeight="Bold" Foreground="#F1F5F9"/>
+                        <TextBlock Text="Custom Bandwidth Throttling &amp; Speed Shaper" FontSize="15" FontWeight="Bold" Foreground="#F8FAFC"/>
                         <TextBlock Text="Dynamic cross-connection shaping for Maximum Bandwidth or Lowest Pings" FontSize="11" Foreground="#94A3B8"/>
                     </StackPanel>
                 </StackPanel>
-                <Button Content="✕" Width="28" Height="28" HorizontalAlignment="Right" Click="CancelButton_Click" Style="{StaticResource CyberButton}" Padding="0"/>
+                <Button Content="✕" Width="28" Height="28" HorizontalAlignment="Right" Click="CancelButton_Click" Style="{StaticResource CyberButton}" Padding="0" AutomationProperties.Name="Close Custom Throttling Dialog"/>
             </Grid>
 
             <!-- Form Content -->
@@ -41,15 +41,15 @@
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="12" Margin="0,0,0,14">
                         <StackPanel>
                             <TextBlock Text="Select Optimization Objective:" FontSize="11" Foreground="#CBD5E1" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <ComboBox x:Name="CmbShaperMode" Background="#131D33" Foreground="Black" Padding="8,6" FontSize="11" SelectionChanged="ShaperMode_SelectionChanged" Margin="0,0,0,8">
+                            <ComboBox x:Name="CmbShaperMode" Background="#131D33" Foreground="#F8FAFC" Padding="8,6" FontSize="11" SelectionChanged="ShaperMode_SelectionChanged" Margin="0,0,0,8" AutomationProperties.Name="Optimization Objective Selector">
                                 <ComboBoxItem Content="🚀 Maximum Bandwidth (Throughput &amp; Window Expansion)" Tag="MaximumBandwidth" IsSelected="True"/>
                                 <ComboBoxItem Content="⚡ Lowest Latency / Ping (Anti-Bufferbloat &amp; Real-Time RTT Priority)" Tag="LowestLatency"/>
                                 <ComboBoxItem Content="⚖ Balanced Dynamic (Smooth Pacing &amp; Proportional)" Tag="BalancedDynamic"/>
                             </ComboBox>
                             <TextBlock x:Name="TxtShaperModeDescription" Text="Optimizes TCP window expansion, large burst buffers (150-200ms), and dynamic cross-adapter capacity sharing for peak download/upload speeds." FontSize="10" Foreground="#38BDF8" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
-                            <CheckBox x:Name="ChkDynamicShaping" Content="Enable Dynamic Real-Time Shaper Adaptation across connections" Foreground="#F1F5F9" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBlock Text="Continuously monitors live adapter ping, throughput, and packet loss, dynamically shifting token rates and routing weights to optimize performance." FontSize="10" Foreground="#64748B" TextWrapping="Wrap" Margin="20,0,0,0"/>
+                            <CheckBox x:Name="ChkDynamicShaping" Content="Enable Dynamic Real-Time Shaper Adaptation across connections" Foreground="#F8FAFC" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4" AutomationProperties.Name="Enable Dynamic Real-Time Shaper Adaptation"/>
+                            <TextBlock Text="Continuously monitors live adapter ping, throughput, and packet loss, dynamically shifting token rates and routing weights to optimize performance." FontSize="10" Foreground="#94A3B8" TextWrapping="Wrap" Margin="20,0,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -71,8 +71,8 @@
                                     <ColumnDefinition Width="130"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBox x:Name="TxtDownloadLimit" Text="500" Background="#131D33" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="10,6" FontSize="13" FontWeight="Bold" FontFamily="Consolas" TextChanged="DownloadLimit_TextChanged"/>
-                                <ComboBox x:Name="CmbDownloadUnit" Grid.Column="2" Background="#131D33" Foreground="Black" Padding="8,6" FontSize="11" SelectionChanged="DownloadUnit_SelectionChanged">
+                                <TextBox x:Name="TxtDownloadLimit" Text="500" Background="#131D33" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="10,6" FontSize="13" FontWeight="Bold" FontFamily="Consolas" TextChanged="DownloadLimit_TextChanged" AutomationProperties.Name="Bonded Download Speed Cap Input"/>
+                                <ComboBox x:Name="CmbDownloadUnit" Grid.Column="2" Background="#131D33" Foreground="#F8FAFC" Padding="8,6" FontSize="11" SelectionChanged="DownloadUnit_SelectionChanged" AutomationProperties.Name="Download Speed Unit Selector">
                                     <ComboBoxItem Content="Mbps" IsSelected="True"/>
                                     <ComboBoxItem Content="MB/s"/>
                                     <ComboBoxItem Content="Kbps"/>
@@ -82,13 +82,13 @@
 
                             <!-- Quick Preset Chips -->
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Quick Caps:" FontSize="10" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <Button Content="50 Mbps" Click="QuickCap_Click" Tag="50" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0"/>
-                                <Button Content="100 Mbps" Click="QuickCap_Click" Tag="100" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0"/>
-                                <Button Content="250 Mbps" Click="QuickCap_Click" Tag="250" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0"/>
-                                <Button Content="400 Mbps" Click="QuickCap_Click" Tag="400" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0"/>
-                                <Button Content="500 Mbps" Click="QuickCap_Click" Tag="500" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0"/>
-                                <Button Content="Unlimited" Click="QuickCap_Click" Tag="0" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10"/>
+                                <TextBlock Text="Quick Caps:" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <Button Content="50 Mbps" Click="QuickCap_Click" Tag="50" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0" AutomationProperties.Name="Set cap to 50 Mbps"/>
+                                <Button Content="100 Mbps" Click="QuickCap_Click" Tag="100" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0" AutomationProperties.Name="Set cap to 100 Mbps"/>
+                                <Button Content="250 Mbps" Click="QuickCap_Click" Tag="250" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0" AutomationProperties.Name="Set cap to 250 Mbps"/>
+                                <Button Content="400 Mbps" Click="QuickCap_Click" Tag="400" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0" AutomationProperties.Name="Set cap to 400 Mbps"/>
+                                <Button Content="500 Mbps" Click="QuickCap_Click" Tag="500" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" Margin="0,0,4,0" AutomationProperties.Name="Set cap to 500 Mbps"/>
+                                <Button Content="Unlimited" Click="QuickCap_Click" Tag="0" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" AutomationProperties.Name="Set cap to Unlimited"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -108,8 +108,8 @@
                                     <ColumnDefinition Width="130"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBox x:Name="TxtUploadLimit" Text="250" Background="#131D33" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="10,6" FontSize="13" FontWeight="Bold" FontFamily="Consolas" TextChanged="UploadLimit_TextChanged"/>
-                                <ComboBox x:Name="CmbUploadUnit" Grid.Column="2" Background="#131D33" Foreground="Black" Padding="8,6" FontSize="11" SelectionChanged="UploadUnit_SelectionChanged">
+                                <TextBox x:Name="TxtUploadLimit" Text="250" Background="#131D33" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="10,6" FontSize="13" FontWeight="Bold" FontFamily="Consolas" TextChanged="UploadLimit_TextChanged" AutomationProperties.Name="Bonded Upload Speed Cap Input"/>
+                                <ComboBox x:Name="CmbUploadUnit" Grid.Column="2" Background="#131D33" Foreground="#F8FAFC" Padding="8,6" FontSize="11" SelectionChanged="UploadUnit_SelectionChanged" AutomationProperties.Name="Upload Speed Unit Selector">
                                     <ComboBoxItem Content="Mbps" IsSelected="True"/>
                                     <ComboBoxItem Content="MB/s"/>
                                     <ComboBoxItem Content="Kbps"/>
@@ -117,7 +117,7 @@
                                 </ComboBox>
                             </Grid>
 
-                            <CheckBox x:Name="ChkAutoUpload" Content="Auto-set upload cap to 50% of download rate" Foreground="#94A3B8" FontSize="11" Checked="AutoUpload_Checked"/>
+                            <CheckBox x:Name="ChkAutoUpload" Content="Auto-set upload cap to 50% of download rate" Foreground="#CBD5E1" FontSize="11" Checked="AutoUpload_Checked" AutomationProperties.Name="Auto-set upload cap to 50 percent"/>
                         </StackPanel>
                     </Border>
 
@@ -125,16 +125,16 @@
                     <TextBlock Text="THROTTLING &amp; TRAFFIC SHAPING POLICIES" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="12" Margin="0,0,0,14">
                         <StackPanel>
-                            <CheckBox x:Name="ChkEnableThrottling" Content="Enable Real-Time Bandwidth &amp; Speed Throttling" Foreground="#F1F5F9" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <TextBlock Text="Actively enforces token-bucket rate limiting on all HTTP, HTTPS CONNECT, SOCKS5 TCP, UDP, and Bridge streams." FontSize="10" Foreground="#64748B" Margin="20,0,0,10"/>
+                            <CheckBox x:Name="ChkEnableThrottling" Content="Enable Real-Time Bandwidth &amp; Speed Throttling" Foreground="#F8FAFC" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" AutomationProperties.Name="Enable Real-Time Bandwidth Throttling"/>
+                            <TextBlock Text="Actively enforces token-bucket rate limiting on all HTTP, HTTPS CONNECT, SOCKS5 TCP, UDP, and Bridge streams." FontSize="10" Foreground="#94A3B8" Margin="20,0,0,10"/>
 
-                            <CheckBox x:Name="ChkProportional" Content="Strict Proportional Traffic Shaping" Foreground="#F1F5F9" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBlock Text="Enforces exact % bandwidth ratios on throughput across combined adapters based on user weight sliders." FontSize="10" Foreground="#64748B" Margin="20,0,0,10"/>
+                            <CheckBox x:Name="ChkProportional" Content="Strict Proportional Traffic Shaping" Foreground="#F8FAFC" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4" AutomationProperties.Name="Strict Proportional Traffic Shaping"/>
+                            <TextBlock Text="Enforces exact % bandwidth ratios on throughput across combined adapters based on user weight sliders." FontSize="10" Foreground="#94A3B8" Margin="20,0,0,10"/>
 
                             <Grid Margin="0,4,0,0">
                                 <StackPanel>
                                     <TextBlock Text="Token Bucket Burst Tolerance Window:" FontSize="11" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                                    <ComboBox x:Name="CmbBurstWindow" Background="#131D33" Foreground="Black" Padding="8,4" FontSize="11">
+                                    <ComboBox x:Name="CmbBurstWindow" Background="#131D33" Foreground="#F8FAFC" Padding="8,4" FontSize="11" AutomationProperties.Name="Token Bucket Burst Tolerance Selector">
                                         <ComboBoxItem Content="20 ms (Ultra-Smooth Pacing - Lowest Jitter)" Tag="0.02"/>
                                         <ComboBoxItem Content="50 ms (Balanced - Recommended for Multi-WAN Bonding)" Tag="0.05" IsSelected="True"/>
                                         <ComboBoxItem Content="100 ms (High Burst - Optimized for Web Downloads)" Tag="0.10"/>
@@ -148,7 +148,7 @@
                     <!-- Per-Adapter Custom Limits -->
                     <Grid Margin="0,0,0,8">
                         <TextBlock Text="PER-ADAPTER CUSTOM SPEED LIMITS (Mbps)" FontSize="11" FontWeight="Bold" Foreground="#00F0FF"/>
-                        <TextBlock Text="Set 0 for Auto / Proportional" FontSize="10" Foreground="#64748B" HorizontalAlignment="Right"/>
+                        <TextBlock Text="Set 0 for Auto / Proportional" FontSize="10" Foreground="#94A3B8" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="10" Margin="0,0,0,8">
@@ -168,14 +168,14 @@
                                         </Border>
 
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
-                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#F1F5F9"/>
-                                            <TextBlock Text="{Binding FormattedEffectivePercentage}" FontSize="10" Foreground="#64748B"/>
+                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#F8FAFC"/>
+                                            <TextBlock Text="{Binding FormattedEffectivePercentage}" FontSize="10" Foreground="#94A3B8"/>
                                         </StackPanel>
 
                                         <TextBlock Grid.Column="2" Text="{Binding FormattedThrottledBandwidth}" FontSize="10" Foreground="#38BDF8" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0" FontFamily="Consolas"/>
 
                                         <Grid Grid.Column="3">
-                                            <TextBox Text="{Binding CustomSpeedLimitMbps, UpdateSourceTrigger=PropertyChanged}" Background="#131D33" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="6,4" FontSize="11" FontFamily="Consolas" TextAlignment="Right"/>
+                                            <TextBox Text="{Binding CustomSpeedLimitMbps, UpdateSourceTrigger=PropertyChanged}" Background="#131D33" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="6,4" FontSize="11" FontFamily="Consolas" TextAlignment="Right" AutomationProperties.Name="{Binding Name, StringFormat='{}Speed Limit for {0}'}"/>
                                         </Grid>
                                     </Grid>
                                 </DataTemplate>
@@ -187,8 +187,8 @@
 
             <!-- Bottom Actions -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                <Button Content="Cancel" Click="CancelButton_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="16,6"/>
-                <Button Content="Apply Parameters" Click="ApplyButton_Click" Style="{StaticResource PrimaryCyanButton}" Padding="20,6"/>
+                <Button Content="Cancel" Click="CancelButton_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="16,6" AutomationProperties.Name="Cancel Custom Throttling"/>
+                <Button Content="Apply Parameters" Click="ApplyButton_Click" Style="{StaticResource PrimaryCyanButton}" Padding="20,6" AutomationProperties.Name="Apply Throttling Parameters"/>
             </StackPanel>
         </Grid>
     </Border>

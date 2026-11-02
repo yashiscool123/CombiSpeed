@@ -1,5 +1,30 @@
 ﻿# Release Notes
 
+## [1.4.0] - 2026-11-02 - Accessible UI/UX Redesign Release
+
+### 🚀 Highlights & Features
+- **Modern Segmented Navigation & Information Architecture**:
+  - Re-architected `MainWindow.xaml` with a sleek, accessible tabbed navigation bar: `⚡ Overview & Dashboard`, `🖧 Combined Adapters`, `🚀 Speed Shaper & QoS`, and `📜 Connection Audit`.
+  - Eliminates vertical scrolling fatigue on laptops and smaller displays while giving each subsystem dedicated, uncluttered visual focus.
+  - Full keyboard accessibility with direct Tab/Arrow navigation and instant shortcuts (`Ctrl+1` through `Ctrl+4`).
+- **Comprehensive WCAG 2.1 AA Accessibility Overhaul**:
+  - **High Contrast Theme**: Stark high-contrast mode with deep black backdrop (`#030712`), high-luminance text (`#FFFFFF`), and vivid focus outlines (`#38BDF8`) exceeding 7:1 contrast ratios.
+  - **Dynamic UI & Font Scaling**: Seamless scaling (`100%`, `115%`, `130%`) powered by layout transformation, guaranteeing that high-DPI displays and low-vision users enjoy crisp, enlarged text and cards with zero layout clipping or horizontal overflow.
+  - **Reduce Motion & Vestibular Safety**: Toggleable mode that pauses rapid waveform redraws and softens LED transitions, preventing visual fatigue for users with vestibular conditions or ADHD.
+  - **Screen Reader Optimization (`AutomationProperties`)**: Comprehensive accessible names, help texts, and live region announcements across all master switches, sliders, checkboxes, and tables for Windows Narrator, NVDA, and JAWS.
+  - **High-Visibility Keyboard Focus Rings**: Custom 2px neon cyan focus visualizer on all interactive controls (`Button`, `TextBox`, `Slider`, `CheckBox`, `ComboBox`).
+  - **Global Keyboard Access Keys**: Instant hotkeys (`Space`/`Alt+P` for Master Bonding Power, `Alt+B` for Virtual Bridge, `Alt+W` for Windows Proxy, `Alt+R` for Rescan, `Alt+A` for Accessibility, `Alt+S` for Settings, `Alt+H` for High Contrast).
+- **Dedicated Accessibility Options Dialog (`AccessibilityDialog.xaml`)**:
+  - Interactive modal dialog accessible via `Alt+A` or the titlebar `♿ Accessibility` button, featuring quick toggles for High Contrast, UI Scale radio buttons, Reduce Motion, Screen Reader options, and an interactive Keyboard Shortcuts Cheat Sheet.
+- **Custom Dark-Themed Styled Controls**:
+  - Custom accessible dark `ComboBox` replacing classic gray dropdowns with dark navy popups (`#0F172A`) and crisp high-contrast text.
+  - Custom accessible `Slider` with ergonomic 18px thumb, glow effects, and precision tooltips.
+- **Durable Persistence & Verification**:
+  - All accessibility settings (`IsHighContrast`, `UiScale`, `IsReduceMotion`, `IsScreenReaderOptimized`) persist across sessions in `%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`.
+  - Automated verification test suite passed 100% OK (`--verify-persistence`, `--verify-throttling`, `--version`).
+  - Release distribution package: `publish/CombiSpeed-v1.4.0-win-x64.zip`.
+
+---
 ## [1.3.6] - 2026-11-02 - Dynamic Cross-Connection Speed Shaper & Latency Modes Release
 
 ### 🚀 Highlights & Features

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Input;
 using CombiSpeed.ViewModels;
 
@@ -98,5 +98,10 @@ public partial class MainWindow : Window
     private void CustomThrottle_Click(object sender, RoutedEventArgs e)
     {
         ViewModel?.OpenCustomThrottleDialog();
+    }
+
+    private void OpenAccessibility_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.OpenAccessibilityDialog();
     }
 }

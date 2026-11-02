@@ -1,4 +1,4 @@
-﻿using CombiSpeed.Views;
+using CombiSpeed.Views;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -24,6 +24,26 @@ public class RelayCommand : ICommand
 
     public bool CanExecute(object? parameter) => _canExecute == null || _canExecute();
     public void Execute(object? parameter) => _execute();
+    public event EventHandler? CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
+}
+
+public class RelayCommand<T> : ICommand
+{
+    private readonly Action<T?> _execute;
+    private readonly Predicate<T?>? _canExecute;
+
+    public RelayCommand(Action<T?> execute, Predicate<T?>? canExecute = null)
+    {
+        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+        _canExecute = canExecute;
+    }
+
+    public bool CanExecute(object? parameter) => _canExecute == null || _canExecute(parameter is T t ? t : default);
+    public void Execute(object? parameter) => _execute(parameter is T t ? t : default);
     public event EventHandler? CanExecuteChanged
     {
         add => CommandManager.RequerySuggested += value;
@@ -85,7 +105,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.6";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.0";
         }
     }
 
@@ -94,12 +114,68 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.6";
-            return $"{verStr} (Build 11)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.0";
+            return $"{verStr} (Build 12)";
         }
     }
 
     public string WindowTitle => $"CombiSpeed {AppVersion} - Multi-WAN Channel Bonding & Bandwidth Aggregator";
+
+    // Accessibility Properties (WCAG 2.1 AA)
+    private bool _isHighContrast;
+    public bool IsHighContrast
+    {
+        get => _isHighContrast;
+        set
+        {
+            if (SetField(ref _isHighContrast, value))
+            {
+                ApplyHighContrastTheme(value);
+            }
+        }
+    }
+
+    private double _uiScale = 1.0;
+    public double UiScale
+    {
+        get => _uiScale;
+        set
+        {
+            double clamped = Math.Clamp(value, 0.85, 1.5);
+            SetField(ref _uiScale, clamped);
+        }
+    }
+
+    private bool _isReduceMotion;
+    public bool IsReduceMotion
+    {
+        get => _isReduceMotion;
+        set => SetField(ref _isReduceMotion, value);
+    }
+
+    private bool _isScreenReaderOptimized;
+    public bool IsScreenReaderOptimized
+    {
+        get => _isScreenReaderOptimized;
+        set => SetField(ref _isScreenReaderOptimized, value);
+    }
+
+    private int _selectedTabIndex = 0;
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set => SetField(ref _selectedTabIndex, value);
+    }
+
+    public ICommand OpenAccessibilityCommand => new RelayCommand(OpenAccessibilityDialog);
+    public ICommand ToggleHighContrastCommand => new RelayCommand(() => IsHighContrast = !IsHighContrast);
+    public ICommand SelectTabCommand => new RelayCommand<object>(param =>
+    {
+        if (param != null && int.TryParse(param.ToString(), out int idx))
+        {
+            SelectedTabIndex = idx;
+        }
+    });
 
     public ObservableCollection<string> ThrottlePresets { get; } = new()
     {
@@ -284,6 +360,19 @@ public class MainViewModel : INotifyPropertyChanged
             Config.EnablePac = _configStore.Data.Config.EnablePac;
             Config.PacUrl = _configStore.Data.Config.PacUrl;
             Config.PrimaryAdapterId = _configStore.Data.Config.PrimaryAdapterId;
+            Config.IsHighContrast = _configStore.Data.Config.IsHighContrast;
+            Config.UiScale = _configStore.Data.Config.UiScale > 0 ? _configStore.Data.Config.UiScale : 1.0;
+            Config.IsReduceMotion = _configStore.Data.Config.IsReduceMotion;
+            Config.IsScreenReaderOptimized = _configStore.Data.Config.IsScreenReaderOptimized;
+
+            _isHighContrast = Config.IsHighContrast;
+            _uiScale = Config.UiScale;
+            _isReduceMotion = Config.IsReduceMotion;
+            _isScreenReaderOptimized = Config.IsScreenReaderOptimized;
+            if (_isHighContrast)
+            {
+                ApplyHighContrastTheme(true);
+            }
         }
 
         // Restore profile list
@@ -733,18 +822,74 @@ public class MainViewModel : INotifyPropertyChanged
         var ptsDown = new PointCollection();
         var ptsUp = new PointCollection();
 
-        for (int i = 0; i < 60; i++)
+        if (IsReduceMotion)
         {
-            double x = i * step;
-            double yDown = height - (Math.Min(1.0, _downloadHistory[i] / maxSpeed) * height);
-            double yUp = height - (Math.Min(1.0, _uploadHistory[i] / maxSpeed) * height);
+            // Reduce Motion: render smooth steady levels avoiding rapid flicker & vestibular strain
+            double avgDown = height - (Math.Min(1.0, (_downloadHistory.Count > 0 ? _downloadHistory.Average() : 0) / maxSpeed) * height);
+            double avgUp = height - (Math.Min(1.0, (_uploadHistory.Count > 0 ? _uploadHistory.Average() : 0) / maxSpeed) * height);
+            ptsDown.Add(new Point(0, avgDown));
+            ptsDown.Add(new Point(width, avgDown));
+            ptsUp.Add(new Point(0, avgUp));
+            ptsUp.Add(new Point(width, avgUp));
+        }
+        else
+        {
+            for (int i = 0; i < 60; i++)
+            {
+                double x = i * step;
+                double yDown = height - (Math.Min(1.0, _downloadHistory[i] / maxSpeed) * height);
+                double yUp = height - (Math.Min(1.0, _uploadHistory[i] / maxSpeed) * height);
 
-            ptsDown.Add(new Point(x, yDown));
-            ptsUp.Add(new Point(x, yUp));
+                ptsDown.Add(new Point(x, yDown));
+                ptsUp.Add(new Point(x, yUp));
+            }
         }
 
         WaveformPointsDownload = ptsDown;
         WaveformPointsUpload = ptsUp;
+    }
+
+    public void ApplyHighContrastTheme(bool enabled)
+    {
+        if (Application.Current == null) return;
+
+        var res = Application.Current.Resources;
+        if (enabled)
+        {
+            res["CyberBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#030712"));
+            res["CyberSurface"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0A0F1D"));
+            res["CyberCard"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["CyberBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
+            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+        }
+        else
+        {
+            res["CyberBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#080C14"));
+            res["CyberSurface"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["CyberCard"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#131D33"));
+            res["CyberBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
+            res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
+            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"));
+        }
+    }
+
+    public void OpenAccessibilityDialog()
+    {
+        var dlg = new AccessibilityDialog(this);
+        dlg.ShowDialog();
+    }
+
+    public void SaveAccessibilitySettings()
+    {
+        Config.IsHighContrast = IsHighContrast;
+        Config.UiScale = UiScale;
+        Config.IsReduceMotion = IsReduceMotion;
+        Config.IsScreenReaderOptimized = IsScreenReaderOptimized;
+        _configStore.SaveImmediate(Adapters, Config, ActiveProfileName);
+        AutoSaveStatusText = "Accessibility Settings Saved";
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

@@ -4,39 +4,58 @@
              xmlns:conv="clr-namespace:CombiSpeed.Converters"
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
+        <!-- Value Converters -->
         <conv:StatusToBrushConverter x:Key="StatusToBrushConverter"/>
         <conv:PingToBrushConverter x:Key="PingToBrushConverter"/>
         <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <conv:EqualityToBooleanConverter x:Key="EqualityToBooleanConverter"/>
+        <conv:EqualityToVisibilityConverter x:Key="EqualityToVisibilityConverter"/>
+        <conv:ScaleToPercentStringConverter x:Key="ScaleToPercentStringConverter"/>
 
-        <!-- Color Palette -->
+        <!-- Color Palette (WCAG 2.1 AA Compliant) -->
         <SolidColorBrush x:Key="CyberBg" Color="#080C14"/>
         <SolidColorBrush x:Key="CyberSurface" Color="#0F172A"/>
         <SolidColorBrush x:Key="CyberCard" Color="#131D33"/>
         <SolidColorBrush x:Key="CyberBorder" Color="#1E293B"/>
         <SolidColorBrush x:Key="CyberCyan" Color="#00F0FF"/>
+        <SolidColorBrush x:Key="CyberCyanHover" Color="#38BDF8"/>
         <SolidColorBrush x:Key="CyberEmerald" Color="#10B981"/>
         <SolidColorBrush x:Key="CyberPurple" Color="#8B5CF6"/>
-        <SolidColorBrush x:Key="CyberPink" Color="#EC4899"/>
-        <SolidColorBrush x:Key="TextPrimary" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="CyberAmber" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="CyberRose" Color="#F43F5E"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#CBD5E1"/>
         <SolidColorBrush x:Key="TextMuted" Color="#94A3B8"/>
+        <SolidColorBrush x:Key="HighContrastFocus" Color="#00F0FF"/>
+
+        <!-- High-Visibility Keyboard Focus Visual (Accessibility) -->
+        <Style x:Key="AccessibleFocusVisual">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="-2" Stroke="#00F0FF" StrokeThickness="2" RadiusX="6" RadiusY="6"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Custom Dark ScrollBar Style -->
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
             <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
-            <Setter Property="Width" Value="6"/>
-            <Setter Property="MinWidth" Value="6"/>
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="MinWidth" Value="8"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ScrollBar}">
-                        <Grid x:Name="Bg" SnapsToDevicePixels="true" Background="#0F172A">
+                        <Grid x:Name="Bg" SnapsToDevicePixels="true" Background="#0A0F1D">
                             <Track x:Name="PART_Track" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsMouseOver}">
                                 <Track.Thumb>
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Border Background="#1E293B" CornerRadius="3" BorderBrush="#334155" BorderThickness="0.5"/>
+                                                <Border Background="#1E293B" CornerRadius="4" BorderBrush="#38BDF8" BorderThickness="0.5"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -48,20 +67,22 @@
             </Setter>
         </Style>
 
-        <!-- Rounded Cyber Button Style -->
+        <!-- Rounded Accessible Cyber Button Style -->
         <Style x:Key="CyberButton" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
             <Setter Property="Background" Value="#1E293B"/>
-            <Setter Property="Foreground" Value="#F1F5F9"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="MinHeight" Value="32"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -71,9 +92,10 @@
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#0F172A"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#38BDF8"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.4"/>
+                                <Setter Property="Opacity" Value="0.45"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -83,17 +105,19 @@
 
         <!-- Primary Cyan Button Style -->
         <Style x:Key="PrimaryCyanButton" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
             <Setter Property="Background" Value="#00F0FF"/>
-            <Setter Property="Foreground" Value="#080C14"/>
+            <Setter Property="Foreground" Value="#040810"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="16,8"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="MinHeight" Value="34"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -103,10 +127,174 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#0284C7"/>
                             </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Accessible Segmented TabControl Style -->
+        <Style x:Key="SegmentedTabControl" TargetType="{x:Type TabControl}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabControl}">
+                        <Grid SnapsToDevicePixels="True">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <!-- Segmented Navigation Header Bar -->
+                            <Border Grid.Row="0" Background="#0A0F1D" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0,0,0,1" Padding="16,8">
+                                <Grid>
+                                    <TabPanel IsItemsHost="True" HorizontalAlignment="Left" KeyboardNavigation.TabIndex="1"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Border Background="#131D33" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" ToolTip="Durable Configuration Auto-Sync Status">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="💾 " FontSize="10" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding DataContext.AutoSaveStatusText, RelativeSource={RelativeSource AncestorType=TabControl}}" FontSize="10" Foreground="#34D399" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <!-- Selected Tab Content -->
+                            <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" KeyboardNavigation.TabIndex="2"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Accessible Segmented TabItem Style -->
+        <Style x:Key="SegmentedTabItem" TargetType="{x:Type TabItem}">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="18,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border x:Name="TabBorder" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}" Margin="2,0" SnapsToDevicePixels="True">
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#131D33"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#00F0FF"/>
+                                <Setter TargetName="TabBorder" Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="#00F0FF"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Accessible Segmented Navigation Tab Button Style -->
+        <Style x:Key="SegmentedTabButton" TargetType="RadioButton">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="TabBorder" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}" Margin="2,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#F8FAFC"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#131D33"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#00F0FF"/>
+                                <Setter TargetName="TabBorder" Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="#00F0FF"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Accessible Dark ComboBoxItem Style -->
+        <Style TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True" CornerRadius="4" Margin="2,1">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#00F0FF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#131D33"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#00F0FF"/>
+                                <Setter TargetName="ItemBorder" Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="#00F0FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Global CheckBox Style with High Contrast Indicator -->
+        <Style TargetType="{x:Type CheckBox}">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Global TextBox Style -->
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
+            <Setter Property="Background" Value="#080C14"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="CaretBrush" Value="#00F0FF"/>
+            <Setter Property="BorderBrush" Value="#1E293B"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Global Slider Style with Accessible Focus -->
+        <Style TargetType="{x:Type Slider}">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
         </Style>
     </Application.Resources>
 </Application>

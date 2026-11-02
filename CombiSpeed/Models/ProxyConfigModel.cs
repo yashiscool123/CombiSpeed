@@ -37,4 +37,10 @@ public class ProxyConfigModel
     public string CustomThrottleUnit { get; set; } = "Mbps"; // "Mbps", "MB/s"
     public SpeedShaperMode ShaperMode { get; set; } = SpeedShaperMode.MaximumBandwidth;
     public bool EnableDynamicShaping { get; set; } = true;
+
+    // Accessibility & UI Display Preferences (WCAG 2.1 AA)
+    public bool IsHighContrast { get; set; } = false;
+    public double UiScale { get; set; } = 1.0; // 1.0 = 100%, 1.15 = 115%, 1.30 = 130%
+    public bool IsReduceMotion { get; set; } = false;
+    public bool IsScreenReaderOptimized { get; set; } = false;
 }

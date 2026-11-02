@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using CombiSpeed.Services;
@@ -111,6 +111,20 @@ public partial class App : Application
                 var profiles = store2.GetProfileNames();
                 if (!profiles.Contains("Streaming Priority")) throw new Exception("Profile was not registered.");
                 Console.WriteLine($"[PASS] Combination Profile registered: {string.Join(", ", profiles)}");
+
+                // Test 5: Accessibility Persistence Verification
+                config.IsHighContrast = true;
+                config.UiScale = 1.15;
+                config.IsReduceMotion = true;
+                config.IsScreenReaderOptimized = true;
+                store2.SaveImmediate(freshAdapters, config, "Accessibility Profile");
+                var store3 = new ConfigurationStore();
+                var loaded3 = store3.Load();
+                if (!loaded3.Config.IsHighContrast || Math.Abs(loaded3.Config.UiScale - 1.15) > 0.01 || !loaded3.Config.IsReduceMotion)
+                {
+                    throw new Exception("Accessibility settings persistence verification failed!");
+                }
+                Console.WriteLine("[PASS] Accessibility persistence verified: HighContrast=True, UiScale=115%, ReduceMotion=True saved & loaded.");
 
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL ADAPTER PERSISTENCE & COMBINATION TESTS PASSED (100% OK)       ");
@@ -309,8 +323,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.6";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 11)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.0";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 12)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Shutdown(0);

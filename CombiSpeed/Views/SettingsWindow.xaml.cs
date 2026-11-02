@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using CombiSpeed.Models;
@@ -33,6 +33,11 @@ public partial class SettingsWindow : Window
             }
         }
         ChkDynamicShaping.IsChecked = config.EnableDynamicShaping;
+
+        ChkHighContrast.IsChecked = config.IsHighContrast;
+        ChkReduceMotion.IsChecked = config.IsReduceMotion;
+        ChkScreenReader.IsChecked = config.IsScreenReaderOptimized;
+        SelectScale(config.UiScale);
 
         if (config.GlobalDownloadLimitBps > 0)
         {
@@ -176,8 +181,34 @@ public partial class SettingsWindow : Window
             _config.BurstToleranceSeconds = burst;
         }
 
+        _config.IsHighContrast = ChkHighContrast.IsChecked == true;
+        _config.IsReduceMotion = ChkReduceMotion.IsChecked == true;
+        _config.IsScreenReaderOptimized = ChkScreenReader.IsChecked == true;
+
+        if (CmbUiScale.SelectedItem is ComboBoxItem scaleItem && scaleItem.Tag != null &&
+            double.TryParse(scaleItem.Tag.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double sc))
+        {
+            _config.UiScale = sc;
+        }
+
         DialogResult = true;
         Close();
+    }
+
+    private void SelectScale(double scale)
+    {
+        foreach (ComboBoxItem item in CmbUiScale.Items)
+        {
+            if (item.Tag != null && double.TryParse(item.Tag.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double s))
+            {
+                if (Math.Abs(s - scale) < 0.05)
+                {
+                    item.IsSelected = true;
+                    return;
+                }
+            }
+        }
+        CmbUiScale.SelectedIndex = 0;
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
