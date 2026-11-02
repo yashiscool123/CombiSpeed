@@ -122,3 +122,16 @@
 - [x] Validate automated test suites (--verify-throttling, --verify-persistence) and verify 100% pass rates.
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, 	ask_log.json).
 - [x] Commit changes to git and create release tag 1.3.4.
+
+## Milestone 11: 500 Mbps Bandwidth Throttling & Custom Throttling Parameters [COMPLETED]
+- [x] Increment version to 1.3.5 and ersionCode: 10 in CombiSpeed.csproj and ersion.json.
+- [x] Expand throttling presets in MainViewModel.cs up to 500 Mbps (62.5 MB/s).
+- [x] Implement CustomThrottleDialog.xaml modal window allowing users to enter custom speed caps, multi-unit rates (Mbps, MB/s, Kbps, KB/s), burst tolerance window, and per-adapter limits.
+- [x] Add ⚙ Custom... button to the Bandwidth Throttling toolbar in MainWindow.xaml and wire Custom... dropdown action.
+- [x] Update SettingsWindow.xaml and SettingsWindow.xaml.cs to support custom speed limits in Mbps / MB/s and configurable burst window.
+- [x] Support configurable Token Bucket burst window (BurstToleranceSeconds) in BandwidthThrottler.cs and ProxyConfigModel.cs.
+- [x] Add CustomSpeedLimitMbps to NetworkAdapterModel.cs for direct two-way per-adapter speed limit editing.
+- [x] Update --verify-throttling test suite with 500 Mbps cap validation, parameter conversion checks, and per-adapter overrides (100% pass rate).
+- [x] Package release distribution publish/CombiSpeed-v1.3.5-win-x64.zip.
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, 	ask_log.json).
+- [x] Commit changes to git and create release tag 1.3.5.

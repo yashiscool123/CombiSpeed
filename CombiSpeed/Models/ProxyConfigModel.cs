@@ -26,4 +26,6 @@ public class ProxyConfigModel
     public bool EnforceProportionalThrottling { get; set; } = true;
     public long GlobalDownloadLimitBps { get; set; } = 0; // 0 = Unlimited / Dynamic Proportional
     public long GlobalUploadLimitBps { get; set; } = 0;
+    public double BurstToleranceSeconds { get; set; } = 0.05; // 50ms default Token Bucket burst window
+    public string CustomThrottleUnit { get; set; } = "Mbps"; // "Mbps", "MB/s"
 }

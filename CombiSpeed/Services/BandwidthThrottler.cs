@@ -95,12 +95,14 @@ public class BandwidthThrottler
         GlobalUploadLimitBps = config.GlobalUploadLimitBps;
         EnforceProportionalThrottling = config.EnforceProportionalThrottling;
 
+        double burstSeconds = config.BurstToleranceSeconds > 0 ? config.BurstToleranceSeconds : 0.05;
+
         if (!IsThrottlingEnabled)
         {
-            _globalRxBucket.SetRate(0);
-            _globalTxBucket.SetRate(0);
-            foreach (var b in _rxBuckets.Values) b.SetRate(0);
-            foreach (var b in _txBuckets.Values) b.SetRate(0);
+            _globalRxBucket.SetRate(0, burstSeconds);
+            _globalTxBucket.SetRate(0, burstSeconds);
+            foreach (var b in _rxBuckets.Values) b.SetRate(0, burstSeconds);
+            foreach (var b in _txBuckets.Values) b.SetRate(0, burstSeconds);
 
             foreach (var adapter in adapters)
             {
@@ -109,21 +111,21 @@ public class BandwidthThrottler
             return;
         }
 
-        _globalRxBucket.SetRate(GlobalDownloadLimitBps);
-        _globalTxBucket.SetRate(GlobalUploadLimitBps);
+        _globalRxBucket.SetRate(GlobalDownloadLimitBps, burstSeconds);
+        _globalTxBucket.SetRate(GlobalUploadLimitBps, burstSeconds);
 
         var adapterList = adapters.Where(a => a.IsEnabled && a.Weight > 0).ToList();
         double totalWeight = adapterList.Sum(a => a.Weight);
 
         foreach (var adapter in adapters)
         {
-            var rxBucket = _rxBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0));
-            var txBucket = _txBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0));
+            var rxBucket = _rxBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0, burstSeconds));
+            var txBucket = _txBuckets.GetOrAdd(adapter.Id, _ => new TokenBucket(0, burstSeconds));
 
             if (!adapter.IsEnabled || adapter.Weight <= 0)
             {
-                rxBucket.SetRate(0);
-                txBucket.SetRate(0);
+                rxBucket.SetRate(0, burstSeconds);
+                txBucket.SetRate(0, burstSeconds);
                 adapter.ThrottledBandwidthBps = 0;
                 continue;
             }
@@ -147,8 +149,8 @@ public class BandwidthThrottler
                 adapterTxRate = adapterTxRate > 0 ? Math.Min(adapterTxRate, proportionalRate) : proportionalRate;
             }
 
-            rxBucket.SetRate(adapterRxRate);
-            txBucket.SetRate(adapterTxRate);
+            rxBucket.SetRate(adapterRxRate, burstSeconds);
+            txBucket.SetRate(adapterTxRate, burstSeconds);
             adapter.ThrottledBandwidthBps = (long)adapterRxRate;
         }
     }
@@ -191,5 +193,38 @@ public class BandwidthThrottler
         {
             await _globalTxBucket.ThrottleAsync(bytes, token).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Converts a numerical rate and unit string into raw bytes per second.
+    /// </summary>
+    public static long ConvertToBytesPerSec(double value, string unit)
+    {
+        if (value <= 0) return 0;
+        return unit?.ToUpperInvariant() switch
+        {
+            "MBPS" => (long)(value * 125_000.0), // 1 Mbps = 1,000,000 bits / 8 = 125,000 bytes/sec
+            "MB/S" => (long)(value * 1024.0 * 1024.0),
+            "GBPS" => (long)(value * 125_000_000.0),
+            "GB/S" => (long)(value * 1024.0 * 1024.0 * 1024.0),
+            "KBPS" => (long)(value * 125.0),
+            "KB/S" => (long)(value * 1024.0),
+            _ => (long)(value * 125_000.0)
+        };
+    }
+
+    /// <summary>
+    /// Converts raw bytes per second into a numerical rate and unit string.
+    /// </summary>
+    public static (double value, string unit) ConvertFromBytesPerSec(long bytesPerSec, string preferredUnit = "Mbps")
+    {
+        if (bytesPerSec <= 0) return (0, preferredUnit);
+        if (preferredUnit.Equals("MB/s", StringComparison.OrdinalIgnoreCase))
+        {
+            return (bytesPerSec / (1024.0 * 1024.0), "MB/s");
+        }
+        // Default to Mbps
+        double mbps = (bytesPerSec * 8.0) / 1_000_000.0;
+        return (mbps, "Mbps");
     }
 }

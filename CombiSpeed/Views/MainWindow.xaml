@@ -402,7 +402,8 @@
 
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <TextBlock Text="Speed Throttle Cap:" FontSize="10" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                        <ComboBox ItemsSource="{Binding ThrottlePresets}" SelectedItem="{Binding SelectedThrottlePreset}" Width="170" Height="24" FontSize="10" Background="#080C14" Foreground="Black" VerticalAlignment="Center"/>
+                                        <ComboBox ItemsSource="{Binding ThrottlePresets}" SelectedItem="{Binding SelectedThrottlePreset}" Width="180" Height="24" FontSize="10" Background="#080C14" Foreground="Black" VerticalAlignment="Center"/>
+                                        <Button Content="⚙ Custom..." Click="CustomThrottle_Click" Style="{StaticResource CyberButton}" Margin="6,0,0,0" Padding="8,2" FontSize="10" ToolTip="Configure custom speed limits up to 500+ Mbps, burst window &amp; per-adapter caps"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>

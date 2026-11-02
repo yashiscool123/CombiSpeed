@@ -1,9 +1,9 @@
 {
   "name": "combispeed",
-  "version": "1.3.4",
-  "versionCode": 9,
-  "releaseName": "CombiSpeed v1.3.4 - Application Version Visibility & Multi-WAN Channel Bonding Release",
-  "buildDate": "2026-11-01T23:20:00+05:30",
+  "version": "1.3.5",
+  "versionCode": 10,
+  "releaseName": "CombiSpeed v1.3.5 - 500 Mbps Throttling & Custom Speed Parameters Release",
+  "buildDate": "2026-11-02T14:20:00+05:30",
   "platform": "win32",
   "arch": "x64",
   "runtime": ".NET 8.0 Windows Desktop (WPF)"

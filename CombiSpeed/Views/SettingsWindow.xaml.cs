@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using CombiSpeed.Models;
+using CombiSpeed.Services;
 
 namespace CombiSpeed.Views;
 
@@ -21,8 +23,33 @@ public partial class SettingsWindow : Window
         ChkEnablePac.IsChecked = config.EnablePac;
         ChkEnableThrottling.IsChecked = config.EnableBandwidthThrottling;
         ChkProportionalThrottling.IsChecked = config.EnforceProportionalThrottling;
-        TxtDownloadLimit.Text = (config.GlobalDownloadLimitBps / (1024 * 1024)).ToString();
-        TxtUploadLimit.Text = (config.GlobalUploadLimitBps / (1024 * 1024)).ToString();
+
+        if (config.GlobalDownloadLimitBps > 0)
+        {
+            var (dlVal, dlUnit) = BandwidthThrottler.ConvertFromBytesPerSec(config.GlobalDownloadLimitBps, config.CustomThrottleUnit ?? "Mbps");
+            TxtDownloadLimit.Text = dlVal.ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
+            SelectUnit(CmbDownloadUnit, dlUnit);
+        }
+        else
+        {
+            TxtDownloadLimit.Text = "0";
+            SelectUnit(CmbDownloadUnit, "Mbps");
+        }
+
+        if (config.GlobalUploadLimitBps > 0)
+        {
+            var (ulVal, ulUnit) = BandwidthThrottler.ConvertFromBytesPerSec(config.GlobalUploadLimitBps, config.CustomThrottleUnit ?? "Mbps");
+            TxtUploadLimit.Text = ulVal.ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
+            SelectUnit(CmbUploadUnit, ulUnit);
+        }
+        else
+        {
+            TxtUploadLimit.Text = "0";
+            SelectUnit(CmbUploadUnit, "Mbps");
+        }
+
+        SelectBurstWindow(config.BurstToleranceSeconds);
+
         GridPacRules.ItemsSource = PacConfigModel.Current.Rules;
 
         foreach (ComboBoxItem item in CmbRoutingMode.Items)
@@ -37,6 +64,34 @@ public partial class SettingsWindow : Window
         UpdateCliText();
         TxtHttpPort.TextChanged += (s, e) => UpdateCliText();
         TxtSocksPort.TextChanged += (s, e) => UpdateCliText();
+    }
+
+    private void SelectUnit(ComboBox cmb, string unit)
+    {
+        foreach (ComboBoxItem item in cmb.Items)
+        {
+            if (string.Equals(item.Content?.ToString(), unit, StringComparison.OrdinalIgnoreCase))
+            {
+                item.IsSelected = true;
+                break;
+            }
+        }
+    }
+
+    private void SelectBurstWindow(double seconds)
+    {
+        foreach (ComboBoxItem item in CmbBurstWindow.Items)
+        {
+            if (item.Tag != null && double.TryParse(item.Tag.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double s))
+            {
+                if (Math.Abs(s - seconds) < 0.01)
+                {
+                    item.IsSelected = true;
+                    return;
+                }
+            }
+        }
+        CmbBurstWindow.SelectedIndex = 1;
     }
 
     private void UpdateCliText()
@@ -77,8 +132,33 @@ public partial class SettingsWindow : Window
 
         _config.EnableBandwidthThrottling = ChkEnableThrottling.IsChecked == true;
         _config.EnforceProportionalThrottling = ChkProportionalThrottling.IsChecked == true;
-        if (long.TryParse(TxtDownloadLimit.Text, out long dlMb)) _config.GlobalDownloadLimitBps = dlMb * 1024 * 1024;
-        if (long.TryParse(TxtUploadLimit.Text, out long ulMb)) _config.GlobalUploadLimitBps = ulMb * 1024 * 1024;
+
+        if (double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl) && dl > 0)
+        {
+            string unit = (CmbDownloadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
+            _config.GlobalDownloadLimitBps = BandwidthThrottler.ConvertToBytesPerSec(dl, unit);
+            _config.CustomThrottleUnit = unit;
+        }
+        else
+        {
+            _config.GlobalDownloadLimitBps = 0;
+        }
+
+        if (double.TryParse(TxtUploadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double ul) && ul > 0)
+        {
+            string unit = (CmbUploadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
+            _config.GlobalUploadLimitBps = BandwidthThrottler.ConvertToBytesPerSec(ul, unit);
+        }
+        else
+        {
+            _config.GlobalUploadLimitBps = 0;
+        }
+
+        if (CmbBurstWindow.SelectedItem is ComboBoxItem burstItem && burstItem.Tag != null &&
+            double.TryParse(burstItem.Tag.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double burst))
+        {
+            _config.BurstToleranceSeconds = burst;
+        }
 
         DialogResult = true;
         Close();

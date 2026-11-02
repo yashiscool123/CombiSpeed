@@ -187,8 +187,46 @@ public partial class App : Application
                     throw new Exception("Throttler failed to enforce delay on rate-limited adapter!");
                 }
 
+                // Test 500 Mbps Throttling Cap
+                long limit500Mbps = BandwidthThrottler.ConvertToBytesPerSec(500, "Mbps");
+                if (limit500Mbps != 62_500_000)
+                {
+                    throw new Exception($"500 Mbps conversion mismatch: expected 62500000, got {limit500Mbps}");
+                }
+                config.EnableBandwidthThrottling = true;
+                config.GlobalDownloadLimitBps = limit500Mbps;
+                config.BurstToleranceSeconds = 0.10;
+                throttler.UpdateConfiguration(mockAdapters, config);
+
+                long expected500_1 = (long)(limit500Mbps * 0.75);
+                long expected500_2 = (long)(limit500Mbps * 0.25);
+                if (mockAdapters[0].ThrottledBandwidthBps != expected500_1 || mockAdapters[1].ThrottledBandwidthBps != expected500_2)
+                {
+                    throw new Exception("500 Mbps proportional allocation mismatch!");
+                }
+                Console.WriteLine($"[PASS] 500 Mbps cap verified: Adapter 1={expected500_1 / 125_000} Mbps (75%), Adapter 2={expected500_2 / 125_000} Mbps (25%)");
+
+                // Test Custom Parameter Unit Conversion
+                long custom350Mbps = BandwidthThrottler.ConvertToBytesPerSec(350, "Mbps");
+                var (convertedVal, convertedUnit) = BandwidthThrottler.ConvertFromBytesPerSec(custom350Mbps, "Mbps");
+                if (Math.Abs(convertedVal - 350.0) > 0.01 || convertedUnit != "Mbps")
+                {
+                    throw new Exception("Custom parameter unit conversion mismatch!");
+                }
+                Console.WriteLine($"[PASS] Custom throttling parameter conversion verified: 350 Mbps = {custom350Mbps} B/s");
+
+                // Test Per-Adapter Custom Limit Override
+                mockAdapters[1].SpeedLimitBps = 10 * 1024 * 1024;
+                throttler.UpdateConfiguration(mockAdapters, config);
+                if (mockAdapters[1].ThrottledBandwidthBps != 10 * 1024 * 1024)
+                {
+                    throw new Exception("Per-adapter custom speed limit override failed!");
+                }
+                Console.WriteLine("[PASS] Per-adapter custom speed cap override verified: Adapter 2 clamped to 10 MB/s.");
+
                 // Test unthrottled mode
                 config.EnableBandwidthThrottling = false;
+                mockAdapters[1].SpeedLimitBps = 0;
                 throttler.UpdateConfiguration(mockAdapters, config);
 
                 var sw2 = Stopwatch.StartNew();
@@ -222,8 +260,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.4";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 9)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.5";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 10)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Shutdown(0);

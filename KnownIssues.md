@@ -25,3 +25,4 @@
 - [x] Adapter settings and combination profile persistence with debounced auto-save and startup restoration.
 - [x] Real-time bandwidth throttling & speed shaper enforcing proportional bandwidth and speed caps across combined connection adapters.
 - [x] Application version display in main window titlebar badge, glassmorphic footer status bar, and --version CLI flag.
+- [x] Throttling cap increased to up to 500 Mbps speeds with high-speed presets and interactive custom throttling parameters dialog (custom Mbps/MB/s limits, burst window, per-adapter limits).

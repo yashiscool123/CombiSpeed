@@ -183,6 +183,30 @@
                                               "progress":  "All tasks completed successfully."
                                           }
                                       ]
+                  },
+                  {
+                      "taskId":  "TASK-2026-010",
+                      "userQuery":  "Increase the throttling cap to upto 500 Mbps speeds. Allow users to entering custom throttling parameters.",
+                      "status":  "completed",
+                      "createdAt":  "2026-11-02T14:15:00+05:30",
+                      "updatedAt":  "2026-11-02T14:25:00+05:30",
+                      "progress":  "Successfully increased the throttling cap to 500 Mbps with expanded presets, implemented CustomThrottleDialog.xaml for arbitrary numerical rates, multi-unit support (Mbps, MB/s, Kbps, KB/s), configurable burst tolerance window, per-adapter limits, toolbar and Settings integration, automated regression testing, and released v1.3.5.",
+                      "checkpoints":  [
+                                          {
+                                              "checkpointId":  "CP-1001",
+                                              "timestamp":  "2026-11-02T14:15:00+05:30",
+                                              "inputs":  "User requested: \u0027Increase the throttling cap to upto 500 Mbps speeds. Allow users to entering custom throttling parameters.\u0027",
+                                              "outputs":  "Architecture plan: (1) Expand ThrottlePresets up to 500 Mbps (62.5 MB/s) with clean Mbps \u0026 MB/s labels, (2) Create CustomThrottleDialog.xaml for interactive custom parameter entry (custom Mbps/MB/s download \u0026 upload, burst window, proportional shaping, and per-adapter limits), (3) Wire toolbar button and \u0027Custom...\u0027 preset to open CustomThrottleDialog, (4) Update SettingsWindow.xaml for custom Mbps/MB/s inputs and burst window, (5) Update BandwidthThrottler to support configurable burst window, (6) Ensure auto-save persistence.",
+                                              "progress":  "Design and architecture phase completed."
+                                          },
+                                          {
+                                              "checkpointId":  "CP-1002",
+                                              "timestamp":  "2026-11-02T14:25:00+05:30",
+                                              "inputs":  "Full implementation and verification of 500 Mbps speed cap, CustomThrottleDialog.xaml, MainWindow toolbar integration, SettingsWindow updates, BandwidthThrottler burst window support, unit conversion methods, NetworkAdapterModel CustomSpeedLimitMbps, and test suite updates.",
+                                              "outputs":  "Built and published CombiSpeed v1.3.5 (versionCode 10) with 0 warnings and 0 errors. Passed 100% of --verify-throttling and --verify-persistence self-test suites. Packaged publish/CombiSpeed-v1.3.5-win-x64.zip. Synchronized ReleaseNotes.md, ReadMe.md, ToDos.md, and KnownIssues.md.",
+                                              "progress":  "All tasks completed successfully."
+                                          }
+                                      ]
                   }
               ]
 }

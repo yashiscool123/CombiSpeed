@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using CombiSpeed.ViewModels;
 
@@ -93,5 +93,10 @@ public partial class MainWindow : Window
         {
             ViewModel.CreateNewProfile(dlg.ResponseText);
         }
+    }
+
+    private void CustomThrottle_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.OpenCustomThrottleDialog();
     }
 }

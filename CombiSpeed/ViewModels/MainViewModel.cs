@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using CombiSpeed.Views;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -84,7 +85,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.4";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.5";
         }
     }
 
@@ -93,8 +94,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.4";
-            return $"{verStr} (Build 9)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.3.5";
+            return $"{verStr} (Build 10)";
         }
     }
 
@@ -103,13 +104,17 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<string> ThrottlePresets { get; } = new()
     {
         "Unlimited (Proportional)",
-        "2 MB/s (16 Mbps)",
-        "5 MB/s (40 Mbps)",
-        "10 MB/s (80 Mbps)",
-        "20 MB/s (160 Mbps)",
-        "50 MB/s (400 Mbps)",
-        "100 MB/s (800 Mbps)"
+        "16 Mbps (2 MB/s)",
+        "40 Mbps (5 MB/s)",
+        "80 Mbps (10 MB/s)",
+        "160 Mbps (20 MB/s)",
+        "250 Mbps (31.25 MB/s)",
+        "400 Mbps (50 MB/s)",
+        "500 Mbps (62.5 MB/s)",
+        "Custom..."
     };
+
+    public ICommand OpenCustomThrottleCommand => new RelayCommand(OpenCustomThrottleDialog);
 
     private string _selectedThrottlePreset = "Unlimited (Proportional)";
     public string SelectedThrottlePreset
@@ -324,24 +329,8 @@ public class MainViewModel : INotifyPropertyChanged
         _healthMonitor.Start(3500);
 
         // Configure initial bandwidth throttling state
-        if (Config.GlobalDownloadLimitBps > 0)
-        {
-            long mb = Config.GlobalDownloadLimitBps / (1024 * 1024);
-            var match = ThrottlePresets.FirstOrDefault(p => p.StartsWith($"{mb} MB/s"));
-            _selectedThrottlePreset = match ?? "Custom";
-            _throttleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeed(Config.GlobalDownloadLimitBps)} Cap";
-        }
-        else if (Config.EnableBandwidthThrottling)
-        {
-            _selectedThrottlePreset = "Unlimited (Proportional)";
-            _throttleStatusText = "Throttling: Proportional % Shaping";
-        }
-        else
-        {
-            _selectedThrottlePreset = "Unlimited (Proportional)";
-            _throttleStatusText = "Throttling: Disabled";
-        }
-        _proxyEngine.UpdateThrottling(Adapters, Config);
+        SyncSelectedThrottlePreset();
+        UpdateThrottlingState();
 
         // Check if Windows Proxy is currently active in registry
         IsWindowsProxyActive = _proxyManager.GetSystemProxyStatus(out _);
@@ -404,13 +393,28 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void ApplyThrottlePreset(string preset)
     {
+        if (string.IsNullOrWhiteSpace(preset)) return;
+
+        if (preset == "Custom...")
+        {
+            Application.Current?.Dispatcher?.BeginInvoke(new Action(OpenCustomThrottleDialog));
+            return;
+        }
+
+        if (preset.StartsWith("Custom:"))
+        {
+            return;
+        }
+
         long limitBps = preset switch
         {
-            "2 MB/s (16 Mbps)" => 2L * 1024 * 1024,
-            "5 MB/s (40 Mbps)" => 5L * 1024 * 1024,
-            "10 MB/s (80 Mbps)" => 10L * 1024 * 1024,
-            "20 MB/s (160 Mbps)" => 20L * 1024 * 1024,
-            "50 MB/s (400 Mbps)" => 50L * 1024 * 1024,
+            "16 Mbps (2 MB/s)" or "2 MB/s (16 Mbps)" => 2L * 1024 * 1024,
+            "40 Mbps (5 MB/s)" or "5 MB/s (40 Mbps)" => 5L * 1024 * 1024,
+            "80 Mbps (10 MB/s)" or "10 MB/s (80 Mbps)" => 10L * 1024 * 1024,
+            "160 Mbps (20 MB/s)" or "20 MB/s (160 Mbps)" => 20L * 1024 * 1024,
+            "250 Mbps (31.25 MB/s)" => (long)(250 * 125_000.0),
+            "400 Mbps (50 MB/s)" or "50 MB/s (400 Mbps)" => 50L * 1024 * 1024,
+            "500 Mbps (62.5 MB/s)" or "62.5 MB/s (500 Mbps)" => (long)(500 * 125_000.0),
             "100 MB/s (800 Mbps)" => 100L * 1024 * 1024,
             _ => 0L
         };
@@ -419,6 +423,76 @@ public class MainViewModel : INotifyPropertyChanged
         Config.GlobalUploadLimitBps = limitBps > 0 ? (limitBps / 2) : 0L;
         Config.EnableBandwidthThrottling = limitBps > 0 || Config.EnforceProportionalThrottling;
         UpdateThrottlingState();
+    }
+
+    public void OpenCustomThrottleDialog()
+    {
+        var dialog = new CustomThrottleDialog(Config, Adapters)
+        {
+            Owner = Application.Current?.MainWindow
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            UpdateThrottlingState();
+            SyncSelectedThrottlePreset();
+        }
+        else
+        {
+            SyncSelectedThrottlePreset();
+        }
+    }
+
+    public void SyncSelectedThrottlePreset()
+    {
+        if (Config.GlobalDownloadLimitBps <= 0)
+        {
+            _selectedThrottlePreset = "Unlimited (Proportional)";
+            OnPropertyChanged(nameof(SelectedThrottlePreset));
+            return;
+        }
+
+        // Check if matches an existing preset
+        string? match = null;
+        double targetMbps = (Config.GlobalDownloadLimitBps * 8.0) / 1_000_000.0;
+        foreach (var p in ThrottlePresets)
+        {
+            if (p.StartsWith("Unlimited") || p == "Custom..." || p.StartsWith("Custom:")) continue;
+            var matchRegex = System.Text.RegularExpressions.Regex.Match(p, @"(\d+(\.\d+)?)\s*Mbps");
+            if (matchRegex.Success && double.TryParse(matchRegex.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double mbps))
+            {
+                if (Math.Abs(mbps - targetMbps) < 2.0)
+                {
+                    match = p;
+                    break;
+                }
+            }
+        }
+
+        if (match != null)
+        {
+            _selectedThrottlePreset = match;
+        }
+        else
+        {
+            string customLabel = $"Custom: {NetworkAdapterModel.FormatSpeedWithBits(Config.GlobalDownloadLimitBps)}";
+            var existingCustom = ThrottlePresets.FirstOrDefault(p => p.StartsWith("Custom:"));
+            if (existingCustom != null)
+            {
+                ThrottlePresets.Remove(existingCustom);
+            }
+            int customIndex = ThrottlePresets.IndexOf("Custom...");
+            if (customIndex >= 0)
+            {
+                ThrottlePresets.Insert(customIndex, customLabel);
+            }
+            else
+            {
+                ThrottlePresets.Add(customLabel);
+            }
+            _selectedThrottlePreset = customLabel;
+        }
+        OnPropertyChanged(nameof(SelectedThrottlePreset));
     }
 
     public void UpdateThrottlingState()
@@ -431,7 +505,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         if (Config.GlobalDownloadLimitBps > 0)
         {
-            ThrottleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeed(Config.GlobalDownloadLimitBps)} Cap";
+            ThrottleStatusText = $"Throttled: {NetworkAdapterModel.FormatSpeedWithBits(Config.GlobalDownloadLimitBps)} Cap";
         }
         else if (Config.EnableBandwidthThrottling)
         {

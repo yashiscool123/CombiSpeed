@@ -1,4 +1,4 @@
-# ⚡ CombiSpeed (Native C# .NET Windows Network Adapter Channel Bonding & Multi-WAN Bandwidth Aggregator)
+﻿# ⚡ CombiSpeed (Native C# .NET Windows Network Adapter Channel Bonding & Multi-WAN Bandwidth Aggregator)
 
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D7?style=for-the-badge&logo=windows)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
@@ -28,10 +28,10 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - Full integration across **HTTP, HTTPS CONNECT, SOCKS5 TCP, SOCKS5 UDP Associate, and Windows Virtual Bonded Bridge** streams.
    - Real-time `⚡ Bandwidth Throttling` toolbar in `MainWindow.xaml` and dedicated settings in `SettingsWindow.xaml`.
 
-2. **Application Window Version Visibility & Pinned Cyberpunk Glass Footer (NEW in v1.3.4)**:
-   - Dynamic assembly and build metadata binding in `MainViewModel.cs` exposing `AppVersion` (`v1.3.4`) and `AppVersionFull` (`v1.3.4 (Build 9)`).
+2. **Application Window Version Visibility & Pinned Cyberpunk Glass Footer (NEW in v1.3.5)**:
+   - Dynamic assembly and build metadata binding in `MainViewModel.cs` exposing `AppVersion` (`v1.3.5`) and `AppVersionFull` (`v1.3.5 (Build 10)`).
    - **Custom TitleBar Cyberpunk Badge**: Prominently displays the active version badge directly next to the COMBISPEED neon logo, ensuring visibility across all window states.
-   - **Pinned Glassmorphic Footer Status Bar**: Pinned bottom status bar displaying complete build attribution (`v1.3.4 (Build 9)`), engine description, real-time configuration auto-sync status, and target runtime environment (`Windows x64 (.NET 8.0)`).
+   - **Pinned Glassmorphic Footer Status Bar**: Pinned bottom status bar displaying complete build attribution (`v1.3.5 (Build 10)`), engine description, real-time configuration auto-sync status, and target runtime environment (`Windows x64 (.NET 8.0)`).
    - **Dynamic OS Window Title**: Sets `Title="{Binding WindowTitle}"` to synchronize OS Taskbar, Task Manager, and Alt-Tab switcher with current release branding.
    - **CLI Version Flags**: Built-in `--version`, `-v`, and `/version` support for instant terminal output.
 
@@ -109,7 +109,7 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET v1.3.4) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v1.3.5) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
 | **Real-Time Bandwidth Throttling** | **Token Bucket asynchronous rate limiter with proportional shaping & speed caps** | None (Unrestricted, no rate limiting) | None (Line rate only) |
 | **Adapter Settings & Profiles** | **Durable Persistence (`adapter_settings.json`), MAC binding, debounced auto-save & presets** | None (Lost on restart) | None (Default metric reset) |

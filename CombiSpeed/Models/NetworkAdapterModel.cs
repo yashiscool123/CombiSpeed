@@ -99,6 +99,15 @@ public class NetworkAdapterModel : INotifyPropertyChanged
 
     public string FormattedSpeedLimit => _speedLimitBps <= 0 ? "Auto / Unlimited" : FormatSpeed(_speedLimitBps);
 
+    public double CustomSpeedLimitMbps
+    {
+        get => _speedLimitBps <= 0 ? 0 : Math.Round((_speedLimitBps * 8.0) / 1_000_000.0, 1);
+        set
+        {
+            SpeedLimitBps = value <= 0 ? 0 : (long)(value * 125_000.0);
+            OnPropertyChanged();
+        }
+    }
     private long _throttledBandwidthBps = 0;
     public long ThrottledBandwidthBps
     {
@@ -182,6 +191,18 @@ public class NetworkAdapterModel : INotifyPropertyChanged
         return $"{gb:F2} GB/s";
     }
 
+
+    public static string FormatSpeedWithBits(long bytesPerSec)
+    {
+        if (bytesPerSec <= 0) return "Unlimited";
+        double mbps = (bytesPerSec * 8.0) / 1_000_000.0;
+        double mb = bytesPerSec / (1024.0 * 1024.0);
+        if (mbps >= 1000)
+        {
+            return $"{mbps / 1000.0:F2} Gbps ({mb / 1024.0:F2} GB/s)";
+        }
+        return $"{mbps:F1} Mbps ({mb:F1} MB/s)";
+    }
     public static string FormatBytes(long bytes)
     {
         if (bytes <= 0) return "0 B";

@@ -1,5 +1,29 @@
 ﻿# Release Notes
 
+## [1.3.5] - 2026-11-02 - 500 Mbps Throttling Cap & Custom Throttling Parameters Release
+
+### 🚀 Highlights & Features
+- **500 Mbps Bandwidth Throttling Cap & High-Speed Presets**:
+  - Expanded bandwidth rate limiting presets in `MainViewModel.cs` to include high-speed tiers: `16 Mbps (2 MB/s)`, `40 Mbps (5 MB/s)`, `80 Mbps (10 MB/s)`, `160 Mbps (20 MB/s)`, `250 Mbps (31.25 MB/s)`, `400 Mbps (50 MB/s)`, and `500 Mbps (62.5 MB/s)`.
+  - Token Bucket rate limiter capacity dynamically scales to sustain 500+ Mbps aggregate speeds across combined network interfaces.
+- **Custom Throttling Parameters Dialog (`CustomThrottleDialog.xaml`)**:
+  - Interactive Cyberpunk modal dialog allowing users to enter arbitrary custom download and upload speed limits.
+  - Multi-unit rate input supporting `Mbps` (Megabits/sec), `MB/s` (Megabytes/sec), `Kbps`, and `KB/s` with real-time equivalent calculations.
+  - Quick-preset chips for 1-click rate selection (`[50 Mbps]`, `[100 Mbps]`, `[250 Mbps]`, `[400 Mbps]`, `[500 Mbps]`, `[Unlimited]`).
+  - Auto-calculate upload speed cap option (50% of download rate).
+  - Configurable Token Bucket Burst Tolerance Window: `20 ms (Ultra-Smooth Pacing)`, `50 ms (Balanced)`, `100 ms (High Burst)`, and `250 ms (Maximum Throughput)`.
+  - Per-adapter custom speed limit overrides directly editable in the dialog list, allowing metered connections to be clamped individually.
+- **Dashboard Toolbar & Settings Window Integration**:
+  - Added dedicated `⚙ Custom...` button to the Bandwidth Throttling toolbar in `MainWindow.xaml`.
+  - Selecting `Custom...` from the preset dropdown automatically opens the custom parameter dialog.
+  - If a custom limit is active, the toolbar displays a dynamic tag (e.g. `Custom: 500.0 Mbps (59.6 MB/s)`).
+  - Updated `SettingsWindow.xaml` with multi-unit speed limit inputs and burst window selector.
+- **Persistence & Diagnostic Test Verification**:
+  - Full persistence of custom limits, units, burst window, and per-adapter speed caps in `%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`.
+  - Enhanced `--verify-throttling` automated self-test suite validating 500 Mbps rate limiting, parameter conversion, and per-adapter overrides with 100% pass rate.
+  - Published release archive `publish/CombiSpeed-v1.3.5-win-x64.zip`.
+
+---
 ## [1.3.4] - 2026-11-01 - Application Version Visibility & TitleBar / Footer Status Bar Release
 
 ### 🚀 Highlights & Features
