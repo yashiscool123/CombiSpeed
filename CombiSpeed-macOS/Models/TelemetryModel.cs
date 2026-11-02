@@ -36,3 +36,4 @@ public class VirtualBridgeModel
     public int MergedAdapterCount { get; set; }
     public string SummaryText { get; set; } = "Ready to merge macOS network services.";
 }
+

@@ -279,9 +279,20 @@ public class EmbeddedDashboardServer
             }
             else if (path == "/api/speedtest/start" && req.HttpMethod == "POST")
             {
-                // Run short async throughput burst
-                await Task.Delay(500);
-                res.StatusCode = 200;
+                var tester = new LinuxSpeedTester();
+                var result = await tester.RunTestAsync(_adapters);
+                var responseObj = new
+                {
+                    bondedMbps = result.BondedDownloadMbps,
+                    boostPercent = result.BoostPercentage,
+                    latencyMs = result.BondedLatencyMs,
+                    adapters = result.AdapterResults
+                };
+                string json = JsonSerializer.Serialize(responseObj);
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
             }
             else if (path == "/api/accessibility" && req.HttpMethod == "POST")
             {
@@ -311,3 +322,4 @@ public class EmbeddedDashboardServer
         }
     }
 }
+

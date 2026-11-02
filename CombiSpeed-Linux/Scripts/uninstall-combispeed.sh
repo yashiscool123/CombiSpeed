@@ -15,3 +15,4 @@ rm -f "$HOME/.local/bin/combispeed"
 rm -f "$HOME/.local/share/applications/combispeed.desktop"
 
 echo "CombiSpeed uninstalled cleanly."
+

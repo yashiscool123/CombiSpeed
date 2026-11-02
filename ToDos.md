@@ -212,3 +212,25 @@
 - [x] Validate automated self-test suites across all platforms (--verify-persistence, --verify-throttling, --version, --export-pac) with 100% pass rates.
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.0.0.
+
+## Milestone 16: Speed Benchmark Overhaul & Virtual Adapter Routing Protection [COMPLETED]
+- [x] Increment version to 2.0.1 and versionCode: 15 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, MainViewModel.cs, App.xaml.cs, Install-CombiSpeed.bat, Info.plist, Program.cs, and CyberpunkSpa.cs).
+- [x] Diagnose and resolve Speed Benchmark freezing on Windows:
+  - Added 1500ms pre-flight latency socket probe in SpeedTester.cs; unroutable or virtual host-only adapters (Hyper-V vEthernet, WSL) are immediately assigned 0 Mbps, preventing 21-42 second TCP SYN retransmission hangs.
+  - Configured SocketsHttpHandler with UseProxy = false and Proxy = null, resolving 10049 WSAEADDRNOTAVAIL socket errors caused by physical interface sockets attempting to route to local proxy 127.0.0.1:8080.
+  - Implemented ResolveHostIPv4Async to prevent IPv6 address family mismatches on IPv4-bound physical sockets.
+  - Fixed event handler unsubscribe in SpeedTestWindow.xaml.cs on Closed event, eliminating handler leaks and UI race conditions.
+  - Added --verify-benchmark CLI flag and validated multi-adapter throughput (189.7 Mbps Ethernet, 72.6 Mbps Wi-Fi, 169.7 Mbps bonded aggregation).
+- [x] Implement native multi-stream speed benchmarking on Linux (LinuxSpeedTester.cs):
+  - Async parallel socket throughput measurement with SO_BINDTODEVICE socket binding and pre-flight latency probe.
+  - Wired to /api/speedtest/start in EmbeddedDashboardServer.cs and updated CyberpunkSpa.cs with real throughput, latency, boost %, and adapter list.
+- [x] Implement native multi-stream speed benchmarking on macOS (MacSpeedTester.cs):
+  - Async parallel socket throughput measurement with IP_BOUND_IF / SO_DONTROUTE socket binding and pre-flight routability checks.
+  - Wired to /api/speedtest/start in EmbeddedDashboardServer.cs and updated CyberpunkSpa.cs with real throughput, latency, boost %, and adapter list.
+- [x] Publish and package release artifacts in publish/:
+  - Windows: publish/windows/CombiSpeed-v2.0.1-win-x64.zip
+  - Linux: publish/linux/CombiSpeed-v2.0.1-linux-x64.tar.gz and .zip
+  - macOS: publish/macos/CombiSpeed-v2.0.1-macos-x64.tar.gz and .zip
+- [x] Execute clean builds and validate 100% test pass rate across --verify-benchmark, --verify-persistence, --verify-throttling.
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.0.1.

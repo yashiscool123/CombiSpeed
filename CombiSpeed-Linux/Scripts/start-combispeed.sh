@@ -18,3 +18,4 @@ fi
 chmod +x "$BIN"
 echo "Starting CombiSpeed Bonding Engine..."
 exec "$BIN" --start "$@"
+

@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.0.0%20(Build%2014)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.0.1%20(Build%2015)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -29,7 +29,14 @@ This bypasses default routing limitations and forces traffic simultaneously acro
 
 ## 🚀 Key Features
 
-1. **Proxy Auto-Config (PAC) File Saving & Direct Export (NEW in v2.0.0)**:
+1. **Speed Benchmark Multi-Stream Overhaul & Virtual Adapter Protection (NEW in v2.0.1)**:
+   - **Pre-Flight Latency & Routability Probing**: Automatically detects and isolates unroutable virtual host-only adapters (such as Hyper-V `vEthernet` or WSL bridges with IPs `172.19.96.1` / `172.31.0.1`). Conducts an instant 1500ms pre-flight probe; adapters exceeding 900ms or unreachable gateways are assigned 0 Mbps immediately, eliminating 21-42 second TCP SYN retransmission hangs.
+   - **Proxy Bypass Isolation (`UseProxy = false`)**: Enforces direct physical interface routing during speed tests (`SocketsHttpHandler.UseProxy = false`, `Proxy = null`), preventing benchmark requests from incorrectly routing to loopback `127.0.0.1:8080` while bound to a physical adapter IP, resolving the `10049 WSAEADDRNOTAVAIL` socket rejection.
+   - **Strict IPv4 DNS Resolution**: Integrated `ResolveHostIPv4Async` to eliminate IPv6 address family mismatches when attempting to connect from IPv4-bound physical sockets.
+   - **Cross-Platform Native Parity**: True asynchronous socket throughput benchmarking across Windows (`SpeedTester.cs`), Linux (`LinuxSpeedTester.cs`), and macOS (`MacSpeedTester.cs`), wired directly to dashboard modals with live per-adapter speed and ping breakdown.
+   - **Clean UI Event Lifecycle**: Complete unsubscription of benchmark progress handlers in `SpeedTestWindow.xaml.cs` on window close, preventing duplicate handler firing and UI race conditions.
+
+2. **Proxy Auto-Config (PAC) File Saving & Direct Export (v2.0.0)**:
    - **One-Click PAC Export Button**: Built directly into the PAC routing configuration section in `SettingsWindow.xaml` and the Linux/macOS dashboard.
    - **Interactive File Save Dialog**: Pre-configured with `.pac`, `.js`, and all-files filters, compiling RFC-compliant `FindProxyForURL(url, host)` JavaScript files directly to disk.
    - **Command-Line PAC Export**: Built-in `--export-pac [outputPath]` CLI command on all operating systems for automated deployment, browser provisioning, and headless server environments.
@@ -252,9 +259,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.0.0-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.0.0-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.0.0-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.0.0-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.0.0-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.0.1-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.0.1-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.0.1-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.0.1-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.0.1-macos-x64.zip`
 
 ---
 
@@ -289,6 +296,7 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 | `--export-pac <path>` | `-export-pac` | Compiles and exports RFC-compliant PAC JavaScript script directly to the specified file path. |
 | `--minimized` | `-m` | Launches CombiSpeed in minimized window mode (Windows). |
 | `--service` / `--headless` / `--daemon` | `-h` | Runs CombiSpeed in headless daemon mode without opening GUI or browser. |
+| `--verify-benchmark` | *(none)* | Runs automated self-test suite verifying pre-flight routability probing, multi-adapter socket throughput, and bonded aggregation. |
 | `--verify-persistence` | *(none)* | Runs automated self-test suite verifying adapter settings, profiles, accessibility, and PAC export. |
 | `--verify-throttling` | *(none)* | Runs automated self-test suite verifying Token Bucket rate limiting, 500 Mbps cap, and dynamic speed shaping. |
 

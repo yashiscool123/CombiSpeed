@@ -32,3 +32,4 @@ public class NetworkAdapterModel
     public double? CustomSpeedLimitMbps { get; set; }
     public string AccentColor { get; set; } = "#00F0FF";
 }
+

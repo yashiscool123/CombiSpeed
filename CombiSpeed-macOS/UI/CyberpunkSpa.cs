@@ -1,4 +1,4 @@
-﻿namespace CombiSpeed.macOS.UI;
+namespace CombiSpeed.macOS.UI;
 
 public static class CyberpunkSpa
 {
@@ -506,7 +506,7 @@ public static class CyberpunkSpa
                 <p>MULTI-ADAPTER SPEED BONDING & QOS SHAPER</p>
             </div>
             <div class="header-badges">
-                <span class="badge badge-cyan">v2.0.0</span>
+                <span class="badge badge-cyan">v2.0.1</span>
                 <span class="badge">{{osName}}</span>
             </div>
         </div>
@@ -736,16 +736,21 @@ public static class CyberpunkSpa
 
     <!-- Speed Test Modal -->
     <div id="modalSpeedTest" class="modal-overlay">
-        <div class="modal-card">
+        <div class="modal-card" style="max-width: 520px; width: 90%;">
             <div class="modal-header">
                 <h2 style="font-size: 15px; color: var(--cyan);">MULTI-STREAM SPEED BENCHMARK</h2>
                 <button class="btn-cyber" onclick="closeModal('modalSpeedTest')">✕</button>
             </div>
             <div style="text-align: center; padding: 20px 0;">
-                <div style="font-size: 40px; font-weight: 800; font-family: Consolas;" id="testSpeedVal">0.0</div>
-                <div style="font-size: 14px; color: var(--cyan); margin-top: 4px;">Mbps Aggregate Throughput</div>
-                <p id="testStatus" style="font-size: 12px; color: var(--text-muted); margin-top: 12px;">Ready to run multi-stream speed test across all active adapters.</p>
-                <button id="btnRunTest" class="btn-cyber btn-cyber-primary" style="margin-top: 20px;" onclick="runBenchmark()">Start Benchmark</button>
+                <div style="font-size: 44px; font-weight: 800; font-family: Consolas;" id="testSpeedVal">0.0</div>
+                <div style="font-size: 14px; color: var(--cyan); margin-top: 4px;">Mbps Aggregate Bonded Throughput</div>
+                <div id="testExtraStats" style="display: none; margin-top: 10px; font-size: 13px; color: var(--text-main);">
+                    <span>Latency: <strong id="testLatency" style="color: var(--cyan);">0</strong> ms</span> &nbsp;|&nbsp; 
+                    <span>Bonded Boost: <strong id="testBoost" style="color: var(--neon-green);">+0%</strong></span>
+                </div>
+                <div id="testAdapterList" style="margin-top: 18px; text-align: left; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;"></div>
+                <p id="testStatus" style="font-size: 12px; color: var(--text-muted); margin-top: 14px;">Ready to run multi-stream speed test across all active adapters.</p>
+                <button id="btnRunTest" class="btn-cyber btn-cyber-primary" style="margin-top: 18px; width: 100%;" onclick="runBenchmark()">Start Benchmark</button>
             </div>
         </div>
     </div>
@@ -844,21 +849,47 @@ public static class CyberpunkSpa
             const btn = document.getElementById('btnRunTest');
             const status = document.getElementById('testStatus');
             const val = document.getElementById('testSpeedVal');
+            const extra = document.getElementById('testExtraStats');
+            const list = document.getElementById('testAdapterList');
             btn.disabled = true;
-            status.innerText = 'Measuring multi-adapter socket throughput...';
+            status.innerText = 'Measuring individual adapter & multi-stream bonded throughput...';
+            val.innerText = '0.0';
+            extra.style.display = 'none';
+            list.innerHTML = '';
 
-            let cur = 0;
+            let counter = 0;
             const timer = setInterval(() => {
-                cur += Math.random() * 45 + 15;
-                if (cur > 480) cur = 480 + Math.random() * 20;
-                val.innerText = cur.toFixed(1);
-            }, 100);
+                counter += 12.5;
+                if (counter > 300) counter = 300;
+                val.innerText = counter.toFixed(1);
+            }, 80);
 
-            await fetch('/api/speedtest/start', { method: 'POST' });
-            clearInterval(timer);
-            val.innerText = (450 + Math.random() * 48).toFixed(1);
-            status.innerText = 'Benchmark complete. Bonded aggregation achieved optimal wire speed.';
-            btn.disabled = false;
+            try {
+                const res = await fetch('/api/speedtest/start', { method: 'POST' });
+                clearInterval(timer);
+                if (!res.ok) throw new Error('Benchmark request failed (HTTP ' + res.status + ')');
+                const data = await res.json();
+
+                val.innerText = (data.bondedMbps || 0).toFixed(1);
+                document.getElementById('testLatency').innerText = data.latencyMs || 0;
+                document.getElementById('testBoost').innerText = '+' + (data.boostPercent || 0) + '%';
+                extra.style.display = 'block';
+
+                if (data.adapters && data.adapters.length > 0) {
+                    list.innerHTML = data.adapters.map(a => `
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                            <span style="font-weight: 600; color: var(--text-main);">${a.Name}</span>
+                            <span style="font-family: Consolas, monospace; color: var(--cyan);">${(a.DownloadMbps || 0).toFixed(1)} Mbps <span style="color: var(--text-muted); font-size: 11px;">(${a.LatencyMs}ms)</span></span>
+                        </div>
+                    `).join('');
+                }
+                status.innerText = 'Benchmark complete. Bonded aggregation achieved optimal wire speed.';
+            } catch (err) {
+                clearInterval(timer);
+                status.innerText = 'Benchmark error: ' + err.message;
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         // Live telemetry polling loop

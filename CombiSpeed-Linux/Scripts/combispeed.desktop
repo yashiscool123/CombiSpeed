@@ -10,3 +10,4 @@ Terminal=false
 Categories=Network;System;Utility;
 Keywords=network;bonding;vpn;proxy;speed;bandwidth;aggregate;shaper;
 StartupNotify=true
+

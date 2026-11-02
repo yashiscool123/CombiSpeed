@@ -33,3 +33,4 @@ public class LinuxVirtualBridgeManager
         _model.SummaryText = "Virtual Bridge disconnected. Ready to merge adapters.";
     }
 }
+

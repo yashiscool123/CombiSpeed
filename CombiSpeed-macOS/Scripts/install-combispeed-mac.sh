@@ -41,3 +41,4 @@ echo " CombiSpeed installed successfully to $TARGET_APP"
 echo " CLI shortcut available at $LINK_DIR/combispeed"
 echo " You can launch CombiSpeed from Finder / Spotlight or run 'combispeed'"
 echo "====================================================================="
+

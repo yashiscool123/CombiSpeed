@@ -20,3 +20,4 @@ pkill -f "CombiSpeed.Linux" 2>/dev/null || true
 pkill -f "combispeed-linux" 2>/dev/null || true
 
 echo "CombiSpeed stopped. Linux proxy safely restored."
+

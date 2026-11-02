@@ -1,30 +1,9 @@
 {
-  "name": "combispeed",
-  "version": "2.0.0",
-  "versionCode": 14,
-  "releaseName": "CombiSpeed v2.0.0 - Multi-OS Cross-Platform & PAC Export Release",
-  "buildDate": "2026-11-02T16:15:00+05:30",
-  "platforms": [
-    {
-      "os": "windows",
-      "arch": "x64",
-      "runtime": ".NET 8.0 Windows Desktop (WPF)",
-      "targetFramework": "net8.0-windows",
-      "codebase": "CombiSpeed/"
-    },
-    {
-      "os": "linux",
-      "arch": "x64",
-      "runtime": ".NET 8.0 Native Linux",
-      "targetFramework": "net8.0",
-      "codebase": "CombiSpeed-Linux/"
-    },
-    {
-      "os": "macos",
-      "arch": "x64",
-      "runtime": ".NET 8.0 Native macOS (Darwin)",
-      "targetFramework": "net8.0",
-      "codebase": "CombiSpeed-macOS/"
-    }
-  ]
+  "$schema": "./version.schema.json",
+  "version": "2.0.1",
+  "versionCode": 15,
+  "releaseName": "CombiSpeed v2.0.1 - Speed Benchmark Overhaul & Virtual Adapter Routing Fix",
+  "minWindowsVersion": "10.0.17763.0",
+  "dotnetVersion": "8.0",
+  "releaseDate": "2026-11-02"
 }

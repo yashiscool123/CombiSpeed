@@ -19,3 +19,4 @@ rm -f "$HOME/.local/bin/combispeed"
 rm -f "$HOME/.config/combispeed/proxy.env"
 
 echo "CombiSpeed macOS uninstalled cleanly."
+

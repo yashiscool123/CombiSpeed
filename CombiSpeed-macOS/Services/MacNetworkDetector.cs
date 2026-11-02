@@ -132,3 +132,4 @@ public class MacNetworkDetector
         return Models.NetworkInterfaceType.Ethernet;
     }
 }
+

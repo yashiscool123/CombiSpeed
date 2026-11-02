@@ -8,6 +8,7 @@ public partial class SpeedTestWindow : Window
 {
     private readonly SpeedTester _speedTester;
     private readonly List<NetworkAdapterModel> _adapters;
+    private readonly Action<SpeedTestProgress> _progressHandler;
 
     public SpeedTestWindow(SpeedTester speedTester, List<NetworkAdapterModel> adapters)
     {
@@ -15,7 +16,7 @@ public partial class SpeedTestWindow : Window
         _speedTester = speedTester;
         _adapters = adapters;
 
-        _speedTester.OnProgress += progress =>
+        _progressHandler = progress =>
         {
             Dispatcher.InvokeAsync(() =>
             {
@@ -31,6 +32,9 @@ public partial class SpeedTestWindow : Window
                 }
             });
         };
+
+        _speedTester.OnProgress += _progressHandler;
+        Closed += (s, e) => _speedTester.OnProgress -= _progressHandler;
     }
 
     private async void StartTest_Click(object sender, RoutedEventArgs e)

@@ -21,3 +21,4 @@ pkill -f "CombiSpeed.macOS" 2>/dev/null || true
 pkill -f "combispeed-macos" 2>/dev/null || true
 
 echo "CombiSpeed stopped. macOS network proxies safely restored."
+

@@ -23,3 +23,4 @@ public class MacVirtualBridgeManager
         _model.SummaryText = "Virtual Bridge disconnected. Ready to merge macOS adapters.";
     }
 }
+

@@ -334,8 +334,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.0";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 14)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.1";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 15)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Shutdown(0);
@@ -366,6 +366,53 @@ public partial class App : Application
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"[CombiSpeed] ERROR: Failed to export PAC file: {ex.Message}");
+                Console.ResetColor();
+                Shutdown(1);
+                return;
+            }
+        }
+
+        if (e.Args.Any(a => a.Equals("--verify-benchmark", StringComparison.OrdinalIgnoreCase)))
+        {
+            AttachConsole(-1);
+            Console.WriteLine("=====================================================================");
+            Console.WriteLine("              CombiSpeed Multi-WAN Speed Benchmark Self-Test         ");
+            Console.WriteLine("=====================================================================");
+
+            try
+            {
+                var detector = new NetworkDetector();
+                var adapters = detector.DetectAdapters();
+                Console.WriteLine($"Detected {adapters.Count} adapters.");
+                foreach (var a in adapters)
+                {
+                    Console.WriteLine($" * Adapter: {a.Name} ({a.Address}) - Status: {a.Status}, IsEnabled: {a.IsEnabled}");
+                }
+
+                var tester = new SpeedTester();
+                tester.OnProgress += p => Console.WriteLine($"[{p.Percent}%] {p.Stage}: {p.Message}");
+
+                var result = Task.Run(() => tester.RunTestAsync(adapters)).GetAwaiter().GetResult();
+                Console.WriteLine($"[BENCHMARK RESULT] Bonded Speed: {result.BondedDownloadMbps} Mbps, Boost: +{result.BoostPercentage}%, Latency: {result.BondedLatencyMs} ms");
+                foreach (var item in result.AdapterResults)
+                {
+                    Console.WriteLine($"  - {item.Name}: {item.DownloadMbps} Mbps (Ping: {item.LatencyMs} ms)");
+                }
+
+                if (result.BondedDownloadMbps <= 0 && adapters.Any(a => a.IsEnabled))
+                {
+                    throw new Exception("Speed benchmark returned 0 Mbps throughput!");
+                }
+
+                Console.WriteLine("[PASS] Speed benchmark successfully executed!");
+                Shutdown(0);
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[FAIL] Benchmark failed with exception: {ex.GetType().Name} - {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
                 Console.ResetColor();
                 Shutdown(1);
                 return;

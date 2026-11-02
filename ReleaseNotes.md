@@ -1,5 +1,36 @@
 # Release Notes
 
+## [2.0.1] - 2026-11-02 - Speed Benchmark Overhaul & Virtual Adapter Routing Fix
+
+### 🚀 Highlights & Engineering Advancements
+- **⚡ Pre-Flight Latency & Routability Probing**:
+  - Automatically isolates host-only and virtual adapters (such as Hyper-V `vEthernet` or WSL bridges with IPs `172.19.96.1` / `172.31.0.1`).
+  - Implemented an asynchronous 1500ms pre-flight socket connect probe (`socket.ConnectAsync("1.1.1.1", 80)`).
+  - Adapters with latency >= 900ms or unreachable default routes are immediately assigned 0 Mbps without initiating throughput downloads, completely eliminating 21-42 second TCP SYN retransmission hangs.
+- **🛡️ Proxy Bypass Socket Isolation (`UseProxy = false`)**:
+  - Configured `SocketsHttpHandler` with `UseProxy = false` and `Proxy = null` across all benchmark sockets.
+  - Fixes the fatal `10049 WSAEADDRNOTAVAIL` socket error that occurred when benchmark sockets bound to physical adapter IPs (`192.168.x.x`) attempted to route through the active CombiSpeed system proxy at `127.0.0.1:8080`.
+- **🌐 Strict IPv4 DNS Resolution (`ResolveHostIPv4Async`)**:
+  - Resolved IPv6 address family mismatches by strictly filtering DNS query results to `AddressFamily.InterNetwork`, ensuring sockets bound to IPv4 adapter endpoints connect smoothly.
+- **🚀 Multi-Stream Bonded Socket Benchmarking**:
+  - Executes parallel multi-stream socket downloads across all routable physical adapters simultaneously, accurately measuring aggregate wire speed and bonded throughput.
+  - Real-world verified: individual speeds (~189 Mbps on Ethernet, ~72 Mbps on Wi-Fi) and bonded aggregation (~169-233 Mbps multi-stream).
+- **🐧🍏 Cross-Platform Native Benchmark Parity**:
+  - Linux: Implemented `LinuxSpeedTester.cs` with `SO_BINDTODEVICE` socket binding, pre-flight latency probe, and multi-endpoint fallback.
+  - macOS: Implemented `MacSpeedTester.cs` with `IP_BOUND_IF` / `SO_DONTROUTE` socket binding and pre-flight routability checks.
+  - Wired to `/api/speedtest/start` and updated `CyberpunkSpa.cs` in both Linux and macOS dashboards to display real bonded throughput, latency, boost percentage, and per-adapter speed breakdown.
+- **🧹 Memory & UI Leak Prevention**:
+  - Stored `_progressHandler` in `SpeedTestWindow.xaml.cs` and cleanly unsubscribed on the `Closed` event, eliminating event handler leaks and UI race conditions.
+- **✅ Verification & Testing**:
+  - Added `--verify-benchmark` CLI command to Windows, running automated self-tests across physical and virtual adapters.
+  - 100% test pass rate across `--verify-benchmark`, `--verify-persistence`, and `--verify-throttling`.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.0.1-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.0.1-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.0.1-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.0.0] - 2026-11-02 - Multi-OS Cross-Platform & PAC Export Super Major Release
 
 ### 🚀 Highlights & Super Major Advancements

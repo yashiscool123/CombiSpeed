@@ -12,7 +12,7 @@ public class Program
         // 1. Version information
         if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) || a.Equals("-v", StringComparison.OrdinalIgnoreCase)))
         {
-            Console.WriteLine("CombiSpeed v2.0.0 (Build 14) - Linux Edition");
+            Console.WriteLine("CombiSpeed v2.0.1 (Build 15) - Linux Edition");
             Console.WriteLine("Multi-WAN Channel Bonding & Dynamic Bandwidth QoS Shaper");
             Console.WriteLine("Platform: Linux x64/arm64 (.NET 8.0)");
             return;
@@ -149,7 +149,7 @@ public class Program
                                         a.Equals("--daemon", StringComparison.OrdinalIgnoreCase));
 
         Console.WriteLine("=====================================================================");
-        Console.WriteLine("   CombiSpeed v2.0.0 - Multi-WAN Bandwidth Aggregator (Linux)        ");
+        Console.WriteLine("   CombiSpeed v2.0.1 - Multi-WAN Bandwidth Aggregator (Linux)        ");
         Console.WriteLine("=====================================================================");
 
         var storageService = new LinuxSettingsStorage();

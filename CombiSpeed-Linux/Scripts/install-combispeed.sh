@@ -31,3 +31,4 @@ echo " CombiSpeed installed successfully to $INSTALL_DIR/combispeed"
 echo " Desktop application entry created: $DESKTOP_DIR/combispeed.desktop"
 echo " You can launch CombiSpeed from your Application Menu or run 'combispeed'"
 echo "====================================================================="
+

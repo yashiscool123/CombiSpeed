@@ -39,3 +39,4 @@ public class ProxyConfigModel
     public bool IsReduceMotion { get; set; } = false;
     public bool IsScreenReaderOptimized { get; set; } = false;
 }
+
