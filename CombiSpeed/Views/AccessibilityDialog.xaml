@@ -6,7 +6,7 @@
         Height="620" Width="640"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
-        Foreground="#F8FAFC"
+        Foreground="#FFFFFF"
         WindowStyle="None"
         AllowsTransparency="True"
         BorderBrush="#00F0FF"
@@ -26,8 +26,8 @@
                         <TextBlock Text="♿" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00F0FF"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Accessibility &amp; Display Preferences" FontSize="16" FontWeight="Bold" Foreground="#F8FAFC"/>
-                        <TextBlock Text="WCAG 2.1 AA compliant - High Contrast, UI Scaling, Reduced Motion &amp; Screen Reader" FontSize="11" Foreground="#94A3B8"/>
+                        <TextBlock Text="Accessibility &amp; Display Preferences" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                        <TextBlock Text="WCAG 2.1 AA compliant - High Contrast, UI Scaling, Reduced Motion &amp; Screen Reader" FontSize="11" Foreground="#CBD5E1"/>
                     </StackPanel>
                 </StackPanel>
                 <Button Content="✕" Width="30" Height="30" HorizontalAlignment="Right" Click="CloseButton_Click" Style="{StaticResource CyberButton}" Padding="0" AutomationProperties.Name="Close Accessibility Dialog"/>
@@ -40,8 +40,8 @@
                     <TextBlock Text="CONTRAST &amp; THEME OPTIONS" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     <Border Background="#080C14" CornerRadius="10" BorderBrush="#1E293B" BorderThickness="1" Padding="14" Margin="0,0,0,14">
                         <StackPanel>
-                            <CheckBox x:Name="ChkHighContrast" Content="Enable High Contrast Mode" FontSize="12" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,4" AutomationProperties.Name="Enable High Contrast Mode"/>
-                            <TextBlock Text="Enhances text luminance, darkens backdrops to deep black (#030712), and highlights interactive borders with high-contrast outlines exceeding 7:1 contrast ratio." FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="22,0,0,0"/>
+                            <CheckBox x:Name="ChkHighContrast" Content="Enable High Contrast Mode" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,4" AutomationProperties.Name="Enable High Contrast Mode"/>
+                            <TextBlock Text="Enhances text luminance, darkens backdrops to deep black (#030712), and highlights interactive borders with high-contrast outlines exceeding 7:1 contrast ratio." FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap" Margin="22,0,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -49,7 +49,7 @@
                     <TextBlock Text="UI &amp; FONT SCALING" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     <Border Background="#080C14" CornerRadius="10" BorderBrush="#1E293B" BorderThickness="1" Padding="14" Margin="0,0,0,14">
                         <StackPanel>
-                            <TextBlock Text="Adjust Application Scale:" FontSize="12" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,8"/>
+                            <TextBlock Text="Adjust Application Scale:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,8"/>
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -60,7 +60,7 @@
                                 <RadioButton x:Name="RbScale115" Grid.Column="1" Content="115% (Large)" GroupName="UiScale" Style="{StaticResource SegmentedTabButton}" Checked="ScaleRadio_Checked" Tag="1.15" AutomationProperties.Name="Scale 115 percent large"/>
                                 <RadioButton x:Name="RbScale130" Grid.Column="2" Content="130% (Extra Large)" GroupName="UiScale" Style="{StaticResource SegmentedTabButton}" Checked="ScaleRadio_Checked" Tag="1.30" AutomationProperties.Name="Scale 130 percent extra large"/>
                             </Grid>
-                            <TextBlock Text="Seamlessly scales all dashboard cards, typography, telemetry graphs, and controls without clipping or horizontal overflow." FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap"/>
+                            <TextBlock Text="Seamlessly scales all dashboard cards, typography, telemetry graphs, and controls without clipping or horizontal overflow." FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
 
@@ -68,8 +68,8 @@
                     <TextBlock Text="MOTION &amp; ANIMATION" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     <Border Background="#080C14" CornerRadius="10" BorderBrush="#1E293B" BorderThickness="1" Padding="14" Margin="0,0,0,14">
                         <StackPanel>
-                            <CheckBox x:Name="ChkReduceMotion" Content="Reduce Motion &amp; Animations" FontSize="12" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,4" AutomationProperties.Name="Reduce Motion and Animations"/>
-                            <TextBlock Text="Minimizes real-time bandwidth graph redrawing, pauses pulsing LED indicators, and disables animated state transitions for users sensitive to motion or vestibular fatigue." FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="22,0,0,0"/>
+                            <CheckBox x:Name="ChkReduceMotion" Content="Reduce Motion &amp; Animations" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,4" AutomationProperties.Name="Reduce Motion and Animations"/>
+                            <TextBlock Text="Minimizes real-time bandwidth graph redrawing, pauses pulsing LED indicators, and disables animated state transitions for users sensitive to motion or vestibular fatigue." FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap" Margin="22,0,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -77,14 +77,14 @@
                     <TextBlock Text="ASSISTIVE TECHNOLOGY &amp; SCREEN READERS" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
                     <Border Background="#080C14" CornerRadius="10" BorderBrush="#1E293B" BorderThickness="1" Padding="14" Margin="0,0,0,14">
                         <StackPanel>
-                            <CheckBox x:Name="ChkScreenReader" Content="Optimize for Screen Readers (Narrator / NVDA / JAWS)" FontSize="12" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,4" AutomationProperties.Name="Optimize for Screen Readers"/>
-                            <TextBlock Text="Enables verbose accessible automation descriptions, live region status notifications for connection bonding events, and explicit keyboard focus boundaries." FontSize="11" Foreground="#94A3B8" TextWrapping="Wrap" Margin="22,0,0,0"/>
+                            <CheckBox x:Name="ChkScreenReader" Content="Optimize for Screen Readers (Narrator / NVDA / JAWS)" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,4" AutomationProperties.Name="Optimize for Screen Readers"/>
+                            <TextBlock Text="Enables verbose accessible automation descriptions, live region status notifications for connection bonding events, and explicit keyboard focus boundaries." FontSize="11" Foreground="#CBD5E1" TextWrapping="Wrap" Margin="22,0,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Keyboard Navigation & Shortcuts Guide -->
                     <TextBlock Text="KEYBOARD SHORTCUTS QUICK REFERENCE" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
-                    <Border Background="#080C14" CornerRadius="10" BorderBrush="#1E293B" BorderThickness="1" Padding="12">
+                    <Border Background="#080C14" CornerRadius="10" BorderBrush="#1E293B" BorderThickness="1" Padding="14">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -93,17 +93,17 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Space / Alt+P : Toggle Master Bonding" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
-                                <TextBlock Text="Alt+B       : Toggle Virtual Bonded Bridge" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
-                                <TextBlock Text="Alt+W       : Toggle Windows System Proxy" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
-                                <TextBlock Text="Alt+R       : Rescan Network Adapters" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
+                                <TextBlock Text="Space / Alt+P : Toggle Master Bonding" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
+                                <TextBlock Text="Alt+B       : Toggle Virtual Bonded Bridge" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
+                                <TextBlock Text="Alt+W       : Toggle Windows System Proxy" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
+                                <TextBlock Text="Alt+R       : Rescan Network Adapters" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Alt+A       : Open Accessibility Options" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
-                                <TextBlock Text="Alt+S       : Open Settings Dialog" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
-                                <TextBlock Text="Alt+C       : Custom Speed Shaper Caps" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
-                                <TextBlock Text="Ctrl+1-4    : Switch Navigation Tabs" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,2"/>
+                                <TextBlock Text="Alt+A       : Open Accessibility Options" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
+                                <TextBlock Text="Alt+S       : Open Settings Dialog" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
+                                <TextBlock Text="Alt+C       : Custom Speed Shaper Caps" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
+                                <TextBlock Text="Ctrl+1-4    : Switch Navigation Tabs" FontSize="11" Foreground="#FFFFFF" FontWeight="SemiBold" FontFamily="Consolas" Margin="0,3"/>
                             </StackPanel>
                         </Grid>
                     </Border>

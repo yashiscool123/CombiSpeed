@@ -5,10 +5,10 @@
         Height="540" Width="620"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
-        Foreground="#F8FAFC"
+        Foreground="#FFFFFF"
         WindowStyle="None"
         AllowsTransparency="True"
-        BorderBrush="#1E293B"
+        BorderBrush="#00F0FF"
         BorderThickness="1">
     <Border Background="#0B1120" CornerRadius="16" BorderBrush="#00F0FF" BorderThickness="1" Margin="2">
         <Grid Margin="24">
@@ -26,8 +26,8 @@
                         <TextBlock Text="⚡" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00F0FF"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Multi-WAN Bonding Speed Benchmark" FontSize="16" FontWeight="Bold" Foreground="#F8FAFC"/>
-                        <TextBlock Text="Measures individual adapter throughput vs aggregated bonded bandwidth" FontSize="11" Foreground="#94A3B8"/>
+                        <TextBlock Text="Multi-WAN Bonding Speed Benchmark" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                        <TextBlock Text="Measures individual adapter throughput vs aggregated bonded bandwidth" FontSize="11" Foreground="#CBD5E1"/>
                     </StackPanel>
                 </StackPanel>
                 <Button Content="✕" Width="30" Height="30" HorizontalAlignment="Right" Click="CloseButton_Click" Style="{StaticResource CyberButton}" Padding="0" AutomationProperties.Name="Close Speed Benchmark Dialog"/>
@@ -37,7 +37,7 @@
             <Border Grid.Row="1" Background="#080C14" CornerRadius="12" BorderBrush="#1E293B" BorderThickness="1" Padding="16" Margin="0,0,0,16">
                 <StackPanel>
                     <Grid Margin="0,0,0,8">
-                        <TextBlock x:Name="TxtStatusMessage" Text="Ready to benchmark adapters vs combined bonded speed." FontSize="12" Foreground="#CBD5E1"/>
+                        <TextBlock x:Name="TxtStatusMessage" Text="Ready to benchmark adapters vs combined bonded speed." FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF"/>
                         <TextBlock x:Name="TxtProgressPercent" Text="0%" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#00F0FF" FontFamily="Consolas"/>
                     </Grid>
                     <ProgressBar x:Name="ProgressBarTest" Height="8" Minimum="0" Maximum="100" Value="0" Background="#1E293B" Foreground="#00F0FF" BorderThickness="0" AutomationProperties.Name="Benchmark Progress Indicator"/>
@@ -52,7 +52,7 @@
                         <Border x:Name="BannerResult" Visibility="Collapsed" Background="#0F2D37" BorderBrush="#00F0FF" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,16">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="BONDED AGGREGATE SPEED" FontSize="10" FontWeight="Bold" Foreground="#00F0FF"/>
+                                    <TextBlock Text="BONDED AGGREGATE SPEED" FontSize="11" FontWeight="Bold" Foreground="#00F0FF"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                         <TextBlock x:Name="TxtBondedSpeed" Text="0.00" FontSize="32" FontWeight="Black" Foreground="White" FontFamily="Consolas"/>
                                         <TextBlock Text=" Mbps" FontSize="16" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Bottom" Margin="4,0,0,4"/>
@@ -62,19 +62,19 @@
                                     <Border Background="#10B981" CornerRadius="12" Padding="10,4" HorizontalAlignment="Right">
                                         <TextBlock x:Name="TxtBoostBadge" Text="+0% Boost" Foreground="#080C14" FontWeight="Bold" FontSize="12"/>
                                     </Border>
-                                    <TextBlock x:Name="TxtBondedLatency" Text="Avg Latency: 0 ms" FontSize="11" Foreground="#CBD5E1" FontFamily="Consolas" Margin="0,4,0,0" HorizontalAlignment="Right"/>
+                                    <TextBlock x:Name="TxtBondedLatency" Text="Avg Latency: 0 ms" FontSize="11" Foreground="#FFFFFF" FontFamily="Consolas" Margin="0,4,0,0" HorizontalAlignment="Right"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
                         <!-- Individual Adapter Bars -->
-                        <TextBlock Text="THROUGHPUT BREAKDOWN:" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,8"/>
+                        <TextBlock Text="THROUGHPUT BREAKDOWN:" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,8"/>
                         <ItemsControl x:Name="ItemsAdapterBars">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Margin="0,0,0,10">
                                         <Grid Margin="0,0,0,4">
-                                            <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#E2E8F0"/>
+                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF"/>
                                             <TextBlock Text="{Binding DownloadMbps, StringFormat='{}{0:F2} Mbps'}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="White" FontFamily="Consolas"/>
                                         </Grid>
                                         <ProgressBar Height="8" Minimum="0" Maximum="200" Value="{Binding DownloadMbps}" Background="#1E293B" Foreground="#38BDF8" BorderThickness="0" AutomationProperties.Name="{Binding Name, StringFormat='{}Speed result for {0}'}"/>

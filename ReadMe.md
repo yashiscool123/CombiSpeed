@@ -4,7 +4,7 @@
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
 ![Architecture](https://img.shields.io/badge/Architecture-WPF%20%7C%20C%23%2012-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-v1.4.0%20(Build%2012)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v1.4.1%20(Build%2013)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 
 **CombiSpeed** is an ultra-fast, native **C# .NET Windows application** that combines multiple network adapters (Wi-Fi, Gigabit Ethernet, 4G/5G Cellular USB dongles, Mobile Hotspots, and LAN connections) into a single, high-speed aggregate connection. 
@@ -23,7 +23,10 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🚀 Key Features
 
-1. **Modern Segmented UI/UX Redesign & WCAG 2.1 AA Accessibility (NEW in v1.4.0)**:
+1. **Modern Segmented UI/UX Redesign, High-Contrast Dropdowns & Text Readability (NEW in v1.4.1)**:
+   - **Custom Accessible Dark `ComboBox` ControlTemplate**: Replaces the platform default Windows Aero2 template with an accessible dark template featuring a high-contrast toggle button (`#131D33`), dedicated split border with glowing cyan chevron (`#00F0FF`), dark popup border (`#0B1120`), and explicit white selection text (`#FFFFFF`), completely resolving white-on-white and black-on-dark display defects.
+   - **Global Anti-Fallback Text Styling**: Registered default styles for `TextBlock` and `Label` with `Foreground="#F8FAFC"`, preventing Windows light theme from causing text to fall back to black on dark surfaces.
+   - **Application-Wide Text Contrast Upgrade**: Replaced low-luminance and dim text colors (`#94A3B8`, `#334155`) across all cards, dialogs, and tables with high-luminance, crystal-clear colors (`#FFFFFF` pure white, `#38BDF8` sky cyan, `#F1F5F9` crisp slate, and `#CBD5E1` bright silver), achieving 14:1+ contrast ratios.
    - **Native Segmented Tabbed Navigation**: Organized into 4 dedicated, focused views eliminating vertical scrolling fatigue:
      - `⚡ Overview & Dashboard`: Hero master power toggle, real-time KPI cards, bonded bridge status, and dynamic traffic telemetry.
      - `🖧 Combined Adapters`: Hardware-bound NIC list, individual health pings, live speedometers, and Smooth Weighted Round-Robin % sliders.
@@ -35,7 +38,6 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - **Reduce Motion & Vestibular Safety**: Disables rapid canvas waveform redraws and softens LED transitions for users with vestibular sensitivities or ADHD.
    - **Screen Reader Optimization (`AutomationProperties`)**: Comprehensive names, values, and states across all interactive elements for Windows Narrator, NVDA, and JAWS.
    - **Global Keyboard Access Keys**: Instant hotkeys (`Space`/`Alt+P` for Master Power, `Alt+B` for Virtual Bridge, `Alt+W` for Windows Proxy, `Alt+R` for Rescan, `Alt+A` for Accessibility, `Alt+S` for Settings, `Alt+H` for High Contrast, and `Ctrl+1-4` for direct tab switching).
-   - **Dedicated Accessibility Options Dialog (`AccessibilityDialog.xaml`)**: Fast, accessible modal dialog with interactive toggles, scale presets, and a keyboard shortcuts cheat sheet.
 
 2. **Dynamic Cross-Connection Speed Shaper & Latency Optimization Modes (v1.3.6)**:
    - **Active Real-Time Telemetry Adaptation**: `BandwidthThrottler.cs` dynamically recalibrates token allocations and burst windows across physical adapters in real time as RTT ping, packet loss, and link health fluctuate.
@@ -51,9 +53,9 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - Full integration across **HTTP, HTTPS CONNECT, SOCKS5 TCP, SOCKS5 UDP Associate, and Windows Virtual Bonded Bridge** streams.
 
 4. **Application Window Version Visibility & Pinned Cyberpunk Glass Footer (v1.3.4)**:
-   - Dynamic assembly and build metadata binding in `MainViewModel.cs` exposing `AppVersion` (`v1.4.0`) and `AppVersionFull` (`v1.4.0 (Build 12)`).
+   - Dynamic assembly and build metadata binding in `MainViewModel.cs` exposing `AppVersion` (`v1.4.1`) and `AppVersionFull` (`v1.4.1 (Build 13)`).
    - **Custom TitleBar Cyberpunk Badge**: Prominently displays the active version badge directly next to the COMBISPEED neon logo, ensuring visibility across all window states.
-   - **Pinned Glassmorphic Footer Status Bar**: Pinned bottom status bar displaying complete build attribution (`v1.4.0 (Build 12)`), engine description, real-time configuration auto-sync status, and target runtime environment (`Windows x64 (.NET 8.0)`).
+   - **Pinned Glassmorphic Footer Status Bar**: Pinned bottom status bar displaying complete build attribution (`v1.4.1 (Build 13)`), engine description, real-time configuration auto-sync status, and target runtime environment (`Windows x64 (.NET 8.0)`).
    - **Dynamic OS Window Title**: Sets `Title="{Binding WindowTitle}"` to synchronize OS Taskbar, Task Manager, and Alt-Tab switcher with current release branding.
    - **CLI Version Flags**: Built-in `--version`, `-v`, and `/version` support for instant terminal output.
 
@@ -124,9 +126,9 @@ When a Windows machine is connected to multiple internet sources simultaneously 
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET v1.4.0) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v1.4.1) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
-| **UI/UX & Accessibility** | **Segmented Tabbed Navigation, WCAG 2.1 AA High Contrast, UI Scaling (100%-130%), Reduce Motion, Screen Reader support, & Hotkeys** | Cramped single-scroll Electron page | Native OS Control Panel / Settings |
+| **UI/UX & Accessibility** | **Custom dark high-contrast ComboBox, anti-fallback text styles, Segmented Tabbed Navigation, WCAG 2.1 AA High Contrast, UI Scaling (100%-130%), Reduce Motion, Screen Reader support, & Hotkeys** | Cramped single-scroll Electron page | Native OS Control Panel / Settings |
 | **Real-Time Bandwidth Throttling** | **Token Bucket rate limiter with dynamic cross-connection shaping, 500 Mbps cap, & anti-bufferbloat latency modes** | None (Unrestricted, no rate limiting) | None (Line rate only) |
 | **Adapter Settings & Profiles** | **Durable Persistence (`adapter_settings.json`), MAC binding, debounced auto-save & presets** | None (Lost on restart) | None (Default metric reset) |
 | **Virtual Bridge / Adapter Connection** | **Native Windows VPN & Virtual Adapter (`CombiSpeed Bonded Bridge`)** in `ncpa.cpl` & Windows Settings | None (Speedy is purely an isolated local SOCKS proxy) | Rigid single physical adapter binding |
@@ -160,8 +162,8 @@ When a Windows machine is connected to multiple internet sources simultaneously 
    - Running background downloads while gaming often causes severe latency spikes due to buffer bloat in router and adapter queues. CombiSpeed's `Lowest Latency / Ping` mode clamps burst buffers to 20ms and dynamically funnels latency-sensitive flows to the lowest-ping physical interface, keeping in-game ping rock-solid.
 7. **Dynamic Self-Healing Across Congested Links**:
    - If one bonded connection (e.g., cellular hotspot or shared office Wi-Fi) experiences sudden latency spikes or signal degradation, CombiSpeed's dynamic shaper immediately reduces its throughput allocation and shifts traffic to healthier physical interfaces in real time without dropping active sessions.
-8. **UI Ergonomics & Accessibility (WCAG 2.1 AA)**:
-   - Prevents UI clutter and continuous scrolling on compact laptops or multi-monitor configurations via clean Segmented Tabs (`Ctrl+1` through `Ctrl+4`). Low-vision users and high-DPI displays benefit from scalable typography up to 130% and stark high-contrast themes, while keyboard-first users enjoy comprehensive hotkeys for every core action.
+8. **UI Ergonomics & High-Contrast Readability (WCAG 2.1 AA/AAA)**:
+   - High-contrast custom dark dropdowns and typography eliminate eye strain and display defects on high-DPI displays or when Windows is set to light theme. Segmented Tabs (`Ctrl+1` through `Ctrl+4`) organize complex subsystems without continuous scrolling.
 
 ---
 

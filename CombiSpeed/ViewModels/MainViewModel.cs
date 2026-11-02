@@ -105,7 +105,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.0";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.1";
         }
     }
 
@@ -114,8 +114,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.0";
-            return $"{verStr} (Build 12)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v1.4.1";
+            return $"{verStr} (Build 13)";
         }
     }
 
@@ -861,8 +861,9 @@ public class MainViewModel : INotifyPropertyChanged
             res["CyberCard"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
             res["CyberBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
             res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
-            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
-            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E2E8F0"));
+            res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
         }
         else
         {
@@ -870,9 +871,10 @@ public class MainViewModel : INotifyPropertyChanged
             res["CyberSurface"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
             res["CyberCard"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#131D33"));
             res["CyberBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
-            res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
-            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
-            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"));
+            res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
+            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+            res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
         }
     }
 

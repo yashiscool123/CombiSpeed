@@ -172,3 +172,17 @@
 - [x] Create standalone zipped release archive (publish/CombiSpeed-v1.4.0-win-x64.zip).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v1.4.0.
+
+
+## Milestone 14: High-Contrast Dropdowns & Text Readability Overhaul [COMPLETED]
+- [x] Increment version to 1.4.1 and versionCode: 13 in CombiSpeed.csproj, version.json, MainViewModel.cs, App.xaml.cs, and Install-CombiSpeed.bat.
+- [x] Build and integrate a bulletproof custom dark ComboBox ControlTemplate with dark toggle button (#131D33), glowing cyan chevron icon (#00F0FF), dark popup border (#0B1120), and explicit white text (#FFFFFF) resolving white-on-white / black-on-dark rendering issues.
+- [x] Register global default styles for TextBlock and Label with default Foreground="#F8FAFC" to prevent system fallback to black text on dark surfaces.
+- [x] Overhaul all text label colors across the application (MainWindow.xaml, SettingsWindow.xaml, CustomThrottleDialog.xaml, AccessibilityDialog.xaml, InputDialog.xaml, SpeedTestWindow.xaml) replacing dim #94A3B8 / #334155 with high-luminance colors (#FFFFFF, #38BDF8, #F1F5F9, #CBD5E1) achieving 14:1+ contrast ratios.
+- [x] Style DataGrid column headers and cells with dark accessible theme.
+- [x] Upgrade SegmentedTabItem and SegmentedTabButton unselected state text to #E2E8F0.
+- [x] Execute clean build and publish release binaries to publish/ with 0 warnings and 0 errors.
+- [x] Validate automated test suites (--verify-persistence, --verify-throttling, --version) and verify 100% pass rates.
+- [x] Create standalone zipped release archive (publish/CombiSpeed-v1.4.1-win-x64.zip).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v1.4.1.

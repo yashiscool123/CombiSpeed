@@ -6,7 +6,7 @@
         Height="230" Width="440"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
-        Foreground="#F8FAFC"
+        Foreground="#FFFFFF"
         WindowStyle="None"
         AllowsTransparency="True"
         BorderBrush="#1E293B"
@@ -25,15 +25,15 @@
                     <TextBlock Text="💾" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00F0FF"/>
                 </Border>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtTitle" Text="Save Combination Profile" FontSize="13" FontWeight="Bold" Foreground="#F8FAFC"/>
-                    <TextBlock x:Name="TxtSubtitle" Text="Enter a name for this adapter &amp; bandwidth combination" FontSize="10" Foreground="#94A3B8"/>
+                    <TextBlock x:Name="TxtTitle" Text="Save Combination Profile" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
+                    <TextBlock x:Name="TxtSubtitle" Text="Enter a name for this adapter &amp; bandwidth combination" FontSize="11" Foreground="#CBD5E1"/>
                 </StackPanel>
             </StackPanel>
 
             <!-- Input Field -->
             <StackPanel Grid.Row="1" VerticalAlignment="Center">
-                <TextBlock x:Name="TxtPrompt" Text="Profile Name:" FontSize="11" Foreground="#CBD5E1" Margin="0,0,0,6"/>
-                <TextBox x:Name="TxtInput" Text="My Combination" Background="#080C14" Foreground="#00F0FF" BorderBrush="#1E293B" Padding="10,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Profile Name Input"/>
+                <TextBlock x:Name="TxtPrompt" Text="Profile Name:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,6"/>
+                <TextBox x:Name="TxtInput" Text="My Combination" Background="#080C14" Foreground="#00F0FF" BorderBrush="#334155" Padding="10,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Profile Name Input"/>
             </StackPanel>
 
             <!-- Actions -->

@@ -6,7 +6,7 @@
         Height="680" Width="640"
         WindowStartupLocation="CenterOwner"
         Background="#080C14"
-        Foreground="#F8FAFC"
+        Foreground="#FFFFFF"
         WindowStyle="None"
         AllowsTransparency="True"
         BorderBrush="#1E293B"
@@ -26,8 +26,8 @@
                         <TextBlock Text="⚙" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00F0FF"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="CombiSpeed Bonding Configuration" FontSize="16" FontWeight="Bold" Foreground="#F8FAFC"/>
-                        <TextBlock Text="Network ports, load balancing algorithms, QoS shaper &amp; accessibility" FontSize="11" Foreground="#94A3B8"/>
+                        <TextBlock Text="CombiSpeed Bonding Configuration" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                        <TextBlock Text="Network ports, load balancing algorithms, QoS shaper &amp; accessibility" FontSize="11" Foreground="#CBD5E1"/>
                     </StackPanel>
                 </StackPanel>
                 <Button Content="✕" Width="30" Height="30" HorizontalAlignment="Right" Click="CloseButton_Click" Style="{StaticResource CyberButton}" Padding="0" AutomationProperties.Name="Close Settings"/>
@@ -46,21 +46,21 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="HTTP / HTTPS Port:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                            <TextBox x:Name="TxtHttpPort" Text="8080" Background="#080C14" Foreground="#F8FAFC" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="HTTP and HTTPS Proxy Port"/>
-                            <TextBlock Text="Default: 8080" FontSize="10" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                            <TextBlock Text="HTTP / HTTPS Port:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtHttpPort" Text="8080" Background="#080C14" Foreground="#00F0FF" BorderBrush="#334155" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="HTTP and HTTPS Proxy Port"/>
+                            <TextBlock Text="Default: 8080" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,3,0,0"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="SOCKS5 Port:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                            <TextBox x:Name="TxtSocksPort" Text="1080" Background="#080C14" Foreground="#F8FAFC" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="SOCKS5 Proxy Port"/>
-                            <TextBlock Text="Default: 1080" FontSize="10" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                            <TextBlock Text="SOCKS5 Port:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtSocksPort" Text="1080" Background="#080C14" Foreground="#00F0FF" BorderBrush="#334155" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="SOCKS5 Proxy Port"/>
+                            <TextBlock Text="Default: 1080" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,3,0,0"/>
                         </StackPanel>
                     </Grid>
 
                     <!-- Routing Algorithm -->
                     <TextBlock Text="LOAD BALANCING ALGORITHM" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
-                    <ComboBox x:Name="CmbRoutingMode" Background="#080C14" Foreground="#F8FAFC" Padding="8,6" FontSize="12" Margin="0,0,0,16" AutomationProperties.Name="Load Balancing Algorithm Selector">
+                    <ComboBox x:Name="CmbRoutingMode" Margin="0,0,0,16" AutomationProperties.Name="Load Balancing Algorithm Selector">
                         <ComboBoxItem Content="Weighted Round-Robin (User configured ratios)" Tag="Weighted" IsSelected="True"/>
                         <ComboBoxItem Content="Equal Share (Evenly balanced across all adapters)" Tag="Equal"/>
                         <ComboBoxItem Content="Least-Latency Smart Routing (Fastest ping first)" Tag="LeastLatency"/>
@@ -69,21 +69,21 @@
 
                     <!-- Windows & Virtual Adapter Integration -->
                     <TextBlock Text="WINDOWS &amp; VIRTUAL ADAPTER INTEGRATION" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
-                    <CheckBox x:Name="ChkAutoVirtualBridge" Content="Auto-connect Virtual Bonded Bridge when CombiSpeed starts" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,8" AutomationProperties.Name="Auto-connect Virtual Bonded Bridge"/>
-                    <CheckBox x:Name="ChkAutoWindowsProxy" Content="Auto-enable Windows System Proxy when CombiSpeed starts" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,16" AutomationProperties.Name="Auto-enable Windows System Proxy"/>
+                    <CheckBox x:Name="ChkAutoVirtualBridge" Content="Auto-connect Virtual Bonded Bridge when CombiSpeed starts" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,8" AutomationProperties.Name="Auto-connect Virtual Bonded Bridge"/>
+                    <CheckBox x:Name="ChkAutoWindowsProxy" Content="Auto-enable Windows System Proxy when CombiSpeed starts" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,16" AutomationProperties.Name="Auto-enable Windows System Proxy"/>
 
                     <StackPanel Margin="0,0,0,16">
-                        <TextBlock Text="Virtual Bridge Tunnel Port:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                        <TextBox x:Name="TxtBridgePort" Text="8443" Background="#080C14" Foreground="#F8FAFC" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Virtual Bridge Tunnel Port"/>
-                        <TextBlock Text="Default: 8443 (Local virtual tunnel gateway listener)" FontSize="10" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                        <TextBlock Text="Virtual Bridge Tunnel Port:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+                        <TextBox x:Name="TxtBridgePort" Text="8443" Background="#080C14" Foreground="#00F0FF" BorderBrush="#334155" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Virtual Bridge Tunnel Port"/>
+                        <TextBlock Text="Default: 8443 (Local virtual tunnel gateway listener)" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,3,0,0"/>
                     </StackPanel>
 
                     <!-- Accessibility & Display Preferences -->
                     <TextBlock Text="ACCESSIBILITY &amp; DISPLAY (WCAG 2.1 AA)" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
-                    <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="12" Margin="0,0,0,16">
+                    <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="14" Margin="0,0,0,16">
                         <StackPanel>
-                            <CheckBox x:Name="ChkHighContrast" Content="Enable High Contrast Mode" Foreground="#F8FAFC" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Settings High Contrast Mode Toggle"/>
-                            <TextBlock Text="High luminance text &amp; vivid cyan borders for optimal visual clarity." FontSize="10" Foreground="#94A3B8" Margin="20,0,0,10"/>
+                            <CheckBox x:Name="ChkHighContrast" Content="Enable High Contrast Mode" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Settings High Contrast Mode Toggle"/>
+                            <TextBlock Text="High luminance text &amp; vivid cyan borders for optimal visual clarity." FontSize="11" Foreground="#CBD5E1" Margin="20,0,0,10"/>
 
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
@@ -92,90 +92,90 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Application Scale / Text Size:" FontSize="11" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                                    <ComboBox x:Name="CmbUiScale" Background="#131D33" Foreground="#F8FAFC" Padding="6,4" FontSize="11" AutomationProperties.Name="Application UI Scale">
+                                    <TextBlock Text="Application Scale / Text Size:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbUiScale" AutomationProperties.Name="Application UI Scale">
                                         <ComboBoxItem Content="100% (Standard Scale)" Tag="1.0" IsSelected="True"/>
                                         <ComboBoxItem Content="115% (Large Scale)" Tag="1.15"/>
                                         <ComboBoxItem Content="130% (Extra Large Scale)" Tag="1.30"/>
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                    <CheckBox x:Name="ChkReduceMotion" Content="Reduce Motion &amp; Animations" Foreground="#CBD5E1" FontSize="11" Margin="0,14,0,0" AutomationProperties.Name="Settings Reduce Motion Toggle"/>
+                                    <CheckBox x:Name="ChkReduceMotion" Content="Reduce Motion &amp; Animations" Foreground="#FFFFFF" FontSize="12" Margin="0,14,0,0" AutomationProperties.Name="Settings Reduce Motion Toggle"/>
                                 </StackPanel>
                             </Grid>
 
-                            <CheckBox x:Name="ChkScreenReader" Content="Optimize for Screen Readers (Narrator / NVDA / JAWS)" Foreground="#CBD5E1" FontSize="11" AutomationProperties.Name="Settings Screen Reader Toggle"/>
+                            <CheckBox x:Name="ChkScreenReader" Content="Optimize for Screen Readers (Narrator / NVDA / JAWS)" Foreground="#FFFFFF" FontSize="12" AutomationProperties.Name="Settings Screen Reader Toggle"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Bandwidth Throttling & Speed Shaper -->
                     <TextBlock Text="BANDWIDTH THROTTLING &amp; SPEED SHAPER" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
-                    <CheckBox x:Name="ChkEnableThrottling" Content="Enable Real-Time Bandwidth &amp; Speed Throttling" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Enable Real-Time Throttling"/>
-                    <CheckBox x:Name="ChkProportionalThrottling" Content="Strict Proportional Shaping (Enforce exact % bandwidth ratios on throughput)" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,8" AutomationProperties.Name="Strict Proportional Shaping"/>
+                    <CheckBox x:Name="ChkEnableThrottling" Content="Enable Real-Time Bandwidth &amp; Speed Throttling" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Enable Real-Time Throttling"/>
+                    <CheckBox x:Name="ChkProportionalThrottling" Content="Strict Proportional Shaping (Enforce exact % bandwidth ratios on throughput)" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,8" AutomationProperties.Name="Strict Proportional Shaping"/>
 
                     <!-- Speed Shaper Mode & Dynamic Adaptation -->
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="16"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Speed Shaper Mode:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                            <ComboBox x:Name="CmbShaperMode" Background="#080C14" Foreground="#F8FAFC" Padding="6,4" FontSize="11" AutomationProperties.Name="Speed Shaper Mode Selector">
+                            <TextBlock Text="Speed Shaper Mode:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="CmbShaperMode" AutomationProperties.Name="Speed Shaper Mode Selector">
                                 <ComboBoxItem Content="🚀 Maximum Bandwidth (Throughput)" Tag="MaximumBandwidth" IsSelected="True"/>
                                 <ComboBoxItem Content="⚡ Lowest Latency (Anti-Bufferbloat)" Tag="LowestLatency"/>
                                 <ComboBoxItem Content="⚖ Balanced Dynamic (Proportional)" Tag="BalancedDynamic"/>
                             </ComboBox>
                         </StackPanel>
                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                            <CheckBox x:Name="ChkDynamicShaping" Content="Enable Dynamic Real-Time Adaptation" Foreground="#CBD5E1" FontSize="11" Margin="0,14,0,0" AutomationProperties.Name="Enable Dynamic Real-Time Adaptation"/>
+                            <CheckBox x:Name="ChkDynamicShaping" Content="Enable Dynamic Real-Time Adaptation" Foreground="#FFFFFF" FontSize="12" Margin="0,14,0,0" AutomationProperties.Name="Enable Dynamic Real-Time Adaptation"/>
                         </StackPanel>
                     </Grid>
 
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="16"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Bonded Download Speed Cap:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <TextBlock Text="Bonded Download Speed Cap:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="6"/>
                                     <ColumnDefinition Width="80"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="TxtDownloadLimit" Text="0" Background="#080C14" Foreground="#F8FAFC" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Bonded Download Speed Cap"/>
-                                <ComboBox x:Name="CmbDownloadUnit" Grid.Column="2" Background="#080C14" Foreground="#F8FAFC" Padding="6,4" FontSize="11" AutomationProperties.Name="Download Speed Unit">
+                                <TextBox x:Name="TxtDownloadLimit" Text="0" Background="#080C14" Foreground="#00F0FF" BorderBrush="#334155" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Bonded Download Speed Cap"/>
+                                <ComboBox x:Name="CmbDownloadUnit" Grid.Column="2" AutomationProperties.Name="Download Speed Unit">
                                     <ComboBoxItem Content="Mbps" IsSelected="True"/>
                                     <ComboBoxItem Content="MB/s"/>
                                 </ComboBox>
                             </Grid>
-                            <TextBlock Text="0 = Unlimited (or Proportional % shaping)" FontSize="10" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                            <TextBlock Text="0 = Unlimited (or Proportional % shaping)" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,3,0,0"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="Bonded Upload Speed Cap:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4"/>
+                            <TextBlock Text="Bonded Upload Speed Cap:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="6"/>
                                     <ColumnDefinition Width="80"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="TxtUploadLimit" Text="0" Background="#080C14" Foreground="#F8FAFC" BorderBrush="#1E293B" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Bonded Upload Speed Cap"/>
-                                <ComboBox x:Name="CmbUploadUnit" Grid.Column="2" Background="#080C14" Foreground="#F8FAFC" Padding="6,4" FontSize="11" AutomationProperties.Name="Upload Speed Unit">
+                                <TextBox x:Name="TxtUploadLimit" Text="0" Background="#080C14" Foreground="#00F0FF" BorderBrush="#334155" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Bonded Upload Speed Cap"/>
+                                <ComboBox x:Name="CmbUploadUnit" Grid.Column="2" AutomationProperties.Name="Upload Speed Unit">
                                     <ComboBoxItem Content="Mbps" IsSelected="True"/>
                                     <ComboBoxItem Content="MB/s"/>
                                 </ComboBox>
                             </Grid>
-                            <TextBlock Text="0 = Unlimited" FontSize="10" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                            <TextBlock Text="0 = Unlimited" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,3,0,0"/>
                         </StackPanel>
                     </Grid>
 
                     <StackPanel Margin="0,0,0,16">
-                        <TextBlock Text="Burst Tolerance Window:" FontSize="11" Foreground="#CBD5E1" Margin="0,0,0,4"/>
-                        <ComboBox x:Name="CmbBurstWindow" Background="#080C14" Foreground="#F8FAFC" Padding="8,4" FontSize="11" AutomationProperties.Name="Burst Tolerance Window Selector">
+                        <TextBlock Text="Burst Tolerance Window:" FontSize="12" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="CmbBurstWindow" AutomationProperties.Name="Burst Tolerance Window Selector">
                             <ComboBoxItem Content="20 ms (Ultra-Smooth Pacing - Lowest Jitter)" Tag="0.02"/>
                             <ComboBoxItem Content="50 ms (Balanced - Recommended for Multi-WAN Bonding)" Tag="0.05" IsSelected="True"/>
                             <ComboBoxItem Content="100 ms (High Burst - Optimized for Web Downloads)" Tag="0.10"/>
@@ -185,17 +185,17 @@
 
                     <!-- Proxy Auto-Config (PAC) & Domain Routing -->
                     <TextBlock Text="PROXY AUTO-CONFIG (PAC) DOMAIN ROUTING" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
-                    <CheckBox x:Name="ChkEnablePac" Content="Enable PAC Domain Routing (AutoConfigURL)" Foreground="#CBD5E1" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Enable PAC Domain Routing"/>
-                    <TextBlock Text="Bypasses the proxy for intranet and custom domains, while aggregating the rest." FontSize="10" Foreground="#94A3B8" Margin="0,0,0,8"/>
+                    <CheckBox x:Name="ChkEnablePac" Content="Enable PAC Domain Routing (AutoConfigURL)" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Enable PAC Domain Routing"/>
+                    <TextBlock Text="Bypasses the proxy for intranet and custom domains, while aggregating the rest." FontSize="11" Foreground="#CBD5E1" Margin="0,0,0,8"/>
 
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="10" Margin="0,0,0,16">
                         <StackPanel>
                             <Grid Margin="0,0,0,8">
-                                <TextBlock Text="Domain Routing Rules" FontSize="11" FontWeight="Bold" Foreground="#CBD5E1"/>
+                                <TextBlock Text="Domain Routing Rules" FontSize="11" FontWeight="Bold" Foreground="#00F0FF"/>
                                 <Button Content="Preview PAC Script" Click="PreviewPac_Click" Style="{StaticResource CyberButton}" Padding="8,2" FontSize="10" HorizontalAlignment="Right" AutomationProperties.Name="Preview Generated PAC Script"/>
                             </Grid>
 
-                            <DataGrid x:Name="GridPacRules" Height="130" AutoGenerateColumns="False" CanUserAddRows="True" Background="Transparent" BorderThickness="0" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#131D33" Foreground="#CBD5E1">
+                            <DataGrid x:Name="GridPacRules" Height="130" AutoGenerateColumns="False" CanUserAddRows="True" Background="Transparent" BorderThickness="0" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#131D33" Foreground="#FFFFFF">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="PATTERN (DOMAIN / IP)" Binding="{Binding Pattern}" Width="160"/>
                                     <DataGridTextColumn Header="ACTION (Bonded / Direct)" Binding="{Binding Action}" Width="140"/>
@@ -211,7 +211,7 @@
                     <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="12">
                         <Grid>
                             <TextBox x:Name="TxtCliProxy" Text="HTTP_PROXY=http://127.0.0.1:8080 HTTPS_PROXY=http://127.0.0.1:8080 ALL_PROXY=socks5://127.0.0.1:1080"
-                                     IsReadOnly="True" Background="Transparent" Foreground="#CBD5E1" BorderThickness="0" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" AutomationProperties.Name="CLI Proxy Environment Variables"/>
+                                     IsReadOnly="True" Background="Transparent" Foreground="#00F0FF" BorderThickness="0" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" AutomationProperties.Name="CLI Proxy Environment Variables"/>
                             <Button Content="Copy" Width="50" Height="24" HorizontalAlignment="Right" VerticalAlignment="Top" Click="CopyCli_Click" Style="{StaticResource CyberButton}" Padding="0" FontSize="10" AutomationProperties.Name="Copy CLI Proxy String"/>
                         </Grid>
                     </Border>

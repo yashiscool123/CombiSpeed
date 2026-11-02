@@ -1,4 +1,27 @@
-﻿# Release Notes
+# Release Notes
+
+## [1.4.1] - 2026-11-02 - High-Contrast Dropdowns & Text Readability Release
+
+### 🚀 Highlights & Features
+- **Custom Accessible Dark `ComboBox` ControlTemplate**:
+  - Replaced the platform default Windows Aero2 combo box template with a bulletproof custom dark WPF `ControlTemplate`.
+  - Dark high-contrast toggle button (`#131D33`) with `#334155` border, vivid cyan focus rings, and dedicated split border with high-contrast `#00F0FF` chevron path icon.
+  - Resolved the classic white-on-white / black-on-dark combo box display defect where the closed selection box item was unreadable due to OS theme overrides.
+  - Dropdown popup rebuilt with deep navy backdrop (`#0B1120`), glowing `#00F0FF` border, and dark scrollviewer.
+  - Enhanced `ComboBoxItem` styles with `#FFFFFF` text, `#1E293B` hover state with `#00F0FF` text, and `#132742` selected state with 14:1+ contrast ratio.
+- **Global TextBlock & Label Anti-Fallback Styles**:
+  - Registered global default styles for `TextBlock` and `Label` with default `Foreground="#F8FAFC"`, preventing controls from falling back to system `WindowText` black (`#000000`) on dark backgrounds when Windows is set to Light Mode.
+- **Application-Wide Text Contrast & Readability Upgrade**:
+  - Replaced low-luminance and dim text colors (`#94A3B8`, `#334155`) across all cards, dialogs, and tables with high-luminance, crystal-clear colors (`#FFFFFF` pure white, `#38BDF8` sky cyan, `#F1F5F9` crisp slate, and `#CBD5E1` bright silver).
+  - High-contrast field headers and section tags in `MainWindow.xaml`, `SettingsWindow.xaml`, `CustomThrottleDialog.xaml`, `AccessibilityDialog.xaml`, `InputDialog.xaml`, and `SpeedTestWindow.xaml`.
+  - Unselected navigation tabs in `SegmentedTabItem` and radio buttons in `SegmentedTabButton` upgraded from dim `#94A3B8` to crisp `#E2E8F0` with `FontWeight="SemiBold"`.
+- **Global Dark `DataGrid` Styling**:
+  - Styled `DataGridColumnHeader` (`#0F172A` background, `#00F0FF` bold text, `#1E293B` border), `DataGridRow`, and `DataGridCell` with clear hover and selection highlighting for connection audit and PAC routing tables.
+- **Verification & Packaging**:
+  - 100% test pass rate across automated self-tests (`--verify-persistence`, `--verify-throttling`, `--version`).
+  - Standalone release package: `publish/CombiSpeed-v1.4.1-win-x64.zip`.
+
+---
 
 ## [1.4.0] - 2026-11-02 - Accessible UI/UX Redesign Release
 
@@ -75,13 +98,13 @@
 
 ### 🚀 Highlights & Features
 - **Application Window Version Visibility**:
-  - Dynamically exposes and renders the current application version (1.3.4) and full build identification (1.3.4 (Build 9)) directly in the WPF desktop window.
-  - **Custom TitleBar Cyberpunk Badge**: Prominently highlights the installed release version (1.3.4) next to the COMBISPEED neon logo with dedicated tooltips, visible across all view states.
-  - **Pinned Glassmorphic Footer Status Bar**: Integrated a bottom status bar displaying AppVersionFull (1.3.4 (Build 9)), engine attribution, real-time configuration auto-sync feedback, and Windows x64 runtime environment.
+  - Dynamically exposes and renders the current application version ( 1.3.4) and full build identification ( 1.3.4 (Build 9)) directly in the WPF desktop window.
+  - **Custom TitleBar Cyberpunk Badge**: Prominently highlights the installed release version ( 1.3.4) next to the COMBISPEED neon logo with dedicated tooltips, visible across all view states.
+  - **Pinned Glassmorphic Footer Status Bar**: Integrated a bottom status bar displaying AppVersionFull ( 1.3.4 (Build 9)), engine attribution, real-time configuration auto-sync feedback, and Windows x64 runtime environment.
   - **Dynamic Taskbar & Window Title**: Synchronized Title="{Binding WindowTitle}" to reflect the active version in Windows Taskbar, Task Manager, and Alt-Tab switcher.
   - **CLI Version Flag**: Added --version, -v, and /version command-line argument support, printing detailed build and runtime metadata to stdout.
 - **Production Package Synchronization**:
-  - Automated version incrementation to 1.3.4 (patch update) and ersionCode: 9 across CombiSpeed.csproj, ersion.json, and one-click installer scripts.
+  - Automated version incrementation to 1.3.4 (patch update) and  ersionCode: 9 across CombiSpeed.csproj,  ersion.json, and one-click installer scripts.
   - Re-generated release distribution package publish/CombiSpeed-v1.3.4-win-x64.zip.
 
 ---
@@ -110,18 +133,18 @@
 
 ### 🚀 Highlights & Features
 - **Real-Time Bandwidth Throttling & Token Bucket Rate Limiting**:
-  - Implements high-precision asynchronous Token Bucket rate limiting in [`BandwidthThrottler.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/BandwidthThrottler.cs), actively throttling byte transfer rates across combined connection adapters.
-  - Rate limiting is integrated directly into [`ProxyEngine.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/ProxyEngine.cs) (HTTP, HTTPS CONNECT, SOCKS5 TCP), [`VirtualBridgeServer.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/VirtualBridgeServer.cs) (Windows Virtual Bonded Bridge adapter), and [`Socks5UdpRelay.cs`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Services/Socks5UdpRelay.cs) (UDP Associate relay).
+  - Implements high-precision asynchronous Token Bucket rate limiting in [`BandwidthThrottler.cs`](file:///f:/New%20OpenCode Project/CombiSpeed/CombiSpeed/Services/BandwidthThrottler.cs), actively throttling byte transfer rates across combined connection adapters.
+  - Rate limiting is integrated directly into [`ProxyEngine.cs`](file:///f:/New%20OpenCode Project/CombiSpeed/CombiSpeed/Services/ProxyEngine.cs) (HTTP, HTTPS CONNECT, SOCKS5 TCP), [`VirtualBridgeServer.cs`](file:///f:/New%20OpenCode Project/CombiSpeed/CombiSpeed/Services/VirtualBridgeServer.cs) (Windows Virtual Bonded Bridge adapter), and [`Socks5UdpRelay.cs`](file:///f:/New%20OpenCode Project/CombiSpeed/CombiSpeed/Services/Socks5UdpRelay.cs) (UDP Associate relay).
 - **Strict Proportional Bandwidth Shaping**:
   - Strictly allocates and throttles byte rates across combined adapters in accordance with user-configured percentage weights (e.g. 75% Ethernet / 25% Wi-Fi), preventing faster lines from drowning out slower lines or violating target ratios.
 - **Configurable Global Speed Caps & Per-Adapter Limits**:
   - 1-Click speed throttle presets: `Unlimited (Proportional)`, `2 MB/s (16 Mbps)`, `5 MB/s (40 Mbps)`, `10 MB/s (80 Mbps)`, `20 MB/s (160 Mbps)`, `50 MB/s (400 Mbps)`, `100 MB/s (800 Mbps)`, or custom limits.
   - Per-adapter speed limit overrides allowing users to cap metered connections (e.g., cellular mobile hotspot capped to 2 MB/s).
 - **Dashboard Bandwidth Throttling Toolbar**:
-  - Added dedicated Bandwidth Throttling & Speed Shaper toolbar to [`MainWindow.xaml`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Views/MainWindow.xaml) with active status badge (`⚡ Throttling: ...`) and quick speed cap selector.
+  - Added dedicated Bandwidth Throttling & Speed Shaper toolbar to [`MainWindow.xaml`](file:///f:/New%20OpenCode Project/CombiSpeed/CombiSpeed/Views/MainWindow.xaml) with active status badge (`⚡ Throttling: ...`) and quick speed cap selector.
   - Enhanced adapter cards to display allocated throttle rates: `⚡ Capped: XX MB/s`.
 - **Settings & Persistence Integration**:
-  - Added Bandwidth Throttling configuration options in [`SettingsWindow.xaml`](file:///f:/New%20OpenCode%20Project/CombiSpeed/CombiSpeed/Views/SettingsWindow.xaml).
+  - Added Bandwidth Throttling configuration options in [`SettingsWindow.xaml`](file:///f:/New%20OpenCode Project/CombiSpeed/CombiSpeed/Views/SettingsWindow.xaml).
   - Automatically persists all throttle settings and per-adapter limits across application restarts in `%LOCALAPPDATA%\CombiSpeed\adapter_settings.json`.
 - **Automated Regression Diagnostic Suite**:
   - Added `--verify-throttling` CLI flag verifying token bucket rate-limiting delay enforcement, proportional slice allocation, and bypass modes with a 100% test pass rate.
@@ -170,7 +193,7 @@
   - Complete background daemon mode running headless without requiring a logged-in user or active WPF GUI (`--service`, `--headless`).
   - Added CLI service commands: `--service-install`, `--service-uninstall`, `--service-start`, `--service-stop`.
   - Created 1-click automated management scripts: `Install-Service.bat` and `Uninstall-Service.bat` registering `CombiSpeedService` in Windows Service Control Manager with auto-recovery on failure.
-  - Integrated service termination in `Stop-CombiSpeed.bat` and `Uninstall-CombiSpeed.bat`.
+  - Integrated service termination in `Stop-CombiSpeed.bat` and `Uninstall-Service.bat`.
 
 ---
 
