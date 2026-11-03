@@ -1,5 +1,20 @@
 # Release Notes
 
+## [2.1.5] - 2026-11-03 - Custom Throttling Dialog Initialization Fix Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🛠️ Resolved `NullReferenceException` in `CustomThrottleDialog`**:
+  - **Root Cause Resolution**: During WPF BAML instantiation of `CustomThrottleDialog.xaml`, the `TxtUploadLimit` TextBox fired its `TextChanged` event before sibling controls (`CmbUploadUnit`, etc.) were instantiated by `InitializeComponent()`, triggering an unhandled `NullReferenceException` in `UpdateEquivalents()`.
+  - **Readiness Gate & Comprehensive Null-Guards**: Added a private `_isReady` state gate that prevents early event handler execution until all controls are fully initialized and populated. Hardened `UpdateEquivalents()`, `DownloadLimit_TextChanged()`, `UploadLimit_TextChanged()`, `DownloadUnit_SelectionChanged()`, `UploadUnit_SelectionChanged()`, and `AutoUpload_Checked()` with safe null-conditional operators.
+- **🧪 Dedicated Automated Verification**:
+  - Added an STA-thread UI instantiation test inside `--verify-throttling` to programmatically verify that `CustomThrottleDialog` instantiates without throwing exceptions.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.5-win-x64.zip` and `publish/CombiSpeed-v2.1.5-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.5-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.5-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.4] - 2026-11-03 - Multi-Faceted Proxy Sorting & Filtering Release
 
 ### 🚀 Highlights & Engineering Advancements

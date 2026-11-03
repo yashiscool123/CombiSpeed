@@ -374,6 +374,30 @@
                     "progress": "Milestone 22 completed successfully with 100% test pass rate and standalone release artifacts generated."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-023",
+            "userQuery": "On clicking Custom Throttling Parameters button, getting error: NullReferenceException in CustomThrottleDialog.UpdateEquivalents() at line 155",
+            "status": "completed",
+            "createdAt": "2026-11-03T17:35:00+05:30",
+            "updatedAt": "2026-11-03T17:50:00+05:30",
+            "progress": "Resolved NullReferenceException in CustomThrottleDialog during XAML BAML deserialization. Added private _isReady gate in CustomThrottleDialog.xaml.cs, preventing early TextChanged/SelectionChanged handler execution before all sibling controls (CmbUploadUnit, CmbDownloadUnit, TxtUploadLimit, etc.) are instantiated. Hardened UpdateEquivalents(), DownloadLimit_TextChanged(), UploadLimit_TextChanged(), DownloadUnit_SelectionChanged(), UploadUnit_SelectionChanged(), ShaperMode_SelectionChanged(), AutoUpload_Checked(), QuickCap_Click(), and ApplyButton_Click() with comprehensive null-checks and null-conditional operators. Added automated STA-thread UI unit test in --verify-throttling (100% PASS). Bumped version to v2.1.5 (Build 22) and published updated packages for Windows, Linux, and macOS.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2301",
+                    "timestamp": "2026-11-03T17:38:00+05:30",
+                    "inputs": "NullReferenceException stack trace from user logs.",
+                    "outputs": "Root cause identified as WPF BAML event dispatch order where TxtUploadLimit.TextChanged fires before CmbUploadUnit is created. Implemented _isReady readiness gate and null guards in CustomThrottleDialog.xaml.cs.",
+                    "progress": "Code fix applied and verified clean compilation."
+                },
+                {
+                    "checkpointId": "CP-2302",
+                    "timestamp": "2026-11-03T17:50:00+05:30",
+                    "inputs": "Verification, release build, packaging, documentation, and git check-in.",
+                    "outputs": "Added STA-thread instantiation unit test to --verify-throttling test suite (100% PASS). Rebuilt and published release archives in publish/ for Windows, Linux, and macOS under v2.1.5 (Build 22). Synchronized documentation and task logs.",
+                    "progress": "Milestone 23 completed with 100% verification and clean shutdown."
+                }
+            ]
         }
     ]
 }

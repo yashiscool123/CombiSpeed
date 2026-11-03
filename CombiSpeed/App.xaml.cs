@@ -196,9 +196,15 @@ public partial class App : Application
         if (e.Args.Any(a => a.Equals("--verify-throttling", StringComparison.OrdinalIgnoreCase)))
         {
             AttachConsole(-1);
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine("      CombiSpeed Bandwidth Throttling & Speed Shaper Self-Test       ");
-            Console.WriteLine("=====================================================================");
+            var logSb = new System.Text.StringBuilder();
+            void Log(string msg)
+            {
+                Console.WriteLine(msg);
+                logSb.AppendLine(msg);
+            }
+            Log("=====================================================================");
+            Log("      CombiSpeed Bandwidth Throttling & Speed Shaper Self-Test       ");
+            Log("=====================================================================");
 
             try
             {
@@ -348,15 +354,41 @@ public partial class App : Application
                 sw2.Stop();
                 Console.WriteLine($"[PASS] Disabled mode executed without delay: {sw2.ElapsedMilliseconds}ms.");
 
-                Console.WriteLine("=====================================================================");
-                Console.WriteLine("  BANDWIDTH THROTTLING & SPEED SHAPER TESTS PASSED (100% OK)         ");
-                Console.WriteLine("=====================================================================");
+                // Test CustomThrottleDialog instantiation on STA thread (zero NullReferenceException)
+                Exception? dialogEx = null;
+                var staThread = new Thread(() =>
+                {
+                    try
+                    {
+                        var dialog = new Views.CustomThrottleDialog(config, mockAdapters);
+                        if (dialog == null) throw new Exception("Dialog instantiation returned null!");
+                    }
+                    catch (Exception ex)
+                    {
+                        dialogEx = ex;
+                    }
+                });
+                staThread.SetApartmentState(ApartmentState.STA);
+                staThread.Start();
+                staThread.Join();
+
+                if (dialogEx != null)
+                {
+                    throw new Exception($"CustomThrottleDialog UI instantiation threw exception: {dialogEx.GetType().Name} - {dialogEx.Message}\n{dialogEx.StackTrace}");
+                }
+                Log("[PASS] CustomThrottleDialog UI instantiation verified on STA thread with ZERO NullReferenceException.");
+
+                Log("=====================================================================");
+                Log("  BANDWIDTH THROTTLING & SPEED SHAPER TESTS PASSED (100% OK)         ");
+                Log("=====================================================================");
+                System.IO.File.WriteAllText("throttling_test.log", logSb.ToString());
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"[FAIL] Throttling verification failed: {ex.Message}");
+                Log($"[FAIL] Throttling verification failed: {ex.Message}");
                 Console.ResetColor();
+                System.IO.File.WriteAllText("throttling_test.log", logSb.ToString());
                 Environment.Exit(1);
                 return;
             }
@@ -371,8 +403,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.4";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 21)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.5";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 22)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);

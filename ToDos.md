@@ -351,3 +351,13 @@
 - [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.4 Build 21).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.4.
+
+## Milestone 23: Custom Throttling Dialog Initialization Fix [COMPLETED]
+- [x] Increment version to 2.1.5 and versionCode: 22 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Identify and resolve NullReferenceException in CustomThrottleDialog.xaml.cs triggered by early TextChanged event dispatch during XAML BAML deserialization.
+- [x] Add private _isReady state gate preventing premature execution of UpdateEquivalents() and UI handlers before controls are instantiated.
+- [x] Harden all event handlers (DownloadLimit_TextChanged, UploadLimit_TextChanged, DownloadUnit_SelectionChanged, UploadUnit_SelectionChanged, ShaperMode_SelectionChanged, AutoUpload_Checked, QuickCap_Click, ApplyButton_Click) with safe null-conditional guards.
+- [x] Add automated STA-thread unit test in --verify-throttling to verify CustomThrottleDialog UI instantiation with zero exceptions.
+- [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.5 Build 22).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.5.

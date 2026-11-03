@@ -10,6 +10,7 @@ public partial class CustomThrottleDialog : Window
 {
     private readonly ProxyConfigModel _config;
     private readonly IEnumerable<NetworkAdapterModel> _adapters;
+    private bool _isReady = false;
 
     public CustomThrottleDialog(ProxyConfigModel config, IEnumerable<NetworkAdapterModel> adapters)
     {
@@ -56,6 +57,7 @@ public partial class CustomThrottleDialog : Window
         // Adapters
         ListAdapters.ItemsSource = _adapters.Where(a => a.IsEnabled).ToList();
 
+        _isReady = true;
         UpdateEquivalents();
     }
 
@@ -85,6 +87,7 @@ public partial class CustomThrottleDialog : Window
 
     private void ShaperMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!_isReady) return;
         if (CmbShaperMode?.SelectedItem is ComboBoxItem item && Enum.TryParse<SpeedShaperMode>(item.Tag?.ToString(), out var mode))
         {
             UpdateShaperModeDescription(mode);
@@ -137,9 +140,10 @@ public partial class CustomThrottleDialog : Window
 
     private void UpdateEquivalents()
     {
-        if (TxtDownloadEquiv == null || TxtUploadEquiv == null) return;
+        if (!_isReady) return;
+        if (TxtDownloadEquiv == null || TxtUploadEquiv == null || CmbDownloadUnit == null || CmbUploadUnit == null || TxtDownloadLimit == null || TxtUploadLimit == null) return;
 
-        if (double.TryParse(TxtDownloadLimit?.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl) && dl > 0)
+        if (double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl) && dl > 0)
         {
             string unit = (CmbDownloadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
             long bps = BandwidthThrottler.ConvertToBytesPerSec(dl, unit);
@@ -150,7 +154,7 @@ public partial class CustomThrottleDialog : Window
             TxtDownloadEquiv.Text = "= Unlimited / Dynamic";
         }
 
-        if (double.TryParse(TxtUploadLimit?.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double ul) && ul > 0)
+        if (double.TryParse(TxtUploadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double ul) && ul > 0)
         {
             string unit = (CmbUploadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
             long bps = BandwidthThrottler.ConvertToBytesPerSec(ul, unit);
@@ -164,18 +168,22 @@ public partial class CustomThrottleDialog : Window
 
     private void DownloadLimit_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if (!_isReady) return;
         UpdateEquivalents();
-        if (ChkAutoUpload?.IsChecked == true && double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl))
+        if (ChkAutoUpload?.IsChecked == true && TxtDownloadLimit != null && double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl))
         {
-            TxtUploadLimit.Text = (dl / 2.0).ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
-            CmbUploadUnit.SelectedIndex = CmbDownloadUnit.SelectedIndex;
+            if (TxtUploadLimit != null)
+                TxtUploadLimit.Text = (dl / 2.0).ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
+            if (CmbUploadUnit != null && CmbDownloadUnit != null)
+                CmbUploadUnit.SelectedIndex = CmbDownloadUnit.SelectedIndex;
         }
     }
 
     private void DownloadUnit_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!_isReady) return;
         UpdateEquivalents();
-        if (ChkAutoUpload?.IsChecked == true)
+        if (ChkAutoUpload?.IsChecked == true && CmbUploadUnit != null && CmbDownloadUnit != null)
         {
             CmbUploadUnit.SelectedIndex = CmbDownloadUnit.SelectedIndex;
         }
@@ -183,33 +191,40 @@ public partial class CustomThrottleDialog : Window
 
     private void UploadLimit_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if (!_isReady) return;
         UpdateEquivalents();
     }
 
     private void UploadUnit_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (!_isReady) return;
         UpdateEquivalents();
     }
 
     private void AutoUpload_Checked(object sender, RoutedEventArgs e)
     {
-        if (double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl))
+        if (!_isReady) return;
+        if (TxtDownloadLimit != null && double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl))
         {
-            TxtUploadLimit.Text = (dl / 2.0).ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
-            CmbUploadUnit.SelectedIndex = CmbDownloadUnit.SelectedIndex;
+            if (TxtUploadLimit != null)
+                TxtUploadLimit.Text = (dl / 2.0).ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
+            if (CmbUploadUnit != null && CmbDownloadUnit != null)
+                CmbUploadUnit.SelectedIndex = CmbDownloadUnit.SelectedIndex;
         }
     }
 
     private void QuickCap_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button btn && btn.Tag != null)
+        if (sender is Button btn && btn.Tag != null && TxtDownloadLimit != null && CmbDownloadUnit != null)
         {
             TxtDownloadLimit.Text = btn.Tag.ToString();
             SelectUnit(CmbDownloadUnit, "Mbps");
             if (ChkAutoUpload?.IsChecked == true && double.TryParse(btn.Tag.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double dl))
             {
-                TxtUploadLimit.Text = (dl / 2.0).ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
-                SelectUnit(CmbUploadUnit, "Mbps");
+                if (TxtUploadLimit != null)
+                    TxtUploadLimit.Text = (dl / 2.0).ToString("F1", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
+                if (CmbUploadUnit != null)
+                    SelectUnit(CmbUploadUnit, "Mbps");
             }
         }
     }
@@ -217,16 +232,16 @@ public partial class CustomThrottleDialog : Window
     private void ApplyButton_Click(object sender, RoutedEventArgs e)
     {
         // 1. Shaper Mode & Dynamic Adaptation
-        if (CmbShaperMode.SelectedItem is ComboBoxItem modeItem && Enum.TryParse<SpeedShaperMode>(modeItem.Tag?.ToString(), out var mode))
+        if (CmbShaperMode?.SelectedItem is ComboBoxItem modeItem && Enum.TryParse<SpeedShaperMode>(modeItem.Tag?.ToString(), out var mode))
         {
             _config.ShaperMode = mode;
         }
-        _config.EnableDynamicShaping = ChkDynamicShaping.IsChecked == true;
+        _config.EnableDynamicShaping = ChkDynamicShaping?.IsChecked == true;
 
         // 2. Download
-        if (double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl) && dl > 0)
+        if (TxtDownloadLimit != null && double.TryParse(TxtDownloadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double dl) && dl > 0)
         {
-            string unit = (CmbDownloadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
+            string unit = (CmbDownloadUnit?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
             _config.GlobalDownloadLimitBps = BandwidthThrottler.ConvertToBytesPerSec(dl, unit);
             _config.CustomThrottleUnit = unit;
         }
@@ -236,9 +251,9 @@ public partial class CustomThrottleDialog : Window
         }
 
         // 3. Upload
-        if (double.TryParse(TxtUploadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double ul) && ul > 0)
+        if (TxtUploadLimit != null && double.TryParse(TxtUploadLimit.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double ul) && ul > 0)
         {
-            string unit = (CmbUploadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
+            string unit = (CmbUploadUnit?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
             _config.GlobalUploadLimitBps = BandwidthThrottler.ConvertToBytesPerSec(ul, unit);
         }
         else
@@ -247,12 +262,12 @@ public partial class CustomThrottleDialog : Window
         }
 
         // 4. Policies
-        _config.EnableBandwidthThrottling = ChkEnableThrottling.IsChecked == true;
-        _config.CombineSpeedsMode = ChkCombineSpeeds.IsChecked == true;
+        _config.EnableBandwidthThrottling = ChkEnableThrottling?.IsChecked == true;
+        _config.CombineSpeedsMode = ChkCombineSpeeds?.IsChecked == true;
         _config.EnforceProportionalThrottling = !_config.CombineSpeedsMode;
 
         // 5. Burst Window
-        if (CmbBurstWindow.SelectedItem is ComboBoxItem burstItem && burstItem.Tag != null &&
+        if (CmbBurstWindow?.SelectedItem is ComboBoxItem burstItem && burstItem.Tag != null &&
             double.TryParse(burstItem.Tag.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double burst))
         {
             _config.BurstToleranceSeconds = burst;
