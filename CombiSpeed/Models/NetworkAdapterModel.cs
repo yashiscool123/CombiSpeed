@@ -177,6 +177,68 @@ public class NetworkAdapterModel : INotifyPropertyChanged
         set => SetField(ref _wanIp, value);
     }
 
+    private string _country = string.Empty;
+    public string Country
+    {
+        get => _country;
+        set
+        {
+            if (SetField(ref _country, value))
+            {
+                OnPropertyChanged(nameof(FormattedLocation));
+                OnPropertyChanged(nameof(FlagEmoji));
+            }
+        }
+    }
+
+    private string _countryCode = "UN";
+    public string CountryCode
+    {
+        get => _countryCode;
+        set
+        {
+            if (SetField(ref _countryCode, value))
+            {
+                OnPropertyChanged(nameof(FormattedLocation));
+                OnPropertyChanged(nameof(FlagEmoji));
+            }
+        }
+    }
+
+    private string _city = string.Empty;
+    public string City
+    {
+        get => _city;
+        set
+        {
+            if (SetField(ref _city, value))
+            {
+                OnPropertyChanged(nameof(FormattedLocation));
+            }
+        }
+    }
+
+    private string _isp = string.Empty;
+    public string Isp
+    {
+        get => _isp;
+        set => SetField(ref _isp, value);
+    }
+
+    public string FlagEmoji => IpGeoLocationModel.ConvertCountryCodeToFlag(CountryCode);
+
+    public string FormattedLocation
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Country) && string.IsNullOrWhiteSpace(City))
+                return WanIp == "Resolving..." ? "Resolving..." : "Global / UN";
+            if (!string.IsNullOrWhiteSpace(City))
+                return $"{City}, {Country} {FlagEmoji}";
+            return $"{Country} {FlagEmoji}";
+        }
+    }
+
     public string FormattedDownloadSpeed => FormatSpeed(DownloadSpeedBps);
     public string FormattedUploadSpeed => FormatSpeed(UploadSpeedBps);
 
@@ -191,7 +253,6 @@ public class NetworkAdapterModel : INotifyPropertyChanged
         return $"{gb:F2} GB/s";
     }
 
-
     public static string FormatSpeedWithBits(long bytesPerSec)
     {
         if (bytesPerSec <= 0) return "Unlimited";
@@ -203,6 +264,7 @@ public class NetworkAdapterModel : INotifyPropertyChanged
         }
         return $"{mbps:F1} Mbps ({mb:F1} MB/s)";
     }
+
     public static string FormatBytes(long bytes)
     {
         if (bytes <= 0) return "0 B";

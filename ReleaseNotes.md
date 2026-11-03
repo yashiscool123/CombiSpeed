@@ -1,5 +1,45 @@
 # Release Notes
 
+## [2.2.0] - 2026-11-04 - Two-Stage Multi-Adapter Bonding with Selective Timely Proxy Rotation & Live GeoIP Resolution Release
+
+### 🚀 Highlights & Engineering Advancements
+- **⚡ Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline**:
+  - **Decoupled Architecture**: Upstream requests are first load-balanced and socket-bound across physical adapters (`Socket.Bind(adapterIp, 0)` on Windows, `SO_BINDTODEVICE` on Linux, `IP_BOUND_IF` on macOS) for aggregate throughput and resilience, and then tunneled upstream through a user-selected rotating proxy server.
+  - **Timely Automatic Rotation Engine**: Implemented `RotationStrategy.TimeBasedInterval` in `RotatingProxyRouter` across Windows, Linux, and macOS. Rotates the active proxy automatically on a user-configurable schedule (10s, 15s, 30s, 45s, 60s, 120s, 300s).
+  - **Non-Blocking Live Countdown**: Displays real-time countdown timer (`Next rotation in 24s`) and fires `OnTimedRotation` events upon proxy transitions.
+  - **Immediate Manual Override**: Provides a 1-click `⚡ Rotate Now` button / API command (`/api/rotating-proxy/rotate-now`) that forces an instantaneous transition to the next candidate without resetting interval timers.
+  - **Unified Bonding Toggle**: Added `RouteBondedTrafficThroughRotator` checkbox toggle (`⚡ Bond-then-Rotate Pipeline`) in the UI, config model, and REST APIs, allowing users to enable or bypass upstream proxy tunneling while retaining multi-adapter physical bonding.
+- **☑ Selective Proxy Pool Management (Checkboxes & Bulk Selection)**:
+  - **Per-Proxy Selection Checkboxes**: Added interactive checkboxes (`IsSelected`) to each row of the Harvested Proxies `DataGrid` in WPF, and to the Linux and macOS Web Dashboards.
+  - **Strict Candidate Enforcement**: `RotatingProxyRouter.GetCandidatePool()` strictly filters by `p.IsSelected == true`, ensuring that only explicitly user-selected proxies participate in rotation.
+  - **1-Click Bulk Action Toolbar**:
+    - `Select All`: Checks all proxies in the current pool for rotation.
+    - `Deselect All`: Clears all checkboxes to pause proxy routing.
+    - `Select Fast (≤300ms)`: Automatically checks only healthy, low-latency verified proxies ($\le 300\text{ ms}$).
+  - **Dynamic Selection Status Badge**: Displays real-time counts (e.g. `Selected for Rotation: 18 of 54 healthy`).
+- **🌍 Live Intranet & Internet Geo-Location Identity Resolution**:
+  - **Dual-Provider Fast Fallback**: Built `GeoIpService` (Windows), `LinuxGeoIpService` (Linux), and `MacGeoIpService` (macOS) with sub-second failover across authoritative GeoIP endpoints (`http://ip-api.com/json/`, `https://ipwho.is/`, `https://api.ipify.org?format=text`), requiring zero API keys.
+  - **Intranet Aggregation**: Detects and aggregates all local network IPv4 addresses across enabled physical NICs (Wi-Fi, Ethernet, Cellular, LAN).
+  - **Live Identity Telemetry Card**: Added a high-contrast Cyberpunk card to the Overview tab displaying:
+    - Unicode Country Flag Emoji (e.g. 🇮🇳, 🇺🇸, 🇩🇪, 🇬🇧, 🇯🇵) algorithmically generated from ISO-3166 codes.
+    - City, Region & Country name.
+    - Public Internet WAN IP address.
+    - Local Intranet IP address(es).
+    - Internet Service Provider (ISP) and Autonomous System Number (ASN).
+    - `⟳ Refresh Identity` button.
+  - **Per-Adapter Location Display**: Extended `NetworkAdapterModel` with `FormattedLocation` showing the resolved public WAN IP and country flag per adapter in the Combined Adapters tab.
+- **🌐 100% Native Cross-Platform Parity**:
+  - Implemented identical REST endpoints in `EmbeddedDashboardServer.cs` on Linux & macOS: `/api/geoip`, `/api/rotating-proxy/select-all`, `/api/rotating-proxy/deselect-all`, `/api/rotating-proxy/select-fast`, `/api/rotating-proxy/toggle-select`, and `/api/rotating-proxy/rotate-now`.
+  - Updated `CyberpunkSpa.cs` on Linux and macOS with the live GeoIP identity card, proxy selection checkboxes, selection action buttons, interval selector, and two-stage pipeline toggle.
+- **🧪 Dedicated Automated Verification**:
+  - Added Test Phase 9 to `--verify-rotator`, verifying selective proxy filtering, timely rotation intervals, force rotation, flag emoji generation, and live GeoIP resolution (**100% PASS**).
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.2.0-win-x64.zip` and `publish/CombiSpeed-v2.2.0-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.2.0-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.2.0-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.9] - 2026-11-04 - Combined Adapters Rescan & Multi-Adapter Discovery Release
 
 ### 🚀 Highlights & Engineering Advancements

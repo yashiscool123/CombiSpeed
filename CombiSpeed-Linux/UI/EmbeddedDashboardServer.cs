@@ -171,6 +171,15 @@ public class EmbeddedDashboardServer
                 res.ContentLength64 = bytes.Length;
                 await res.OutputStream.WriteAsync(bytes);
             }
+            else if (path == "/api/geoip")
+            {
+                var loc = await LinuxGeoIpService.ResolveCurrentLocationAsync(_adapters);
+                string json = JsonSerializer.Serialize(loc);
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
             else if (path == "/api/rotating-proxy/status")
             {
                 var status = new
@@ -183,8 +192,13 @@ public class EmbeddedDashboardServer
                     autoValidateEnabled = _config.RotatingProxy.AutoValidateEnabled,
                     poolCount = _validator?.TotalCount ?? 0,
                     healthyCount = _validator?.HealthyCount ?? 0,
+                    selectedCount = _validator?.AllProxies.Count(p => p.IsSelected) ?? 0,
                     chainPhysicalAdapters = _config.RotatingProxy.ChainPhysicalAdapters,
-                    strictAnonymity = _config.RotatingProxy.StrictAnonymity
+                    strictAnonymity = _config.RotatingProxy.StrictAnonymity,
+                    routeBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                    rotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds,
+                    activeTimedProxy = _rotatingServer?.Router?.ActiveTimedProxy?.Endpoint,
+                    secondsUntilNextRotation = _rotatingServer?.Router?.SecondsUntilNextRotation ?? 0
                 };
                 string json = JsonSerializer.Serialize(status);
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
@@ -207,9 +221,76 @@ public class EmbeddedDashboardServer
                     _config.RotatingProxy.Strategy = strat;
                 if (doc.RootElement.TryGetProperty("chainPhysicalAdapters", out var cpa))
                     _config.RotatingProxy.ChainPhysicalAdapters = cpa.GetBoolean();
+                if (doc.RootElement.TryGetProperty("routeBondedTrafficThroughRotator", out var rb))
+                    _config.RotatingProxy.RouteBondedTrafficThroughRotator = rb.GetBoolean();
+                if (doc.RootElement.TryGetProperty("rotationIntervalSeconds", out var ris))
+                    _config.RotatingProxy.RotationIntervalSeconds = ris.GetInt32();
 
                 _storage.Save(_adapters, _config);
                 res.StatusCode = 200;
+            }
+            else if (path == "/api/rotating-proxy/select-all" && req.HttpMethod == "POST")
+            {
+                if (_validator != null)
+                {
+                    foreach (var p in _validator.AllProxies) p.IsSelected = true;
+                }
+                string json = JsonSerializer.Serialize(new { status = "All selected", count = _validator?.AllProxies.Count(p => p.IsSelected) ?? 0 });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/deselect-all" && req.HttpMethod == "POST")
+            {
+                if (_validator != null)
+                {
+                    foreach (var p in _validator.AllProxies) p.IsSelected = false;
+                }
+                string json = JsonSerializer.Serialize(new { status = "All deselected", count = 0 });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/select-fast" && req.HttpMethod == "POST")
+            {
+                if (_validator != null)
+                {
+                    foreach (var p in _validator.AllProxies) p.IsSelected = p.IsHealthy && p.LatencyMs <= 300;
+                }
+                string json = JsonSerializer.Serialize(new { status = "Fast selected", count = _validator?.AllProxies.Count(p => p.IsSelected) ?? 0 });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/toggle-select" && req.HttpMethod == "POST")
+            {
+                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
+                string body = await reader.ReadToEndAsync();
+                var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("endpoint", out var epProp))
+                {
+                    string ep = epProp.GetString() ?? "";
+                    var match = _validator?.AllProxies.FirstOrDefault(p => p.Endpoint.Equals(ep, StringComparison.OrdinalIgnoreCase));
+                    if (match != null) match.IsSelected = !match.IsSelected;
+                }
+                string json = JsonSerializer.Serialize(new { status = "Toggled", count = _validator?.AllProxies.Count(p => p.IsSelected) ?? 0 });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/rotate-now" && req.HttpMethod == "POST")
+            {
+                _rotatingServer?.Router?.ForceRotate();
+                var active = _rotatingServer?.Router?.ActiveTimedProxy;
+                string json = JsonSerializer.Serialize(new { status = "Rotated", active = active?.Endpoint, country = active?.CountryCode });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
             }
             else if (path == "/api/rotating-proxy/pool")
             {

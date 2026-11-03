@@ -114,39 +114,10 @@ public class HealthMonitor : IDisposable
             adapter.Status = adapter.PacketLossPercent >= 75 ? AdapterStatus.Down : AdapterStatus.Degraded;
         }
 
-        // Asynchronously resolve WAN IP if not yet resolved
-        if (adapter.WanIp == "Resolving..." && adapter.Status != AdapterStatus.Down)
+        // Asynchronously resolve WAN IP and GeoIP Location if not yet resolved
+        if ((adapter.WanIp == "Resolving..." || string.IsNullOrWhiteSpace(adapter.Country)) && adapter.Status != AdapterStatus.Down)
         {
-            _ = ResolveWanIpAsync(adapter, localIp);
-        }
-    }
-
-    private static async Task ResolveWanIpAsync(NetworkAdapterModel adapter, IPAddress localIp)
-    {
-        try
-        {
-            var handler = new SocketsHttpHandler
-            {
-                ConnectCallback = async (context, token) =>
-                {
-                    var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    socket.Bind(new IPEndPoint(localIp, 0)); // Force via adapter!
-                    await socket.ConnectAsync(context.DnsEndPoint.Host, context.DnsEndPoint.Port, token);
-                    return new NetworkStream(socket, ownsSocket: true);
-                }
-            };
-
-            using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(3) };
-            string json = await client.GetStringAsync("https://api.ipify.org?format=json");
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("ip", out var ipProp))
-            {
-                adapter.WanIp = ipProp.GetString() ?? "Unknown";
-            }
-        }
-        catch
-        {
-            // Ignored; can retry on next tick
+            _ = GeoIpService.ResolveAdapterLocationAsync(adapter, localIp);
         }
     }
 

@@ -4,68 +4,96 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.1.9%20(Build%2026)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.2.0%20(Build%2027)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
-**CombiSpeed** is an ultra-fast, multi-OS application that combines multiple network adapters (Wi-Fi, Gigabit Ethernet, 4G/5G Cellular USB dongles, Mobile Hotspots, Thunderbolt bridges, and LAN connections) into a single, high-speed aggregate connection with dynamic traffic shaping.
+**CombiSpeed** is an ultra-fast, production-grade, multi-OS application engineered to combine multiple network adapters (Wi-Fi, Gigabit Ethernet, 4G/5G Cellular USB dongles, Mobile Hotspots, Thunderbolt bridges, and LAN connections) into a single, high-speed aggregate connection with dynamic traffic shaping and integrated timely rotating proxy routing.
 
-Featuring dedicated, separate native codebases for **Windows 10/11 (`CombiSpeed/`)**, **Linux (`CombiSpeed-Linux/`)**, and **macOS (`CombiSpeed-macOS/`)**, CombiSpeed runs directly on each OS kernel's network stack with native low-level socket binding, delivering zero runtime overhead, instant startup (<200ms), and an identical, accessible dark cyberpunk glassmorphic dashboard across all platforms!
+Featuring dedicated, separate native codebases for **Windows 10/11 (`CombiSpeed/`)**, **Linux (`CombiSpeed-Linux/`)**, and **macOS (`CombiSpeed-macOS/`)**, CombiSpeed runs directly on each OS kernel's network stack with native low-level socket binding, delivering zero runtime overhead, instant cold startup (<200ms), and an identical, accessible dark cyberpunk glassmorphic dashboard across all platforms!
 
 ---
 
-## 🌟 Application Summary
+## 🎯 Initial Application Purpose & Problem Solved
 
-When a computer is connected to multiple internet sources simultaneously (e.g. Fiber broadband via Ethernet, 5G phone hotspot via Wi-Fi, or secondary office Wi-Fi), standard OS routing tables restrict all traffic to a single default route with the lowest metric. The secondary connections sit 100% idle!
+Modern devices routinely have access to multiple concurrent internet connections: home/office fiber broadband via Gigabit Ethernet, primary Wi-Fi, 4G/5G mobile hotspot over USB or Wi-Fi, secondary Wi-Fi connections via USB adapters, and Thunderbolt network bridges. However, standard operating system routing tables (Windows TCP/IP stack, Linux route tables, and macOS BSD network subsystem) are architecturally hardcoded to choose only a **single default gateway** with the lowest metric. 
 
-**CombiSpeed eliminates this bottleneck.** It acts as a local high-performance asynchronous multi-threaded aggregation engine. By intercepting connections via dual-mode SOCKS5 & HTTP/HTTPS forward proxies or native virtual bonded bridges, it binds each outgoing TCP/UDP socket directly to individual physical network adapter interfaces:
-- **Windows**: `Socket.Bind(new IPEndPoint(adapterIp, 0))` + WinINet proxy & Virtual Bridge
-- **Linux**: `Socket.Bind` + `SO_BINDTODEVICE` (socket opt 25) + `gsettings` & shell proxy environment
-- **macOS**: `Socket.Bind` + `IP_BOUND_IF` / `SO_DONTROUTE` + `networksetup` proxy automation
+As a result:
+- **Secondary Connections Sit 100% Idle**: When connected to both a 300 Mbps Fiber line and a 150 Mbps 5G phone hotspot, standard OS routing utilizes only one, leaving 150 Mbps of paid bandwidth completely wasted.
+- **Single Point of Failure**: If the primary line encounters packet loss, jitter, bufferbloat, or carrier disconnect, all active downloads, video streams, and cloud syncs stall or drop entirely.
+- **Local Network Bottlenecks**: High-concurrency tasks (such as web scraping, game downloads, ISO transfers, and media production uploads) saturate a single router or network adapter interface.
 
-This bypasses default routing limitations and forces traffic simultaneously across all active adapters, combining their speeds into a single supercharged pipeline.
+**CombiSpeed was created to eliminate this fundamental OS limitation.** By intercepting and dispatching connections through low-level native socket binding (`Socket.Bind` to physical adapter interface IPs on Windows, `SO_BINDTODEVICE` socket options on Linux, and `IP_BOUND_IF` / `SO_DONTROUTE` on macOS), CombiSpeed forces network traffic concurrently and additively across all active network adapters, pooling their bandwidth into a unified, resilient super-connection.
+
+---
+
+## 🌟 Application Summary & Architecture
+
+CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-shaping engine designed for high throughput, minimal memory usage, and zero latency overhead:
+
+1. **Additive Multi-WAN Channel Bonding**:
+   Combines physical wire speeds additively ($TotalSpeed = Speed_{NIC1} + Speed_{NIC2} + \dots$). Eliminates fractional throttling or artificial sub-limits so every connection benefits from the combined capacity.
+
+2. **Parallel HTTP Range Chunk Combining**:
+   Splits large file transfers ($\ge 512\text{ KB}$) into concurrent byte ranges dispatched simultaneously across different physical network adapters, combining multiple physical wire speeds into a single accelerated download stream.
+
+3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (NEW in v2.2.0)**:
+   A decoupled two-stage networking architecture: CombiSpeed first binds and load-balances outbound client sockets across physical network adapters for aggregate bandwidth and multi-NIC fault tolerance. Then, it tunnels all requests upstream through a user-selected, filtered rotating proxy server that dynamically rotates on a timely basis (configurable interval in seconds, e.g., 10s, 30s, 60s, 120s, 300s).
+
+4. **Live Intranet & Internet Geo-Location Identity Resolution (NEW in v2.2.0)**:
+   Continuously monitors and resolves real-time network identity with dual-provider fast fallback (`http://ip-api.com/json/`, `https://ipwho.is/`, `https://api.ipify.org?format=text`), displaying local intranet IP aggregation, public Internet WAN IP, city, region, country, ISP/ASN, and dynamic Unicode country flag emojis (e.g. 🇮🇳, 🇺🇸, 🇩🇪, 🇬🇧, 🇯🇵).
+
+5. **Automated Rotating Proxy Harvester with 255+ Global Feeds**:
+   Scrapes, parses, and validates thousands of proxy candidate nodes from 255+ curated open-source feeds across HTTP, HTTPS, SOCKS4, and SOCKS5. Features bulk URL feed management, multi-faceted filtering & sorting, and persistent disk caching of healthy proxies with immediate eviction of unavailable nodes.
+
+6. **Dynamic QoS Traffic Shaping**:
+   Three specialized adaptive shaping modes:
+   - `Maximum Bandwidth`: Aggressive TCP window scaling (150ms burst window) optimized for multi-gigabit downloads.
+   - `Lowest Latency`: Anti-bufferbloat pacing (20ms burst window) prioritizing low-ping fiber over high-latency cellular for lag-free gaming and VoIP.
+   - `Balanced Dynamic`: Real-time health monitoring that dynamically shifts allocation away from jittery or degraded adapters.
+
+7. **Cross-Platform Standalone Native Codebases**:
+   - **`CombiSpeed/`**: Windows 10/11 WPF application with hardware-accelerated DirectX rendering, WinINet registry automation, and Virtual Bonded Bridge support.
+   - **`CombiSpeed-Linux/`**: Linux daemon with `SO_BINDTODEVICE` binding, GNOME `gsettings` integration, shell environment generation, and responsive Cyberpunk Web UI.
+   - **`CombiSpeed-macOS/`**: macOS application bundle with `IP_BOUND_IF` socket binding, `networksetup` proxy control, and matching Cyberpunk Web UI.
 
 ---
 
 ## 🚀 Key Features
 
-1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1, v2.1.3, v2.1.4, v2.1.6 & v2.1.7)**:
-   - **Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction (NEW in v2.1.7)**:
-     - **Strictly Healthy Disk Persistence**: Automatically serializes only verified healthy proxies (`IsHealthy == true && Failures == 0`) to `%LOCALAPPDATA%\CombiSpeed\healthy_proxies.json` (Windows), `~/.config/combispeed/healthy_proxies.json` (Linux), and `~/Library/Application Support/CombiSpeed/healthy_proxies.json` (macOS). Dead or unverified nodes are strictly filtered out and never saved.
-     - **Instant Cold Startup Pre-Warming**: Restores cached healthy proxies into memory immediately on app launch across all platforms, delivering instant proxy rotation without waiting for a fresh scraping cycle.
-     - **Immediate Unavailable Eviction**: Upstream proxies that fail during live TCP connection or tunneling in `RotatingProxyRouter` / `RotatingProxyServer`, or fail periodic validation / dead pruning, are instantly marked unavailable, purged from the pool, and evicted from persistent disk storage.
-   - **Massive 255+ Global & Geo-Targeted Proxy Feeds Catalog (NEW in v2.1.6)**:
-     Integrated 255 curated open-source proxy repository feeds and APIs across HTTPS (85 global, 28 country), HTTP (65 global, 16 country), SOCKS4 (41 global, 9 country), and SOCKS5 (57 global, 9 country), with 16-worker bounded parallel scraping concurrency.
-   - **Multi-Source Open-Source Proxy Harvester**:
-     Automatically scrapes fresh proxy candidate pools from top-tier maintained open-source repositories and APIs out of the box (*TheSpeedX/PROXY-List*, *monosans/proxy-list*, *clarketm/proxy-list*, *proxyscrape API*), custom user URLs/APIs, pastebins, or local `.txt` lists.
-   - **Bulk Proxy Repository Sources & Feed URLs Management (NEW in v2.1.3)**:
-     Allows users to bulk add, view, edit, or customize any number of proxy feed URLs and repository endpoints. Features multi-line text editing (`ProxySourcesDialog.xaml` in Windows, Web modal in Linux/macOS SPAs), live URL counting, automatic comment ignoring (`#` or `//`), HTTP/HTTPS URL validation, de-duplication, clipboard pasting, and 1-click restore to verified default repositories.
-   - **Multi-Faceted Proxy Sorting & Filtering (NEW in v2.1.4)**:
-     - **Latency Threshold Filter**: Filter the pool instantaneously by response speed tiers (`All Latencies`, `< 150 ms (Ultra-Fast)`, `< 300 ms (Fast)`, `< 500 ms (Normal)`, and `< 1000 ms`).
-     - **Dynamic Source Origin Filter**: Auto-discovers and categorizes proxies by their scraping feed origin (*TheSpeedX*, *monosans*, *hookzof*, *proxyscrape*, or custom URL hostname), isolating proxies from specific repositories.
-     - **Protocol Filter**: Filter candidate pools by protocol (`HTTP`, `HTTPS`, `SOCKS4`, `SOCKS5`).
-     - **Universal Live Search**: Instant search box matching host IP, port, country code, protocol, or source URL across the pool in real time.
-     - **Multi-Criteria & Interactive Column Sorting**: Presets for `Lowest Latency (Fastest)`, `Highest Latency`, `Status / Working First`, `Source (A-Z)`, and `Country Code (A-Z)`. Full interactive column header click-to-sort across both Windows WPF `DataGrid` and Linux/macOS Web SPAs.
-   - **Universal Heuristic Regex & JSON API Scraper**:
-     Intelligently extracts proxies from unstructured plain text, CSV, JSON arrays/objects (`{"ip":"...", "port":8080, "country":"US"}`), and HTML tables (`<td>IP</td><td>PORT</td><td>Country</td>`) supporting `IP:PORT`, `PROTOCOL://IP:PORT`, and authenticated `IP:PORT:USER:PASS` lines. Automatically isolates and purges RFC 1918 private subnets and loopback addresses.
-   - **High-Concurrency Multi-Protocol Validator**:
-     Semaphore-bounded parallel async prober testing HTTP, HTTPS CONNECT, SOCKS4, and RFC 1928 SOCKS5 endpoints in milliseconds without UI freezing or thread starvation. Accurately measures real-time RTT latency (ms) and detects anonymity tiers (Elite, Anonymous, Transparent).
-   - **GeoIP Country Detection & Geo-Targeted Rotation Filtering (NEW in v2.1.1)**:
-     Extracts country codes from proxy payloads and provides instant 1-click filtering (`ALL`, `US`, `DE`, `GB`, `FR`, `CA`, `JP`, `NL`, `SG`, `IN`). Outbound requests are dynamically routed strictly through healthy proxies located in the requested country with seamless fallback if a regional pool is exhausted.
-   - **Autonomous Background Scheduler (NEW in v2.1.1)**:
-     Continuous background self-healing engine running non-blocking timers for scheduled auto-harvesting (every 30 minutes) and automated pool health validation & dead-node pruning (every 5 minutes), keeping the proxy pool continuously responsive without manual intervention.
-   - **Upstream Proxy Authentication (NEW in v2.1.1)**:
-     Full transparent support for private authenticated proxies via automatic `Proxy-Authorization: Basic <base64>` header injection for HTTP/HTTPS tunnels and RFC 1929 Username/Password subnegotiation for SOCKS5.
-   - **Dynamic Rotation & Sticky Session Strategies**:
-     - `Round Robin (Per-Request)`: Rotates to a new healthy upstream proxy on every HTTP/HTTPS request (ideal for large-scale web scraping, price intelligence, and QA automation).
-     - `Sticky Domain (Host Affinity)`: Retains the same upstream proxy for requests targeting the same host (e.g. `*.target.com`), preserving login sessions and OAuth cookies.
-     - `Sticky Session (Duration)`: Preserves proxy affinity per connection or client session for a user-configurable duration (e.g. 5–30 minutes).
-     - `Lowest Latency (Fastest)`: Dynamically routes through the top fastest responsive proxies ($< 250\text{ ms}$).
-     - `Elite Only`: Restricts rotation strictly to high-anonymity Elite proxies that leak zero proxy headers (`Via`, `X-Forwarded-For`).
-   - **The "Double-Layer" Multi-NIC Egress MOAT**:
-     CombiSpeed uniquely binds outbound proxy connections across local physical network adapters (`Socket.Bind(adapterIp, 0)`). Local traffic is distributed across Ethernet, Wi-Fi, and Cellular dongles while simultaneously rotating global public IPs, eliminating both local router connection bottlenecks and remote rate limits!
-   - **Dedicated Port & Smart PAC Integration**:
-     Runs a dedicated rotating proxy listener on port `8081` alongside the high-speed bonded port `8080`. Supports `PacAction.RotatingProxy` in PAC scripts to route specific scraping domains to `8081` while streaming and bulk downloads stay on the unthrottled bonded port `8080`.
+1. **Two-Stage Bonding & Timely Rotating Proxy Pipeline (NEW in v2.2.0)**:
+   - **Decoupled Two-Stage Routing**: First multiplexes concurrent connections across local physical network adapters (Ethernet, Wi-Fi, 4G/5G, Thunderbolt), and second tunnels traffic through user-selected proxy servers that rotate on a timely basis.
+   - **Timely Automatic Rotation Interval**: User-selectable rotation intervals (10s, 15s, 30s, 45s, 60s, 120s, 300s) with live countdown display and manual `⚡ Rotate Now` override.
+   - **Per-Proxy Selection Checkboxes**: Interactive checkboxes in the proxy data grid allowing users to handpick or bulk-select (`Select All`, `Deselect All`, `Select Fast ≤300ms`) which healthy proxies participate in rotation.
+   - **Pipeline Toggle**: Quick `⚡ Bond-then-Rotate` checkbox toggle in UI and REST APIs to enable or disable proxy tunneling on the bonded connection.
+
+2. **Live Intranet & Internet Geo-Location Identity (NEW in v2.2.0)**:
+   - **Intranet IP Aggregation**: Resolves and displays all active local IPv4 addresses across enabled physical network interfaces.
+   - **Public Internet WAN IP & Live GeoIP**: Instant sub-second resolution of public IP, ISP/ASN, city, region, country, and algorithmic Unicode flag emoji without requiring API keys.
+   - **Dedicated Cyberpunk Identity Card**: Pinned high-contrast card on Overview tab with 1-click `⟳ Refresh Identity` button.
+   - **Per-Adapter Location Display**: Individual adapter cards in the Combined Adapters tab display each adapter's resolved public WAN IP and country flag.
+
+3. **Combined Adapters 1-Click Rescan (NEW in v2.1.9)**:
+   - Dedicated `⟳ Rescan Adapters` button directly in the Combined Adapters tab and REST API (`POST /api/adapters/rescan`), detecting hotplugged adapters instantly.
+   - Live combinable adapters badge (e.g. `4 Detected (3 Combined)`) and responsive Cyberpunk empty state banner.
+
+4. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (Enhanced in v2.1.0 – v2.1.7)**:
+   - **Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction (v2.1.7)**:
+     - Automatically saves only verified healthy proxies (`IsHealthy == true && Failures == 0`) to persistent disk storage (`healthy_proxies.json`), filtering out dead nodes.
+     - Cold startup pre-warming restores verified proxies immediately on launch with zero scraping delay.
+     - Dynamically evicts unavailable nodes from both memory and disk storage upon connection failure.
+   - **Massive 255+ Global & Geo-Targeted Proxy Feeds Catalog (v2.1.6)**:
+     Curated feeds across HTTPS (85 global, 28 country), HTTP (65 global, 16 country), SOCKS4 (41 global, 9 country), and SOCKS5 (57 global, 9 country).
+   - **Bulk Proxy Repository Sources Management (v2.1.3)**:
+     Bulk add, edit, or customize proxy feed URLs and repository APIs with live URL counting, comment filtering (`#`, `//`), and 1-click restore to verified default repositories.
+   - **Multi-Faceted Proxy Sorting & Filtering (v2.1.4)**:
+     Filter by latency threshold (<150ms, <300ms, <500ms, <1000ms), dynamic scraping source origin, protocol (`HTTP`, `HTTPS`, `SOCKS4`, `SOCKS5`), and live search matching host, port, country, or protocol.
+   - **Multi-Protocol Health Validator & Heuristic Parser**:
+     High-concurrency parallel prober testing HTTP, HTTPS, SOCKS4, and SOCKS5 in milliseconds, measuring RTT latency and identifying Elite anonymity. Supports authenticated proxies (`IP:PORT:USER:PASS`) via Basic Auth and SOCKS5 RFC 1929 subnegotiation.
+   - **Geo-Targeted Rotation Filtering**:
+     Instant 1-click country filtering (`ALL`, `US`, `DE`, `GB`, `FR`, `CA`, `JP`, `NL`, `SG`, `IN`) with graceful fallback.
+   - **Double-Layer Multi-NIC Egress MOAT**:
+     Binds outbound proxy connections across local physical network adapters while rotating global public IPs, eliminating both local router bottlenecks and remote rate limits simultaneously.
 
 2. **Speed Combining & Unified Bandwidth Pooling (v2.0.2)**:
    - **Combine Speeds Mode**: Bandwidth across all active connections and adapters is pooled additively ($TotalSpeed = Speed_{NIC1} + Speed_{NIC2} + \dots$). Eliminates artificial fractional slicing or partitioning where adapters were throttled to fractional percentages (e.g. 50% or 25%).
@@ -303,9 +331,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.1.9-win-x64.zip` and `publish/CombiSpeed-v2.1.9-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.1.9-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.1.9-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.1.9-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.1.9-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.2.0-win-x64.zip` and `publish/CombiSpeed-v2.2.0-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.2.0-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.0-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.2.0-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.0-macos-x64.zip`
 
 ---
 

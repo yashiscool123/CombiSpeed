@@ -408,3 +408,18 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.1.9 Build 26).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.9.
+
+## Milestone 28: Two-Stage Multi-Adapter Bonding with Selective Timely Proxy Rotation & Live GeoIP Resolution [COMPLETED]
+- [x] Increment version to 2.2.0 and versionCode: 27 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Implement two-stage decoupled routing pipeline in `ProxyEngine.cs`, `LinuxProxyEngine.cs`, and `MacProxyEngine.cs`: first bind physical sockets across active network adapters for combined throughput, then route outbound traffic through a selected rotating proxy when `RouteBondedTrafficThroughRotator` is active.
+- [x] Implement `RotationStrategy.TimeBasedInterval` in `RotatingProxyRouter`, `LinuxRotatingProxyRouter`, and `MacRotatingProxyRouter` with user-configurable intervals (10s, 15s, 30s, 45s, 60s, 120s, 300s), non-blocking live countdown timers, and manual `ForceRotate()` override.
+- [x] Implement per-proxy selective pool management (`IsSelected` property) with interactive checkboxes in WPF DataGrid and Linux/macOS Web SPAs, strictly enforcing user selection in `RotatingProxyRouter.GetCandidatePool()`.
+- [x] Add 1-click bulk selection commands: `Select All`, `Deselect All`, `Select Fast (≤300ms)`, and `⚡ Rotate Now`.
+- [x] Implement Live Intranet & Internet Geo-Location Identity resolution in `GeoIpService`, `LinuxGeoIpService`, and `MacGeoIpService` with dual-provider fast fallback (`http://ip-api.com/json/`, `https://ipwho.is/`, `https://api.ipify.org?format=text`), local intranet aggregation, and algorithmic ISO-3166 Unicode flag emoji generation.
+- [x] Add Cyberpunk Live Network Identity & Geo-Location card to Overview tab (Tab 0) and per-adapter location display in Combined Adapters tab (Tab 1).
+- [x] Implement cross-platform REST APIs in `EmbeddedDashboardServer.cs` (`/api/geoip`, `/api/rotating-proxy/select-all`, `/api/rotating-proxy/deselect-all`, `/api/rotating-proxy/select-fast`, `/api/rotating-proxy/toggle-select`, `/api/rotating-proxy/rotate-now`) and update `CyberpunkSpa.cs`.
+- [x] Overhaul `ReadMe.md` for initial application purpose and application summary reflecting the full architectural lineage, MOATs, and real-world challenges solved.
+- [x] Add automated test step `[TEST 9/9]` to `--verify-rotator` verifying selective proxy filtering, timely rotation intervals, force rotation, flag emoji generation, and live GeoIP resolution (100% pass rate).
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.0 Build 27).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.2.0.

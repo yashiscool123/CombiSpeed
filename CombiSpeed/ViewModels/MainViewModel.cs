@@ -345,6 +345,11 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ExportWorkingProxiesCommand { get; }
     public ICommand ImportProxiesFileCommand { get; }
     public ICommand ToggleRotatingProxyCommand { get; }
+    public ICommand SelectAllProxiesCommand { get; }
+    public ICommand DeselectAllProxiesCommand { get; }
+    public ICommand SelectFastProxiesCommand { get; }
+    public ICommand ForceRotateCommand { get; }
+    public ICommand RefreshGeoIpCommand { get; }
 
     public SpeedTester SpeedTesterService => _speedTester;
     public LoadBalancerEngine LoadBalancerService => _loadBalancer;
@@ -373,10 +378,33 @@ public class MainViewModel : INotifyPropertyChanged
         ExportWorkingProxiesCommand = new RelayCommand(async () => await ExportWorkingProxiesAsync());
         ImportProxiesFileCommand = new RelayCommand(async () => await ImportProxiesFileAsync());
         ToggleRotatingProxyCommand = new RelayCommand(ToggleRotatingProxy);
+        SelectAllProxiesCommand = new RelayCommand(SelectAllProxies);
+        DeselectAllProxiesCommand = new RelayCommand(DeselectAllProxies);
+        SelectFastProxiesCommand = new RelayCommand(SelectFastProxies);
+        ForceRotateCommand = new RelayCommand(ForceRotateProxy);
+        RefreshGeoIpCommand = new RelayCommand(async () => await ResolveGeoIpAsync(forceRefresh: true));
 
         _rotatingRouter = new RotatingProxyRouter(_proxyValidator, Config.RotatingProxy, _loadBalancer);
+        _proxyEngine.RotatingRouter = _rotatingRouter;
+        _proxyEngine.CurrentConfig = Config;
         _rotatingProxyServer = new RotatingProxyServer(Config.RotatingProxy, _rotatingRouter, () => _networkDetector.GetAllCached());
         _proxyScheduler = new ProxySchedulerService(_proxyHarvester, _proxyValidator, Config.RotatingProxy);
+
+        _rotatingRouter.OnTimedRotation += (proxy) =>
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (proxy != null)
+                {
+                    ActiveProxyDisplay = $"{proxy.Endpoint} ({proxy.CountryCode}) {proxy.FlagEmoji}";
+                }
+                else
+                {
+                    ActiveProxyDisplay = "None Selected / Available";
+                }
+                RotationCountdownText = $"Next rotation in {Config.RotatingProxy.RotationIntervalSeconds}s";
+            });
+        };
 
         _rotatingProxyServer.OnLog += log =>
         {
@@ -611,6 +639,7 @@ public class MainViewModel : INotifyPropertyChanged
         NetworkDetector.RecalculateEffectivePercentages(Adapters);
         UpdateMergedSummary();
         _proxyEngine.UpdateThrottling(Adapters, Config);
+        _ = ResolveGeoIpAsync();
         _healthMonitor.TriggerImmediateCheck();
 
         OnPropertyChanged(nameof(CombinableAdaptersCountText));
@@ -632,6 +661,7 @@ public class MainViewModel : INotifyPropertyChanged
         NetworkDetector.RecalculateEffectivePercentages(Adapters);
         UpdateMergedSummary();
         _proxyEngine.UpdateThrottling(Adapters, Config);
+        _ = ResolveGeoIpAsync();
         _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
         AutoSaveStatusText = "Saving changes...";
         OnPropertyChanged(nameof(CombinableAdaptersCountText));
@@ -1539,6 +1569,8 @@ public class MainViewModel : INotifyPropertyChanged
             var displayList = all.Take(400).ToList();
             foreach (var p in displayList)
             {
+                p.SelectionChanged -= OnProxySelectionChanged;
+                p.SelectionChanged += OnProxySelectionChanged;
                 HarvestedProxies.Add(p);
             }
 
@@ -1548,7 +1580,136 @@ public class MainViewModel : INotifyPropertyChanged
             var healthy = _proxyValidator.GetHealthyProxies(Config.RotatingProxy.StrictAnonymity, Config.RotatingProxy.Strategy, Config.RotatingProxy.CountryFilter);
             AveragePingMs = healthy.Count > 0 ? (int)healthy.Average(p => p.LatencyMs) : 0;
             FilteredCountText = $"Showing {displayList.Count} of {TotalHarvestedCount} proxies ({VerifiedHealthyCount} working)";
+            UpdateSelectedProxiesCount();
         });
+    }
+
+    private void OnProxySelectionChanged()
+    {
+        UpdateSelectedProxiesCount();
+    }
+
+    private string _activeProxyDisplay = "Idle (Traffic combined & ready)";
+    public string ActiveProxyDisplay
+    {
+        get => _activeProxyDisplay;
+        set => SetField(ref _activeProxyDisplay, value);
+    }
+
+    private void UpdateSelectedProxiesCount()
+    {
+        int selCount = _proxyValidator.AllProxies.Count(p => p.IsSelected);
+        SelectedProxiesCountText = $"Selected for Rotation: {selCount} of {_proxyValidator.HealthyCount} healthy";
+    }
+
+    public void SelectAllProxies()
+    {
+        foreach (var p in _proxyValidator.AllProxies)
+        {
+            p.IsSelected = true;
+        }
+        UpdateSelectedProxiesCount();
+    }
+
+    public void DeselectAllProxies()
+    {
+        foreach (var p in _proxyValidator.AllProxies)
+        {
+            p.IsSelected = false;
+        }
+        UpdateSelectedProxiesCount();
+    }
+
+    public void SelectFastProxies()
+    {
+        foreach (var p in _proxyValidator.AllProxies)
+        {
+            p.IsSelected = p.IsHealthy && p.LatencyMs <= 300;
+        }
+        UpdateSelectedProxiesCount();
+    }
+
+    public void ForceRotateProxy()
+    {
+        _rotatingRouter?.ForceRotate();
+        var current = _rotatingRouter?.ActiveTimedProxy;
+        ActiveProxyDisplay = current != null ? $"{current.Endpoint} ({current.CountryCode}) {current.FlagEmoji}" : "Rotated";
+    }
+
+    // GeoIP & Intranet/Internet Location Resolution
+    private IpGeoLocationModel _currentGeoLocation = new();
+    public IpGeoLocationModel CurrentGeoLocation
+    {
+        get => _currentGeoLocation;
+        set => SetField(ref _currentGeoLocation, value);
+    }
+
+    public string CurrentIntranetIp => _currentGeoLocation.IntranetIp;
+    public string CurrentInternetIp => _currentGeoLocation.InternetIp;
+    public string CurrentLocation => _currentGeoLocation.FormattedLocation;
+    public string CurrentCountry => _currentGeoLocation.Country;
+    public string CurrentIsp => _currentGeoLocation.Isp;
+    public string CurrentFlagEmoji => _currentGeoLocation.FlagEmoji;
+
+    public async Task ResolveGeoIpAsync(bool forceRefresh = false)
+    {
+        try
+        {
+            var loc = await GeoIpService.ResolveCurrentLocationAsync(Adapters, forceRefresh);
+            CurrentGeoLocation = loc;
+            OnPropertyChanged(nameof(CurrentIntranetIp));
+            OnPropertyChanged(nameof(CurrentInternetIp));
+            OnPropertyChanged(nameof(CurrentLocation));
+            OnPropertyChanged(nameof(CurrentCountry));
+            OnPropertyChanged(nameof(CurrentIsp));
+            OnPropertyChanged(nameof(CurrentFlagEmoji));
+        }
+        catch { }
+    }
+
+    public bool RouteBondedTrafficThroughRotator
+    {
+        get => Config.RotatingProxy.RouteBondedTrafficThroughRotator;
+        set
+        {
+            if (Config.RotatingProxy.RouteBondedTrafficThroughRotator != value)
+            {
+                Config.RotatingProxy.RouteBondedTrafficThroughRotator = value;
+                OnPropertyChanged();
+                _proxyEngine.CurrentConfig = Config;
+                SaveCurrentCombinationImmediate();
+            }
+        }
+    }
+
+    public List<int> RotationIntervalOptions { get; } = new() { 10, 15, 30, 45, 60, 120, 300 };
+
+    public int RotationIntervalSeconds
+    {
+        get => Config.RotatingProxy.RotationIntervalSeconds;
+        set
+        {
+            if (Config.RotatingProxy.RotationIntervalSeconds != value)
+            {
+                Config.RotatingProxy.RotationIntervalSeconds = value;
+                OnPropertyChanged();
+                SaveCurrentCombinationImmediate();
+            }
+        }
+    }
+
+    private string _rotationCountdownText = "Next rotation: 30s";
+    public string RotationCountdownText
+    {
+        get => _rotationCountdownText;
+        set => SetField(ref _rotationCountdownText, value);
+    }
+
+    private string _selectedProxiesCountText = "Selected for Rotation: 0 healthy";
+    public string SelectedProxiesCountText
+    {
+        get => _selectedProxiesCountText;
+        set => SetField(ref _selectedProxiesCountText, value);
     }
 
     private static string ExtractSourceLabel(string sourceUrl)

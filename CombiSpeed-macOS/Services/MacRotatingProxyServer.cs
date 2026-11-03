@@ -10,6 +10,7 @@ public class MacRotatingProxyServer
 {
     private readonly RotatingProxyConfigModel _config;
     private readonly MacRotatingProxyRouter _router;
+    public MacRotatingProxyRouter Router => _router;
     private readonly Func<IEnumerable<NetworkAdapterModel>> _getAdapters;
 
     private TcpListener? _listener;

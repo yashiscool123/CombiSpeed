@@ -494,6 +494,30 @@
                     "progress": "Milestone 27 completed with 100% verification and clean packaging."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-028",
+            "userQuery": "The application should also allow to select a list of proxies that can be used on rotation as a proxy server upon combining connection adapters. The application should also display & resolve the current intranet & internet IP addresses and the location along with the country. The logic of the application should be to first combine the adapters for better / optimal combined speeds and then route all requests via the selected / filtered proxy server that will rotate on a timely basis. Update the ReadMe.md file for the initial application purpose and the application summary sections accordingly based on all the requests till date/ releasenotes.md file .",
+            "status": "completed",
+            "createdAt": "2026-11-04T00:23:00+05:30",
+            "updatedAt": "2026-11-04T01:06:00+05:30",
+            "progress": "Delivered Milestone 28: Two-Stage Multi-Adapter Bonding with Selective Timely Proxy Rotation & Live GeoIP Resolution across Windows, Linux, and macOS. Implemented two-stage routing pipeline in ProxyEngine (first bind to physical adapters for combined speeds, then route outbound traffic through selected rotating proxy). Implemented TimeBasedInterval timely rotation with user-configurable interval (10s–300s), countdown timer, and manual ForceRotate(). Added per-proxy IsSelected checkboxes in WPF DataGrid and Web SPAs, along with Select All, Deselect All, and Select Fast (<=300ms) bulk actions. Implemented GeoIpService with dual-provider fast fallback and algorithmic ISO-3166 flag emoji generator, displaying live Intranet & Internet IP, location, country, and ISP in a dedicated Cyberpunk card. Overhauled ReadMe.md purpose and application summary reflecting full architectural lineage and MOATs. Automated tests in --verify-rotator passed 100%. Rebuilt and published release packages under v2.2.0 (Build 27).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2801",
+                    "timestamp": "2026-11-04T00:24:00+05:30",
+                    "inputs": "User requested selective proxy list rotation, live intranet & internet IP + GeoIP location & country display, two-stage routing pipeline (combine adapters for optimal speed -> route via timely-rotating selected proxy), and ReadMe.md purpose/summary overhaul.",
+                    "outputs": "Architected GeoIpService with dual-provider fallback, IpGeoLocationModel, HarvestedProxyModel.IsSelected, TimeBasedInterval timely rotation in RotatingProxyRouter, two-stage bonded routing in ProxyEngine, UI controls in MainWindow.xaml, Linux/macOS REST API and CyberpunkSpa.cs, and ReadMe.md update.",
+                    "progress": "Architecture and design planning completed."
+                },
+                {
+                    "checkpointId": "CP-2802",
+                    "timestamp": "2026-11-04T01:06:00+05:30",
+                    "inputs": "Implementation, automated test verification, release packaging, and documentation overhaul.",
+                    "outputs": "Implemented two-stage bonded proxy routing, timely rotation intervals, proxy selection checkboxes and bulk commands, live GeoIP card in Overview tab and adapter location in Combined Adapters tab, cross-platform parity on Linux & macOS, --verify-rotator Test 9 (100% pass rate), published v2.2.0 release packages, and updated ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md.",
+                    "progress": "Milestone 28 completed successfully with 100% verification and clean packaging."
+                }
+            ]
         }
     ]
 }

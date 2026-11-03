@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 namespace CombiSpeed.Models;
 
 public enum ProxyProtocol
@@ -17,15 +19,33 @@ public enum ProxyAnonymity
 
 public enum RotationStrategy
 {
-    RoundRobin,     // Rotates to a new proxy on every single request
+    RoundRobin,
+    TimeBasedInterval,     // Rotates to a new proxy on every single request
     StickyDomain,   // Retains proxy affinity per target host/domain
     StickySession,  // Retains proxy affinity per client connection for a configurable duration
     LowestLatency,  // Selects from the fastest verified proxies
     EliteOnly       // Restricts rotation to high-anonymity Elite proxies
 }
 
-public class HarvestedProxyModel
+public class HarvestedProxyModel : INotifyPropertyChanged
 {
+    private bool _isSelected = true;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected != value)
+            {
+                _isSelected = value;
+                OnPropertyChanged();
+                SelectionChanged?.Invoke();
+            }
+        }
+    }
+    public event Action? SelectionChanged;
+    public string FlagEmoji => IpGeoLocationModel.ConvertCountryCodeToFlag(CountryCode);
+    public string LocationSummary => $"{CountryCode} {FlagEmoji}";
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Host { get; set; } = string.Empty;
     public int Port { get; set; }
@@ -66,12 +86,20 @@ public class HarvestedProxyModel
     public string StatusColor => IsHealthy
         ? (LatencyMs < 250 ? "#10B981" : LatencyMs < 600 ? "#F59E0B" : "#38BDF8")
         : "#EF4444";
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }
 
 public class RotatingProxyConfigModel
 {
     public bool EnableRotatingProxy { get; set; } = true;
     public int RotatingProxyPort { get; set; } = 8081;
+    public int RotationIntervalSeconds { get; set; } = 30;
+    public bool RouteBondedTrafficThroughRotator { get; set; } = false;
     public RotationStrategy Strategy { get; set; } = RotationStrategy.RoundRobin;
     public int StickySessionMinutes { get; set; } = 5;
     public bool StrictAnonymity { get; set; } = false;

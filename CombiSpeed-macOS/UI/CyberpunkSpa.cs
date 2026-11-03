@@ -558,6 +558,28 @@ public static class CyberpunkSpa
 
         <!-- TAB 1: Overview -->
         <div id="tabOverview" class="tab-panel active">
+            <!-- Live Intranet & Internet Geo-Location Identity Card -->
+            <div class="bridge-card" style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div id="geoFlagBox" style="font-size: 30px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: rgba(0,240,255,0.06); border: 1px solid var(--border); border-radius: 10px;">🌐</div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 13px; font-weight: 700; color: var(--cyan);">LIVE NETWORK IDENTITY &amp; GEO-LOCATION</span>
+                                <span class="badge" style="background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green);">RESOLVED</span>
+                            </div>
+                            <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 11px; flex-wrap: wrap;">
+                                <span><span style="color: var(--text-muted);">Location:</span> <strong id="geoLocText" style="color: var(--cyan);">Resolving...</strong></span>
+                                <span><span style="color: var(--text-muted);">WAN IP:</span> <strong id="geoWanIp" style="color: var(--amber); font-family: monospace;">Resolving...</strong></span>
+                                <span><span style="color: var(--text-muted);">Intranet:</span> <strong id="geoIntranetIp" style="color: var(--purple); font-family: monospace;">Resolving...</strong></span>
+                                <span><span style="color: var(--text-muted);">ISP:</span> <strong id="geoIsp" style="color: var(--text-main);">Resolving...</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-cyber" onclick="fetchGeoIp(true)">⟳ Refresh Identity</button>
+                </div>
+            </div>
+
             <div class="waveform-card">
                 <div class="waveform-header">
                     <span style="font-size: 13px; font-weight: 700; color: var(--cyan);">LIVE 60-SECOND REAL-TIME BANDWIDTH WAVEFORM</span>
@@ -721,6 +743,9 @@ public static class CyberpunkSpa
                     <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;">
                         <input type="checkbox" id="chkChainNic" onchange="updateRotatorConfig()"> ⚡ Multi-NIC Chaining
                     </label>
+                    <label style="font-size: 11px; color: var(--cyan); display: flex; align-items: center; gap: 4px; margin-left: 8px; font-weight: bold;">
+                        <input type="checkbox" id="chkBondRotate" onchange="updateRotatorConfig()"> ⚡ Bond-then-Rotate
+                    </label>
                 </div>
 
                 <!-- Sorting & Multi-Faceted Filtering Bar -->
@@ -753,9 +778,33 @@ public static class CyberpunkSpa
                     <span id="filterCountBadge" style="margin-left: auto; font-size: 11px; font-weight: bold; color: var(--cyan); font-family: Consolas;">Showing 0 proxies</span>
                 </div>
 
+                <!-- Selection & Timely Rotation Action Bar -->
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; background: rgba(0,240,255,0.06); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--cyan);">
+                    <span style="font-size: 11px; font-weight: bold; color: var(--cyan);">☑ POOL SELECTION:</span>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="selectAllProxies()">Select All</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="deselectAllProxies()">Deselect All</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="selectFastProxies()">Select Fast (≤300ms)</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="forceRotateNow()">⚡ Rotate Now</button>
+
+                    <span id="selectionSummaryPill" class="badge" style="background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green); margin-left: auto;">Selected: 0 healthy</span>
+                    <span id="rotationCountdownBadge" class="badge" style="background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber);">Next rotation: 30s</span>
+
+                    <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">Interval:</span>
+                    <select id="rotatorIntervalSelect" class="select-dark" style="padding: 3px 6px; font-size: 11px; width: 65px;" onchange="updateRotatorConfig()">
+                        <option value="10">10s</option>
+                        <option value="15">15s</option>
+                        <option value="30">30s</option>
+                        <option value="45">45s</option>
+                        <option value="60">60s</option>
+                        <option value="120">120s</option>
+                        <option value="300">300s</option>
+                    </select>
+                </div>
+
                 <table class="audit-table">
                     <thead>
                         <tr>
+                            <th style="width: 40px;">USE</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('status')" title="Click to sort by status">STATUS ⇅</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('geo')" title="Click to sort by country">GEO ⇅</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('endpoint')" title="Click to sort by endpoint">ENDPOINT ⇅</th>
@@ -1260,6 +1309,15 @@ public static class CyberpunkSpa
                     document.getElementById('chkAutoHarvest').checked = !!st.autoHarvestEnabled;
                     document.getElementById('chkAutoValidate').checked = !!st.autoValidateEnabled;
                     document.getElementById('chkChainNic').checked = !!st.chainPhysicalAdapters;
+                    if (document.getElementById('chkBondRotate')) document.getElementById('chkBondRotate').checked = !!st.routeBondedTrafficThroughRotator;
+                    if (document.getElementById('rotatorIntervalSelect')) document.getElementById('rotatorIntervalSelect').value = st.rotationIntervalSeconds || 30;
+                }
+
+                if (document.getElementById('selectionSummaryPill')) {
+                    document.getElementById('selectionSummaryPill').innerText = 'Selected: ' + (st.selectedCount || 0) + ' healthy';
+                }
+                if (document.getElementById('rotationCountdownBadge')) {
+                    document.getElementById('rotationCountdownBadge').innerText = 'Next rotation: ' + (st.secondsUntilNextRotation || 30) + 's';
                 }
 
                 if (currentTab === 'tabRotator') {
@@ -1405,6 +1463,7 @@ public static class CyberpunkSpa
 
             document.getElementById('rotatorRows').innerHTML = filtered.map(p => `
                 <tr>
+                    <td style="text-align: center;"><input type="checkbox" ${p.IsSelected ? 'checked' : ''} onchange="toggleSelectProxy('${p.Endpoint}')"></td>
                     <td><span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${p.IsHealthy ? 'var(--emerald)' : 'var(--red)'}; color: #000;">${p.IsHealthy ? p.LatencyMs + 'ms' : 'FAIL'}</span></td>
                     <td style="font-weight: bold; color: var(--cyan);">${p.CountryCode || 'UN'}</td>
                     <td style="font-family: Consolas;">${p.Endpoint}</td>
@@ -1422,12 +1481,59 @@ public static class CyberpunkSpa
             const autoHarvest = document.getElementById('chkAutoHarvest').checked;
             const autoValidate = document.getElementById('chkAutoValidate').checked;
             const chainPhysicalAdapters = document.getElementById('chkChainNic').checked;
+            const routeBondedTrafficThroughRotator = document.getElementById('chkBondRotate')?.checked || false;
+            const rotationIntervalSeconds = parseInt(document.getElementById('rotatorIntervalSelect')?.value || '30', 10);
             await fetch('/api/rotating-proxy/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ countryFilter, autoHarvest, autoValidate, chainPhysicalAdapters })
+                body: JSON.stringify({ countryFilter, autoHarvest, autoValidate, chainPhysicalAdapters, routeBondedTrafficThroughRotator, rotationIntervalSeconds })
             });
             fetchRotator();
+        }
+
+        async function selectAllProxies() {
+            await fetch('/api/rotating-proxy/select-all', { method: 'POST' });
+            fetchRotator();
+        }
+
+        async function deselectAllProxies() {
+            await fetch('/api/rotating-proxy/deselect-all', { method: 'POST' });
+            fetchRotator();
+        }
+
+        async function selectFastProxies() {
+            await fetch('/api/rotating-proxy/select-fast', { method: 'POST' });
+            fetchRotator();
+        }
+
+        async function toggleSelectProxy(endpoint) {
+            await fetch('/api/rotating-proxy/toggle-select', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint })
+            });
+            fetchRotator();
+        }
+
+        async function forceRotateNow() {
+            const res = await fetch('/api/rotating-proxy/rotate-now', { method: 'POST' });
+            const data = await res.json();
+            alert(`Rotated to: ${data.active || 'Next proxy'} (${data.country || 'Global'})`);
+            fetchRotator();
+        }
+
+        async function fetchGeoIp(force = false) {
+            try {
+                const res = await fetch('/api/geoip');
+                const data = await res.json();
+                if (data) {
+                    if (document.getElementById('geoFlagBox')) document.getElementById('geoFlagBox').innerText = data.FlagEmoji || '🌐';
+                    if (document.getElementById('geoLocText')) document.getElementById('geoLocText').innerText = data.LocationFormatted || `${data.City}, ${data.Country}`;
+                    if (document.getElementById('geoWanIp')) document.getElementById('geoWanIp').innerText = data.InternetIp || 'Unknown';
+                    if (document.getElementById('geoIntranetIp')) document.getElementById('geoIntranetIp').innerText = data.IntranetIp || '127.0.0.1';
+                    if (document.getElementById('geoIsp')) document.getElementById('geoIsp').innerText = data.Isp || 'Unknown';
+                }
+            } catch(e) {}
         }
 
         async function triggerHarvest() {
@@ -1497,6 +1603,7 @@ public static class CyberpunkSpa
         window.onload = () => {
             pollTelemetry();
             fetchRotator();
+            fetchGeoIp();
             setInterval(fetchRotator, 3000);
             drawWaveform();
         };

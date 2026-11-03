@@ -20,6 +20,7 @@ public class LinuxProxyEngine
     public long TotalBytesUploaded;
     public int ActiveConnections;
     public List<AuditLogModel> RecentLogs { get; } = new();
+    public LinuxRotatingProxyRouter? RotatingRouter { get; set; }
 
     public LinuxProxyEngine(ProxyConfigModel config, LinuxLoadBalancer loadBalancer, LinuxBandwidthThrottler throttler)
     {
@@ -158,14 +159,36 @@ public class LinuxProxyEngine
                     targetPort = parts.Length > 1 && int.TryParse(parts[1], out int p) ? p : 443;
 
                     using var remoteSocket = CreateBoundSocket(adapter);
-                    await remoteSocket.ConnectAsync(targetHost, targetPort, ct);
-                    using var remoteStream = new NetworkStream(remoteSocket, true);
+                    string clientEp = client.Client.RemoteEndPoint?.ToString() ?? "";
+                    bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
+                    var proxy = viaRotator ? RotatingRouter?.SelectUpstreamProxy(targetHost, clientEp) : null;
 
-                    byte[] ok = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
-                    await clientStream.WriteAsync(ok, 0, ok.Length, ct);
+                    if (proxy != null)
+                    {
+                        await remoteSocket.ConnectAsync(proxy.Host, proxy.Port, ct);
+                        using var remoteStream = new NetworkStream(remoteSocket, true);
+                        bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, ct);
+                        if (!tunnelOk)
+                        {
+                            RotatingRouter?.MarkUnavailable(proxy.Endpoint);
+                            throw new Exception($"Upstream proxy {proxy.Endpoint} tunnel failed");
+                        }
+                        byte[] ok = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
+                        await clientStream.WriteAsync(ok, 0, ok.Length, ct);
+                        AddAuditLog($"HTTPS -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
+                        await PipeBidirectionalAsync(clientStream, remoteStream, adapter, ct);
+                    }
+                    else
+                    {
+                        await remoteSocket.ConnectAsync(targetHost, targetPort, ct);
+                        using var remoteStream = new NetworkStream(remoteSocket, true);
 
-                    AddAuditLog("HTTPS", targetHost, targetPort, adapter.Name, client.Client.RemoteEndPoint?.ToString() ?? "");
-                    await PipeBidirectionalAsync(clientStream, remoteStream, adapter, ct);
+                        byte[] ok = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
+                        await clientStream.WriteAsync(ok, 0, ok.Length, ct);
+
+                        AddAuditLog("HTTPS", targetHost, targetPort, adapter.Name, clientEp);
+                        await PipeBidirectionalAsync(clientStream, remoteStream, adapter, ct);
+                    }
                 }
                 else
                 {
@@ -268,21 +291,151 @@ public class LinuxProxyEngine
                 if (adapter == null) return;
 
                 using var remoteSocket = CreateBoundSocket(adapter);
-                await remoteSocket.ConnectAsync(targetHost, targetPort, ct);
+                string clientEp = client.Client.RemoteEndPoint?.ToString() ?? "";
+                bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
+                var proxy = viaRotator ? RotatingRouter?.SelectUpstreamProxy(targetHost, clientEp) : null;
 
-                // Send SOCKS5 Success response
-                byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };
-                await stream.WriteAsync(success, 0, success.Length, ct);
+                if (proxy != null)
+                {
+                    await remoteSocket.ConnectAsync(proxy.Host, proxy.Port, ct);
+                    using var remoteStream = new NetworkStream(remoteSocket, true);
+                    bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, ct);
+                    if (!tunnelOk)
+                    {
+                        RotatingRouter?.MarkUnavailable(proxy.Endpoint);
+                        throw new Exception($"Upstream proxy {proxy.Endpoint} tunnel failed");
+                    }
+                    byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };
+                    await stream.WriteAsync(success, 0, success.Length, ct);
+                    AddAuditLog($"SOCKS5 -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
+                    await PipeBidirectionalAsync(stream, remoteStream, adapter, ct);
+                }
+                else
+                {
+                    await remoteSocket.ConnectAsync(targetHost, targetPort, ct);
+                    // Send SOCKS5 Success response
+                    byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };
+                    await stream.WriteAsync(success, 0, success.Length, ct);
 
-                using var remoteStream = new NetworkStream(remoteSocket, true);
-                AddAuditLog("SOCKS5", targetHost, targetPort, adapter.Name, client.Client.RemoteEndPoint?.ToString() ?? "");
-                await PipeBidirectionalAsync(stream, remoteStream, adapter, ct);
+                    using var remoteStream = new NetworkStream(remoteSocket, true);
+                    AddAuditLog("SOCKS5", targetHost, targetPort, adapter.Name, clientEp);
+                    await PipeBidirectionalAsync(stream, remoteStream, adapter, ct);
+                }
             }
         }
         catch (Exception) { }
         finally
         {
             Interlocked.Decrement(ref ActiveConnections);
+        }
+    }
+
+    private static async Task<bool> EstablishUpstreamProxyTunnelAsync(NetworkStream stream, HarvestedProxyModel proxy, string targetHost, int targetPort, CancellationToken token)
+    {
+        try
+        {
+            if (proxy.Protocol == ProxyProtocol.Socks5)
+            {
+                // RFC 1928 SOCKS5 Handshake
+                bool hasAuth = !string.IsNullOrEmpty(proxy.Username);
+                byte[] greeting = hasAuth ? new byte[] { 0x05, 0x02, 0x00, 0x02 } : new byte[] { 0x05, 0x01, 0x00 };
+                await stream.WriteAsync(greeting, token);
+
+                byte[] reply = new byte[2];
+                int r = await stream.ReadAsync(reply.AsMemory(0, 2), token);
+                if (r < 2 || reply[0] != 0x05) return false;
+
+                if (reply[1] == 0x02 && hasAuth)
+                {
+                    var uBytes = Encoding.UTF8.GetBytes(proxy.Username ?? "");
+                    var pBytes = Encoding.UTF8.GetBytes(proxy.Password ?? "");
+                    var authMsg = new byte[3 + uBytes.Length + pBytes.Length];
+                    authMsg[0] = 0x01;
+                    authMsg[1] = (byte)uBytes.Length;
+                    Array.Copy(uBytes, 0, authMsg, 2, uBytes.Length);
+                    authMsg[2 + uBytes.Length] = (byte)pBytes.Length;
+                    Array.Copy(pBytes, 0, authMsg, 3 + uBytes.Length, pBytes.Length);
+                    await stream.WriteAsync(authMsg, token);
+
+                    byte[] authReply = new byte[2];
+                    r = await stream.ReadAsync(authReply.AsMemory(0, 2), token);
+                    if (r < 2 || authReply[1] != 0x00) return false;
+                }
+                else if (reply[1] != 0x00)
+                {
+                    return false;
+                }
+
+                // SOCKS5 Connect
+                byte[] req;
+                if (IPAddress.TryParse(targetHost, out var ip) && ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    var ipBytes = ip.GetAddressBytes();
+                    req = new byte[10];
+                    req[0] = 0x05;
+                    req[1] = 0x01;
+                    req[2] = 0x00;
+                    req[3] = 0x01;
+                    Array.Copy(ipBytes, 0, req, 4, 4);
+                    req[8] = (byte)((targetPort >> 8) & 0xFF);
+                    req[9] = (byte)(targetPort & 0xFF);
+                }
+                else
+                {
+                    var hostBytes = Encoding.ASCII.GetBytes(targetHost);
+                    req = new byte[7 + hostBytes.Length];
+                    req[0] = 0x05;
+                    req[1] = 0x01;
+                    req[2] = 0x00;
+                    req[3] = 0x03;
+                    req[4] = (byte)hostBytes.Length;
+                    Array.Copy(hostBytes, 0, req, 5, hostBytes.Length);
+                    req[5 + hostBytes.Length] = (byte)((targetPort >> 8) & 0xFF);
+                    req[6 + hostBytes.Length] = (byte)(targetPort & 0xFF);
+                }
+
+                await stream.WriteAsync(req, token);
+                byte[] resp = new byte[512];
+                r = await stream.ReadAsync(resp.AsMemory(0, resp.Length), token);
+                return r >= 4 && resp[0] == 0x05 && resp[1] == 0x00;
+            }
+            else
+            {
+                // HTTP / HTTPS CONNECT tunnel
+                var connectBuilder = new StringBuilder();
+                connectBuilder.Append($"CONNECT {targetHost}:{targetPort} HTTP/1.1\r\n");
+                connectBuilder.Append($"Host: {targetHost}:{targetPort}\r\n");
+                connectBuilder.Append("Proxy-Connection: Keep-Alive\r\n");
+                if (!string.IsNullOrEmpty(proxy.Username))
+                {
+                    string credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{proxy.Username}:{proxy.Password}"));
+                    connectBuilder.Append($"Proxy-Authorization: Basic {credentials}\r\n");
+                }
+                connectBuilder.Append("\r\n");
+
+                byte[] connectReq = Encoding.ASCII.GetBytes(connectBuilder.ToString());
+                await stream.WriteAsync(connectReq, token);
+
+                byte[] buf = new byte[2048];
+                int total = 0;
+                while (total < buf.Length)
+                {
+                    int read = await stream.ReadAsync(buf.AsMemory(total, buf.Length - total), token);
+                    if (read <= 0) return false;
+                    total += read;
+                    string res = Encoding.ASCII.GetString(buf, 0, total);
+                    if (res.Contains("\r\n\r\n"))
+                    {
+                        var firstLine = res.Split("\r\n")[0];
+                        return firstLine.Contains(" 200");
+                    }
+                }
+                return false;
+            }
+        }
+        catch
+        {
+            return false;
         }
     }
 

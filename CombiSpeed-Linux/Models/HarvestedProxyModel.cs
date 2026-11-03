@@ -18,6 +18,7 @@ public enum ProxyAnonymity
 public enum RotationStrategy
 {
     RoundRobin,
+    TimeBasedInterval,
     StickyDomain,
     StickySession,
     LowestLatency,
@@ -42,6 +43,9 @@ public class HarvestedProxyModel
     public string? Username { get; set; }
     public string? Password { get; set; }
 
+    public bool IsSelected { get; set; } = true;
+    public string FlagEmoji => IpGeoLocationModel.ConvertCountryCodeToFlag(CountryCode);
+    public string LocationSummary => $"{CountryCode} {FlagEmoji}";
     public string Endpoint => $"{Host}:{Port}";
 
     public string FormattedProtocol => Protocol switch
@@ -66,6 +70,8 @@ public class RotatingProxyConfigModel
 {
     public bool EnableRotatingProxy { get; set; } = true;
     public int RotatingProxyPort { get; set; } = 8081;
+    public int RotationIntervalSeconds { get; set; } = 30;
+    public bool RouteBondedTrafficThroughRotator { get; set; } = false;
     public RotationStrategy Strategy { get; set; } = RotationStrategy.RoundRobin;
     public int StickySessionMinutes { get; set; } = 5;
     public bool StrictAnonymity { get; set; } = false;

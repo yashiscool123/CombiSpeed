@@ -7,6 +7,7 @@ public enum NetworkInterfaceType
     Ethernet,
     Wireless,
     Cellular,
+    Thunderbolt,
     Virtual,
     Other
 }
@@ -32,5 +33,14 @@ public class NetworkAdapterModel
     public double UploadSpeedKbps { get; set; } = 0.0;
     public double? CustomSpeedLimitMbps { get; set; }
     public string AccentColor { get; set; } = "#00F0FF";
-}
 
+    public string WanIp { get; set; } = "Resolving...";
+    public string Country { get; set; } = string.Empty;
+    public string CountryCode { get; set; } = "UN";
+    public string City { get; set; } = string.Empty;
+    public string Isp { get; set; } = string.Empty;
+    public string FlagEmoji => IpGeoLocationModel.ConvertCountryCodeToFlag(CountryCode);
+    public string FormattedLocation => !string.IsNullOrWhiteSpace(City)
+        ? $"{City}, {Country} {FlagEmoji}"
+        : (!string.IsNullOrWhiteSpace(Country) ? $"{Country} {FlagEmoji}" : "Global / UN");
+}

@@ -7,7 +7,7 @@ namespace CombiSpeed.Services;
 
 /// <summary>
 /// Dispatcher and routing engine that selects upstream proxies according to configurable policies
-/// (Round Robin, Sticky Domain, Lowest Latency, Elite Only) and binds outbound sockets across
+/// (TimeBasedInterval, Round Robin, Sticky Domain, Lowest Latency, Elite Only) and binds outbound sockets across
 /// local physical network adapters for double-layer multi-WAN acceleration.
 /// </summary>
 public class RotatingProxyRouter
@@ -18,6 +18,24 @@ public class RotatingProxyRouter
 
     private int _roundRobinIndex;
     private readonly ConcurrentDictionary<string, (HarvestedProxyModel Proxy, DateTime ExpiresAt)> _stickyCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly object _timeRotationLock = new();
+    private HarvestedProxyModel? _activeTimedProxy;
+    private DateTime _lastTimedRotation = DateTime.MinValue;
+
+    public HarvestedProxyModel? ActiveTimedProxy => _activeTimedProxy;
+    public event Action<HarvestedProxyModel?>? OnTimedRotation;
+
+    public int SecondsUntilNextRotation
+    {
+        get
+        {
+            if (_config.Strategy != RotationStrategy.TimeBasedInterval) return 0;
+            int intervalSec = Math.Max(5, _config.RotationIntervalSeconds);
+            var elapsed = (DateTime.UtcNow - _lastTimedRotation).TotalSeconds;
+            return Math.Max(0, (int)(intervalSec - elapsed));
+        }
+    }
 
     public long TotalRotatedRequests;
     public long SuccessfulRotations;
@@ -33,19 +51,63 @@ public class RotatingProxyRouter
     }
 
     /// <summary>
-    /// Selects an upstream proxy according to the configured rotation strategy and country filter.
+    /// Forces an immediate rotation to the next available selected proxy.
     /// </summary>
-    public HarvestedProxyModel? SelectUpstreamProxy(string? targetHost = null, string? clientSessionId = null)
+    public HarvestedProxyModel? ForceRotate()
+    {
+        var healthy = GetCandidatePool();
+        if (healthy.Count == 0) return null;
+
+        lock (_timeRotationLock)
+        {
+            _activeTimedProxy = PickRoundRobin(healthy);
+            _lastTimedRotation = DateTime.UtcNow;
+            OnTimedRotation?.Invoke(_activeTimedProxy);
+            OnLog?.Invoke($"[Router] Manual rotation: Switched active proxy to {_activeTimedProxy?.Endpoint} ({_activeTimedProxy?.CountryCode} {_activeTimedProxy?.FlagEmoji}).");
+            return _activeTimedProxy;
+        }
+    }
+
+    private List<HarvestedProxyModel> GetCandidatePool()
     {
         var healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy, _config.CountryFilter);
         if (healthy.Count == 0 && !string.IsNullOrWhiteSpace(_config.CountryFilter) && !_config.CountryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
         {
-            // Graceful fallback to all available healthy proxies if specific country has none
             healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy, "ALL");
         }
-        if (healthy.Count == 0) return null;
+
+        // Apply selective proxy filter: use selected proxies if any are marked selected
+        var selected = healthy.Where(p => p.IsSelected).ToList();
+        return selected.Count > 0 ? selected : healthy;
+    }
+
+    /// <summary>
+    /// Selects an upstream proxy according to the configured rotation strategy and country filter.
+    /// </summary>
+    public HarvestedProxyModel? SelectUpstreamProxy(string? targetHost = null, string? clientSessionId = null)
+    {
+        var candidates = GetCandidatePool();
+        if (candidates.Count == 0) return null;
 
         Interlocked.Increment(ref TotalRotatedRequests);
+
+        // 0. Time-Based Interval Strategy (Timely rotation every X seconds)
+        if (_config.Strategy == RotationStrategy.TimeBasedInterval)
+        {
+            var now = DateTime.UtcNow;
+            int intervalSec = Math.Max(5, _config.RotationIntervalSeconds);
+            lock (_timeRotationLock)
+            {
+                if (_activeTimedProxy == null || !_activeTimedProxy.IsHealthy || (now - _lastTimedRotation) >= TimeSpan.FromSeconds(intervalSec) || !candidates.Contains(_activeTimedProxy))
+                {
+                    _activeTimedProxy = PickRoundRobin(candidates);
+                    _lastTimedRotation = now;
+                    OnTimedRotation?.Invoke(_activeTimedProxy);
+                    OnLog?.Invoke($"[Router] Timely rotation: Switched active proxy to {_activeTimedProxy?.Endpoint} ({_activeTimedProxy?.CountryCode} {_activeTimedProxy?.FlagEmoji}) - interval {intervalSec}s.");
+                }
+                return _activeTimedProxy ?? PickRoundRobin(candidates);
+            }
+        }
 
         // 1. Sticky Domain Strategy
         if (_config.Strategy == RotationStrategy.StickyDomain && !string.IsNullOrWhiteSpace(targetHost))
@@ -56,7 +118,7 @@ public class RotatingProxyRouter
                 return cached.Proxy;
             }
 
-            var chosen = PickRoundRobin(healthy);
+            var chosen = PickRoundRobin(candidates);
             if (chosen != null)
             {
                 _stickyCache[key] = (chosen, DateTime.Now.AddMinutes(_config.StickySessionMinutes));
@@ -73,7 +135,7 @@ public class RotatingProxyRouter
                 return cached.Proxy;
             }
 
-            var chosen = PickRoundRobin(healthy);
+            var chosen = PickRoundRobin(candidates);
             if (chosen != null)
             {
                 _stickyCache[key] = (chosen, DateTime.Now.AddMinutes(_config.StickySessionMinutes));
@@ -84,13 +146,13 @@ public class RotatingProxyRouter
         // 3. Lowest Latency Strategy (picks uniformly from the top 5 fastest to prevent overload)
         if (_config.Strategy == RotationStrategy.LowestLatency)
         {
-            int poolSize = Math.Min(5, healthy.Count);
+            int poolSize = Math.Min(5, candidates.Count);
             int index = Random.Shared.Next(0, poolSize);
-            return healthy[index];
+            return candidates[index];
         }
 
         // 4. Default: Pure Round-Robin (Per-Request Rotation)
-        return PickRoundRobin(healthy);
+        return PickRoundRobin(candidates);
     }
 
     private HarvestedProxyModel? PickRoundRobin(List<HarvestedProxyModel> pool)

@@ -14,6 +14,28 @@ public class MacRotatingProxyRouter
     private int _roundRobinIndex;
     private readonly ConcurrentDictionary<string, (HarvestedProxyModel Proxy, DateTime ExpiresAt)> _stickyCache = new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly object _timeRotationLock = new();
+    private HarvestedProxyModel? _activeTimedProxy;
+    private DateTime _lastTimedRotation = DateTime.MinValue;
+
+    public HarvestedProxyModel? ActiveTimedProxy => _activeTimedProxy;
+    public event Action<HarvestedProxyModel?>? OnTimedRotation;
+
+    public int SecondsUntilNextRotation
+    {
+        get
+        {
+            if (_config.Strategy != RotationStrategy.TimeBasedInterval) return 0;
+            int intervalSec = Math.Max(5, _config.RotationIntervalSeconds);
+            var elapsed = (DateTime.UtcNow - _lastTimedRotation).TotalSeconds;
+            return Math.Max(0, (int)(intervalSec - elapsed));
+        }
+    }
+
+    public long TotalRotatedRequests;
+    public long SuccessfulRotations;
+    public long FailedRotations;
+
     public MacRotatingProxyRouter(MacProxyValidator validator, RotatingProxyConfigModel config, MacLoadBalancer loadBalancer)
     {
         _validator = validator;
@@ -21,14 +43,53 @@ public class MacRotatingProxyRouter
         _loadBalancer = loadBalancer;
     }
 
-    public HarvestedProxyModel? SelectUpstreamProxy(string? targetHost = null, string? clientSessionId = null)
+    public HarvestedProxyModel? ForceRotate()
+    {
+        var pool = GetCandidatePool();
+        if (pool.Count == 0) return null;
+        lock (_timeRotationLock)
+        {
+            _activeTimedProxy = PickRoundRobin(pool);
+            _lastTimedRotation = DateTime.UtcNow;
+            OnTimedRotation?.Invoke(_activeTimedProxy);
+            return _activeTimedProxy;
+        }
+    }
+
+    private List<HarvestedProxyModel> GetCandidatePool()
     {
         var healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy, _config.CountryFilter);
         if (healthy.Count == 0 && !string.IsNullOrWhiteSpace(_config.CountryFilter) && !_config.CountryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
         {
             healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy, "ALL");
         }
-        if (healthy.Count == 0) return null;
+
+        var selected = healthy.Where(p => p.IsSelected).ToList();
+        return selected.Count > 0 ? selected : healthy;
+    }
+
+    public HarvestedProxyModel? SelectUpstreamProxy(string? targetHost = null, string? clientSessionId = null)
+    {
+        var pool = GetCandidatePool();
+        if (pool.Count == 0) return null;
+
+        Interlocked.Increment(ref TotalRotatedRequests);
+
+        if (_config.Strategy == RotationStrategy.TimeBasedInterval)
+        {
+            var now = DateTime.UtcNow;
+            int intervalSec = Math.Max(5, _config.RotationIntervalSeconds);
+            lock (_timeRotationLock)
+            {
+                if (_activeTimedProxy == null || !_activeTimedProxy.IsHealthy || (now - _lastTimedRotation) >= TimeSpan.FromSeconds(intervalSec) || !pool.Contains(_activeTimedProxy))
+                {
+                    _activeTimedProxy = PickRoundRobin(pool);
+                    _lastTimedRotation = now;
+                    OnTimedRotation?.Invoke(_activeTimedProxy);
+                }
+                return _activeTimedProxy ?? PickRoundRobin(pool);
+            }
+        }
 
         if (_config.Strategy == RotationStrategy.StickyDomain && !string.IsNullOrWhiteSpace(targetHost))
         {
@@ -38,7 +99,7 @@ public class MacRotatingProxyRouter
                 return cached.Proxy;
             }
 
-            var chosen = PickRoundRobin(healthy);
+            var chosen = PickRoundRobin(pool);
             if (chosen != null)
             {
                 _stickyCache[key] = (chosen, DateTime.Now.AddMinutes(_config.StickySessionMinutes));
@@ -48,11 +109,11 @@ public class MacRotatingProxyRouter
 
         if (_config.Strategy == RotationStrategy.LowestLatency)
         {
-            int poolSize = Math.Min(5, healthy.Count);
-            return healthy[Random.Shared.Next(0, poolSize)];
+            int poolSize = Math.Min(5, pool.Count);
+            return pool[Random.Shared.Next(0, poolSize)];
         }
 
-        return PickRoundRobin(healthy);
+        return PickRoundRobin(pool);
     }
 
     private HarvestedProxyModel? PickRoundRobin(List<HarvestedProxyModel> pool)
@@ -78,10 +139,12 @@ public class MacRotatingProxyRouter
             }
 
             await socket.ConnectAsync(proxy.Host, proxy.Port, ct);
+            Interlocked.Increment(ref SuccessfulRotations);
             return socket;
         }
         catch
         {
+            Interlocked.Increment(ref FailedRotations);
             socket.Dispose();
             _validator.MarkUnavailable(proxy.Endpoint);
             throw;

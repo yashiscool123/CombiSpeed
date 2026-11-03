@@ -10,6 +10,7 @@ public class LinuxRotatingProxyServer
 {
     private readonly RotatingProxyConfigModel _config;
     private readonly LinuxRotatingProxyRouter _router;
+    public LinuxRotatingProxyRouter Router => _router;
     private readonly Func<IEnumerable<NetworkAdapterModel>> _getAdapters;
 
     private TcpListener? _listener;
