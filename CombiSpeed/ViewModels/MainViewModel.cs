@@ -65,6 +65,7 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly ProxyValidatorEngine _proxyValidator = new();
     private readonly RotatingProxyRouter _rotatingRouter;
     private readonly RotatingProxyServer _rotatingProxyServer;
+    private readonly ProxySchedulerService _proxyScheduler;
 
     private readonly DispatcherTimer _uiTimer;
     private readonly List<double> _downloadHistory = new(new double[60]);
@@ -118,8 +119,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.0";
-            return $"{verStr} (Build 17)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.1";
+            return $"{verStr} (Build 18)";
         }
     }
 
@@ -372,6 +373,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         _rotatingRouter = new RotatingProxyRouter(_proxyValidator, Config.RotatingProxy, _loadBalancer);
         _rotatingProxyServer = new RotatingProxyServer(Config.RotatingProxy, _rotatingRouter, () => _networkDetector.GetAllCached());
+        _proxyScheduler = new ProxySchedulerService(_proxyHarvester, _proxyValidator, Config.RotatingProxy);
 
         _rotatingProxyServer.OnLog += log =>
         {
@@ -380,6 +382,19 @@ public class MainViewModel : INotifyPropertyChanged
                 AuditLogs.Insert(0, new AuditLogModel { Protocol = "ROTATOR", TargetHost = log, Status = "OK", Timestamp = DateTime.Now });
                 while (AuditLogs.Count > 100) AuditLogs.RemoveAt(AuditLogs.Count - 1);
             });
+        };
+
+        _proxyScheduler.OnLog += msg =>
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                HarvestStatusText = msg;
+            });
+        };
+
+        _proxyScheduler.OnPoolUpdated += () =>
+        {
+            RefreshProxyCollection();
         };
 
         _proxyValidator.OnLog += msg =>
@@ -414,6 +429,32 @@ public class MainViewModel : INotifyPropertyChanged
             Config.UiScale = _configStore.Data.Config.UiScale > 0 ? _configStore.Data.Config.UiScale : 1.0;
             Config.IsReduceMotion = _configStore.Data.Config.IsReduceMotion;
             Config.IsScreenReaderOptimized = _configStore.Data.Config.IsScreenReaderOptimized;
+
+            if (_configStore.Data.Config.RotatingProxy != null)
+            {
+                var r = _configStore.Data.Config.RotatingProxy;
+                Config.RotatingProxy.EnableRotatingProxy = r.EnableRotatingProxy;
+                Config.RotatingProxy.RotatingProxyPort = r.RotatingProxyPort;
+                Config.RotatingProxy.Strategy = r.Strategy;
+                Config.RotatingProxy.ChainPhysicalAdapters = r.ChainPhysicalAdapters;
+                Config.RotatingProxy.StrictAnonymity = r.StrictAnonymity;
+                Config.RotatingProxy.AutoHarvestEnabled = r.AutoHarvestEnabled;
+                Config.RotatingProxy.AutoHarvestIntervalMinutes = r.AutoHarvestIntervalMinutes;
+                Config.RotatingProxy.AutoValidateEnabled = r.AutoValidateEnabled;
+                Config.RotatingProxy.AutoValidateIntervalMinutes = r.AutoValidateIntervalMinutes;
+                Config.RotatingProxy.CountryFilter = r.CountryFilter ?? "ALL";
+                if (r.CustomSources != null && r.CustomSources.Count > 0)
+                {
+                    Config.RotatingProxy.CustomSources = r.CustomSources;
+                }
+            }
+
+            if (Config.RotatingProxy.EnableRotatingProxy)
+            {
+                _rotatingProxyServer.Start();
+                _proxyScheduler.Start();
+                IsRotatingProxyRunning = _rotatingProxyServer.IsRunning;
+            }
 
             _isHighContrast = Config.IsHighContrast;
             _uiScale = Config.UiScale;
@@ -1189,22 +1230,86 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public ObservableCollection<string> CountryFilters { get; } = new()
+    {
+        "ALL",
+        "US",
+        "DE",
+        "GB",
+        "FR",
+        "CA",
+        "JP",
+        "NL",
+        "SG",
+        "IN"
+    };
+
+    public string SelectedCountryFilter
+    {
+        get => Config.RotatingProxy.CountryFilter;
+        set
+        {
+            if (Config.RotatingProxy.CountryFilter != value)
+            {
+                Config.RotatingProxy.CountryFilter = value;
+                OnPropertyChanged();
+                RefreshProxyCollection();
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
+    public bool AutoHarvestEnabled
+    {
+        get => Config.RotatingProxy.AutoHarvestEnabled;
+        set
+        {
+            if (Config.RotatingProxy.AutoHarvestEnabled != value)
+            {
+                Config.RotatingProxy.AutoHarvestEnabled = value;
+                OnPropertyChanged();
+                _proxyScheduler.RestartTimers();
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
+    public bool AutoValidateEnabled
+    {
+        get => Config.RotatingProxy.AutoValidateEnabled;
+        set
+        {
+            if (Config.RotatingProxy.AutoValidateEnabled != value)
+            {
+                Config.RotatingProxy.AutoValidateEnabled = value;
+                OnPropertyChanged();
+                _proxyScheduler.RestartTimers();
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
     public void ToggleRotatingProxy()
     {
         if (IsRotatingProxyRunning)
         {
+            _proxyScheduler.Stop();
             _rotatingProxyServer.Stop();
             IsRotatingProxyRunning = false;
+            Config.RotatingProxy.EnableRotatingProxy = false;
             HarvestStatusText = "Rotating proxy server stopped.";
         }
         else
         {
             _rotatingProxyServer.Start();
+            _proxyScheduler.Start();
             IsRotatingProxyRunning = _rotatingProxyServer.IsRunning;
+            Config.RotatingProxy.EnableRotatingProxy = true;
             HarvestStatusText = IsRotatingProxyRunning
                 ? $"Rotating proxy server active on port {RotatingProxyPort}"
                 : "Failed to start rotating proxy server.";
         }
+        _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
     }
 
     private void RefreshProxyCollection()
@@ -1212,8 +1317,14 @@ public class MainViewModel : INotifyPropertyChanged
         Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             HarvestedProxies.Clear();
-            var all = _proxyValidator.AllProxies.OrderByDescending(p => p.IsHealthy).ThenBy(p => p.LatencyMs).Take(300);
-            foreach (var p in all)
+            var all = _proxyValidator.AllProxies.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(Config.RotatingProxy.CountryFilter) && !Config.RotatingProxy.CountryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                all = all.Where(p => p.CountryCode.Equals(Config.RotatingProxy.CountryFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var displayList = all.OrderByDescending(p => p.IsHealthy).ThenBy(p => p.LatencyMs).Take(300);
+            foreach (var p in displayList)
             {
                 HarvestedProxies.Add(p);
             }
@@ -1221,7 +1332,7 @@ public class MainViewModel : INotifyPropertyChanged
             TotalHarvestedCount = _proxyValidator.TotalCount;
             VerifiedHealthyCount = _proxyValidator.HealthyCount;
 
-            var healthy = _proxyValidator.GetHealthyProxies();
+            var healthy = _proxyValidator.GetHealthyProxies(Config.RotatingProxy.StrictAnonymity, Config.RotatingProxy.Strategy, Config.RotatingProxy.CountryFilter);
             AveragePingMs = healthy.Count > 0 ? (int)healthy.Average(p => p.LatencyMs) : 0;
         });
     }

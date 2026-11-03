@@ -175,6 +175,9 @@ public class EmbeddedDashboardServer
                     isRunning = _rotatingServer?.IsRunning ?? false,
                     port = _config.RotatingProxy.RotatingProxyPort,
                     strategy = _config.RotatingProxy.Strategy.ToString(),
+                    countryFilter = _config.RotatingProxy.CountryFilter,
+                    autoHarvestEnabled = _config.RotatingProxy.AutoHarvestEnabled,
+                    autoValidateEnabled = _config.RotatingProxy.AutoValidateEnabled,
                     poolCount = _validator?.TotalCount ?? 0,
                     healthyCount = _validator?.HealthyCount ?? 0,
                     chainPhysicalAdapters = _config.RotatingProxy.ChainPhysicalAdapters,
@@ -185,6 +188,25 @@ public class EmbeddedDashboardServer
                 res.ContentType = "application/json";
                 res.ContentLength64 = bytes.Length;
                 await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/config" && req.HttpMethod == "POST")
+            {
+                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
+                string body = await reader.ReadToEndAsync();
+                var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("countryFilter", out var cf))
+                    _config.RotatingProxy.CountryFilter = cf.GetString() ?? "ALL";
+                if (doc.RootElement.TryGetProperty("autoHarvest", out var ah))
+                    _config.RotatingProxy.AutoHarvestEnabled = ah.GetBoolean();
+                if (doc.RootElement.TryGetProperty("autoValidate", out var av))
+                    _config.RotatingProxy.AutoValidateEnabled = av.GetBoolean();
+                if (doc.RootElement.TryGetProperty("strategy", out var st) && Enum.TryParse<RotationStrategy>(st.GetString(), out var strat))
+                    _config.RotatingProxy.Strategy = strat;
+                if (doc.RootElement.TryGetProperty("chainPhysicalAdapters", out var cpa))
+                    _config.RotatingProxy.ChainPhysicalAdapters = cpa.GetBoolean();
+
+                _storage.Save(_adapters, _config);
+                res.StatusCode = 200;
             }
             else if (path == "/api/rotating-proxy/pool")
             {

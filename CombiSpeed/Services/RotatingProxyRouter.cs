@@ -33,11 +33,16 @@ public class RotatingProxyRouter
     }
 
     /// <summary>
-    /// Selects an upstream proxy according to the configured rotation strategy.
+    /// Selects an upstream proxy according to the configured rotation strategy and country filter.
     /// </summary>
     public HarvestedProxyModel? SelectUpstreamProxy(string? targetHost = null, string? clientSessionId = null)
     {
-        var healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy);
+        var healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy, _config.CountryFilter);
+        if (healthy.Count == 0 && !string.IsNullOrWhiteSpace(_config.CountryFilter) && !_config.CountryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+        {
+            // Graceful fallback to all available healthy proxies if specific country has none
+            healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy, "ALL");
+        }
         if (healthy.Count == 0) return null;
 
         Interlocked.Increment(ref TotalRotatedRequests);

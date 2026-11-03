@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.1.0%20(Build%2017)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.1.1%20(Build%2018)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -29,13 +29,19 @@ This bypasses default routing limitations and forces traffic simultaneously acro
 
 ## 🚀 Key Features
 
-1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0)**:
+1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1)**:
    - **Multi-Source Open-Source Proxy Harvester**:
      Automatically scrapes fresh proxy candidate pools from top-tier maintained open-source repositories and APIs out of the box (*TheSpeedX/PROXY-List*, *monosans/proxy-list*, *clarketm/proxy-list*, *proxyscrape API*), custom user URLs/APIs, pastebins, or local `.txt` lists.
-   - **Universal Heuristic Regex Scraper**:
-     Intelligently extracts proxies from unstructured plain text, CSV, JSON, and HTML tables (`<td>IP</td><td>PORT</td>`) supporting `IP:PORT`, `PROTOCOL://IP:PORT`, and authenticated `IP:PORT:USER:PASS` lines. Automatically isolates and purges RFC 1918 private subnets and loopback addresses.
+   - **Universal Heuristic Regex & JSON API Scraper**:
+     Intelligently extracts proxies from unstructured plain text, CSV, JSON arrays/objects (`{"ip":"...", "port":8080, "country":"US"}`), and HTML tables (`<td>IP</td><td>PORT</td><td>Country</td>`) supporting `IP:PORT`, `PROTOCOL://IP:PORT`, and authenticated `IP:PORT:USER:PASS` lines. Automatically isolates and purges RFC 1918 private subnets and loopback addresses.
    - **High-Concurrency Multi-Protocol Validator**:
      Semaphore-bounded parallel async prober testing HTTP, HTTPS CONNECT, SOCKS4, and RFC 1928 SOCKS5 endpoints in milliseconds without UI freezing or thread starvation. Accurately measures real-time RTT latency (ms) and detects anonymity tiers (Elite, Anonymous, Transparent).
+   - **GeoIP Country Detection & Geo-Targeted Rotation Filtering (NEW in v2.1.1)**:
+     Extracts country codes from proxy payloads and provides instant 1-click filtering (`ALL`, `US`, `DE`, `GB`, `FR`, `CA`, `JP`, `NL`, `SG`, `IN`). Outbound requests are dynamically routed strictly through healthy proxies located in the requested country with seamless fallback if a regional pool is exhausted.
+   - **Autonomous Background Scheduler (NEW in v2.1.1)**:
+     Continuous background self-healing engine running non-blocking timers for scheduled auto-harvesting (every 30 minutes) and automated pool health validation & dead-node pruning (every 5 minutes), keeping the proxy pool continuously responsive without manual intervention.
+   - **Upstream Proxy Authentication (NEW in v2.1.1)**:
+     Full transparent support for private authenticated proxies via automatic `Proxy-Authorization: Basic <base64>` header injection for HTTP/HTTPS tunnels and RFC 1929 Username/Password subnegotiation for SOCKS5.
    - **Dynamic Rotation & Sticky Session Strategies**:
      - `Round Robin (Per-Request)`: Rotates to a new healthy upstream proxy on every HTTP/HTTPS request (ideal for large-scale web scraping, price intelligence, and QA automation).
      - `Sticky Domain (Host Affinity)`: Retains the same upstream proxy for requests targeting the same host (e.g. `*.target.com`), preserving login sessions and OAuth cookies.

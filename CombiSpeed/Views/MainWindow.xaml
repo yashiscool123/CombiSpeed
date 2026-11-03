@@ -728,32 +728,45 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Strategy Selector -->
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Rotation Strategy:" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                        <ComboBox ItemsSource="{Binding RotationStrategies}" SelectedItem="{Binding SelectedRotationStrategy}" Width="240" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                                        <TextBlock Text="Strategy:" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox ItemsSource="{Binding RotationStrategies}" SelectedItem="{Binding SelectedRotationStrategy}" Width="210" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- Country Filter -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                                        <TextBlock Text="🌍 Country:" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox ItemsSource="{Binding CountryFilters}" SelectedItem="{Binding SelectedCountryFilter}" Width="85" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center"/>
                                     </StackPanel>
 
                                     <!-- Status message / Progress -->
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="10,0">
                                         <TextBlock Text="{Binding HarvestStatusText}" FontSize="11" Foreground="#38BDF8" TextTrimming="CharacterEllipsis"/>
                                         <ProgressBar Value="{Binding HarvestProgress}" Maximum="100" Height="4" Margin="0,4,0,0" Background="#1E293B" Foreground="#00F0FF" Visibility="{Binding IsHarvestingOrValidating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     </StackPanel>
 
-                                    <!-- Toggles: Multi-NIC Chaining & Strict Anonymity -->
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <CheckBox IsChecked="{Binding ChainPhysicalAdapters, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,16,0" ToolTip="Dispatches outgoing proxy connections across all enabled physical adapters">
-                                            <TextBlock Text="⚡ Multi-NIC Chaining" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
+                                    <!-- Toggles: Multi-NIC Chaining, Strict Anonymity & Periodic Auto Timers -->
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <CheckBox IsChecked="{Binding AutoHarvestEnabled, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,10,0" ToolTip="Background auto-harvest fresh proxies every 30 minutes">
+                                            <TextBlock Text="🔄 Auto-Harvest" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
                                         </CheckBox>
-                                        <CheckBox IsChecked="{Binding StrictAnonymity, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,16,0" ToolTip="Restricts rotation strictly to Elite and Anonymous proxies">
-                                            <TextBlock Text="🛡 Elite &amp; Anon Only" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
+                                        <CheckBox IsChecked="{Binding AutoValidateEnabled, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,10,0" ToolTip="Continuous background health checks and dead pruning every 5 minutes">
+                                            <TextBlock Text="🩺 Auto-Check" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
                                         </CheckBox>
-                                        <Button Content="🗑 Prune Dead" Command="{Binding PruneDeadProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"/>
-                                        <Button Content="✕ Clear All" Command="{Binding ClearProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11"/>
+                                        <CheckBox IsChecked="{Binding ChainPhysicalAdapters, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,10,0" ToolTip="Dispatches outgoing proxy connections across all enabled physical adapters">
+                                            <TextBlock Text="⚡ Multi-NIC" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
+                                        </CheckBox>
+                                        <CheckBox IsChecked="{Binding StrictAnonymity, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,12,0" ToolTip="Restricts rotation strictly to Elite and Anonymous proxies">
+                                            <TextBlock Text="🛡 Elite Only" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
+                                        </CheckBox>
+                                        <Button Content="🗑 Prune" Command="{Binding PruneDeadProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"/>
+                                        <Button Content="✕ Clear" Command="{Binding ClearProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -777,12 +790,13 @@
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
-                                            <DataGridTextColumn Header="ENDPOINT (HOST:PORT)" Binding="{Binding Endpoint}" Width="180" FontFamily="Consolas"/>
-                                            <DataGridTextColumn Header="PROTOCOL" Binding="{Binding FormattedProtocol}" Width="95"/>
-                                            <DataGridTextColumn Header="ANONYMITY" Binding="{Binding FormattedAnonymity}" Width="110"/>
-                                            <DataGridTextColumn Header="LATENCY" Binding="{Binding LatencyMs, StringFormat='{}{0}ms'}" Width="85"/>
-                                            <DataGridTextColumn Header="FAILURES" Binding="{Binding Failures}" Width="75"/>
-                                            <DataGridTextColumn Header="SUCCESSES" Binding="{Binding Successes}" Width="85"/>
+                                            <DataGridTextColumn Header="GEO" Binding="{Binding CountryCode}" Width="60" FontWeight="Bold"/>
+                                            <DataGridTextColumn Header="ENDPOINT (HOST:PORT)" Binding="{Binding Endpoint}" Width="170" FontFamily="Consolas"/>
+                                            <DataGridTextColumn Header="PROTOCOL" Binding="{Binding FormattedProtocol}" Width="90"/>
+                                            <DataGridTextColumn Header="ANONYMITY" Binding="{Binding FormattedAnonymity}" Width="105"/>
+                                            <DataGridTextColumn Header="LATENCY" Binding="{Binding LatencyMs, StringFormat='{}{0}ms'}" Width="80"/>
+                                            <DataGridTextColumn Header="FAILURES" Binding="{Binding Failures}" Width="70"/>
+                                            <DataGridTextColumn Header="SUCCESSES" Binding="{Binding Successes}" Width="80"/>
                                             <DataGridTextColumn Header="SOURCE REPOSITORY / URL" Binding="{Binding SourceUrl}" Width="*"/>
                                         </DataGrid.Columns>
                                     </DataGrid>

@@ -688,10 +688,35 @@ public static class CyberpunkSpa
                         <div class="metric-sub">Multi-NIC Bound</div>
                     </div>
                 </div>
+                <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
+                    <span style="font-size: 12px; font-weight: bold; color: var(--cyan);">🌍 Country:</span>
+                    <select id="rotatorCountryFilter" class="select-cyber" style="padding: 4px 8px; font-size: 11px; background: #0b1120; color: #fff; border: 1px solid var(--border);" onchange="updateRotatorConfig()">
+                        <option value="ALL">All Countries</option>
+                        <option value="US">🇺🇸 United States (US)</option>
+                        <option value="DE">🇩🇪 Germany (DE)</option>
+                        <option value="GB">🇬🇧 United Kingdom (GB)</option>
+                        <option value="FR">🇫🇷 France (FR)</option>
+                        <option value="CA">🇨🇦 Canada (CA)</option>
+                        <option value="JP">🇯🇵 Japan (JP)</option>
+                        <option value="NL">🇳🇱 Netherlands (NL)</option>
+                        <option value="SG">🇸🇬 Singapore (SG)</option>
+                        <option value="IN">🇮🇳 India (IN)</option>
+                    </select>
+                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;">
+                        <input type="checkbox" id="chkAutoHarvest" onchange="updateRotatorConfig()"> 🔄 Auto-Harvest (30m)
+                    </label>
+                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;">
+                        <input type="checkbox" id="chkAutoValidate" onchange="updateRotatorConfig()"> 🩺 Auto-Check (5m)
+                    </label>
+                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;">
+                        <input type="checkbox" id="chkChainNic" onchange="updateRotatorConfig()"> ⚡ Multi-NIC Chaining
+                    </label>
+                </div>
                 <table class="audit-table">
                     <thead>
                         <tr>
                             <th>STATUS</th>
+                            <th>GEO</th>
                             <th>ENDPOINT</th>
                             <th>PROTOCOL</th>
                             <th>ANONYMITY</th>
@@ -701,7 +726,7 @@ public static class CyberpunkSpa
                         </tr>
                     </thead>
                     <tbody id="rotatorRows">
-                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No proxies harvested yet. Click "⚡ Harvest Proxies" to populate.</td></tr>
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No proxies harvested yet. Click "⚡ Harvest Proxies" to populate.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1114,6 +1139,13 @@ public static class CyberpunkSpa
                 document.getElementById('rotatorStatusPill').style.color = st.isRunning ? 'var(--emerald)' : 'var(--text-muted)';
                 document.getElementById('btnToggleRotator').innerText = st.isRunning ? '🛑 Stop Rotator' : '▶ Start Rotator';
 
+                if (document.getElementById('rotatorCountryFilter') && !document.getElementById('rotatorCountryFilter').matches(':focus')) {
+                    document.getElementById('rotatorCountryFilter').value = st.countryFilter || 'ALL';
+                    document.getElementById('chkAutoHarvest').checked = !!st.autoHarvestEnabled;
+                    document.getElementById('chkAutoValidate').checked = !!st.autoValidateEnabled;
+                    document.getElementById('chkChainNic').checked = !!st.chainPhysicalAdapters;
+                }
+
                 if (currentTab === 'tabRotator') {
                     const poolRes = await fetch('/api/rotating-proxy/pool');
                     const pool = await poolRes.json();
@@ -1121,6 +1153,7 @@ public static class CyberpunkSpa
                         document.getElementById('rotatorRows').innerHTML = pool.map(p => `
                             <tr>
                                 <td><span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${p.IsHealthy ? 'var(--emerald)' : 'var(--red)'}; color: #000;">${p.IsHealthy ? p.LatencyMs + 'ms' : 'FAIL'}</span></td>
+                                <td style="font-weight: bold; color: var(--cyan);">${p.CountryCode || 'UN'}</td>
                                 <td style="font-family: Consolas;">${p.Endpoint}</td>
                                 <td>${p.FormattedProtocol}</td>
                                 <td>${p.FormattedAnonymity}</td>
@@ -1132,6 +1165,19 @@ public static class CyberpunkSpa
                     }
                 }
             } catch(e) {}
+        }
+
+        async function updateRotatorConfig() {
+            const countryFilter = document.getElementById('rotatorCountryFilter').value;
+            const autoHarvest = document.getElementById('chkAutoHarvest').checked;
+            const autoValidate = document.getElementById('chkAutoValidate').checked;
+            const chainPhysicalAdapters = document.getElementById('chkChainNic').checked;
+            await fetch('/api/rotating-proxy/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ countryFilter, autoHarvest, autoValidate, chainPhysicalAdapters })
+            });
+            fetchRotator();
         }
 
         async function triggerHarvest() {

@@ -335,8 +335,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.0";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 17)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.1";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 18)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);
@@ -570,6 +570,58 @@ public partial class App : Application
                     throw new Exception("RotatingProxyServer failed to stop cleanly!");
                 }
                 Log(" [PASS] RotatingProxyServer listener and lifecycle verified successfully.");
+
+                // 5. Test Country Filter, JSON Scraping & Background Scheduler
+                Log("[TEST 5/5] Testing Country Filtering, JSON Feeds & Background Scheduler...");
+                string jsonSample = @"[
+                    { ""ip"": ""198.51.100.1"", ""port"": 8080, ""country"": ""US"", ""protocol"": ""http"" },
+                    { ""ip"": ""198.51.100.2"", ""port"": 3128, ""country"": ""DE"", ""protocol"": ""https"" },
+                    { ""ip"": ""198.51.100.3"", ""port"": 1080, ""country"": ""US"", ""protocol"": ""socks5"" }
+                ]";
+                var jsonExtracted = harvester.ExtractProxiesFromText(jsonSample, "JsonFeedTest");
+                Log($"Extracted {jsonExtracted.Count} proxies from JSON sample (expected 3).");
+                if (jsonExtracted.Count != 3)
+                {
+                    throw new Exception($"JSON parsing failed! Expected 3 proxies, got {jsonExtracted.Count}");
+                }
+
+                foreach (var p in jsonExtracted) { p.IsHealthy = true; validator.AddOrUpdateCandidate(p); }
+
+                var usOnly = validator.GetHealthyProxies(countryFilter: "US");
+                Log($"US-filtered pool: {usOnly.Count} proxies (expected 2).");
+                if (usOnly.Count != 2 || usOnly.Any(p => p.CountryCode != "US"))
+                {
+                    throw new Exception("Country filter 'US' failed!");
+                }
+
+                var deOnly = validator.GetHealthyProxies(countryFilter: "DE");
+                Log($"DE-filtered pool: {deOnly.Count} proxies (expected 1).");
+                if (deOnly.Count != 1 || deOnly[0].CountryCode != "DE")
+                {
+                    throw new Exception("Country filter 'DE' failed!");
+                }
+
+                config.CountryFilter = "DE";
+                var deProxy = router.SelectUpstreamProxy();
+                if (deProxy == null || deProxy.CountryCode != "DE")
+                {
+                    throw new Exception("Router failed to prioritize country filter 'DE'!");
+                }
+
+                config.CountryFilter = "JP";
+                var fallbackProxy = router.SelectUpstreamProxy();
+                if (fallbackProxy == null)
+                {
+                    throw new Exception("Router failed graceful fallback when filtered country has 0 proxies!");
+                }
+                Log($"Graceful fallback verified for unrepresented country: {fallbackProxy.Endpoint} ({fallbackProxy.CountryCode})");
+
+                using (var scheduler = new ProxySchedulerService(harvester, validator, config))
+                {
+                    scheduler.Start();
+                    scheduler.Stop();
+                }
+                Log(" [PASS] Country filtering, JSON feed extraction, and scheduler verified successfully.");
 
                 Log("\n[ALL PASS] Rotating Proxy & Harvester Engine self-test PASSED with 100% SUCCESS!");
                 System.IO.File.WriteAllText("rotator_test.log", logSb.ToString());

@@ -73,6 +73,9 @@ public class RotatingProxyConfigModel
     public int ConcurrencyLimit { get; set; } = 60;
     public bool AutoHarvestEnabled { get; set; } = false;
     public int AutoHarvestIntervalMinutes { get; set; } = 30;
+    public bool AutoValidateEnabled { get; set; } = true;
+    public int AutoValidateIntervalMinutes { get; set; } = 5;
+    public string CountryFilter { get; set; } = "ALL";
     public int MaxPoolSize { get; set; } = 5000;
     public bool ChainPhysicalAdapters { get; set; } = true;
 
@@ -88,3 +91,4 @@ public class RotatingProxyConfigModel
         "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"
     };
 }
+

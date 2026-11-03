@@ -84,16 +84,49 @@ public class LinuxProxyValidator
 
             if (proxy.Protocol == ProxyProtocol.Socks5)
             {
-                byte[] greeting = { 0x05, 0x01, 0x00 };
+                byte[] greeting = string.IsNullOrEmpty(proxy.Username)
+                    ? new byte[] { 0x05, 0x01, 0x00 }
+                    : new byte[] { 0x05, 0x02, 0x00, 0x02 };
                 await socket.SendAsync(greeting, SocketFlags.None, cts.Token);
                 byte[] response = new byte[2];
                 int bytesRead = await socket.ReceiveAsync(response, SocketFlags.None, cts.Token);
-                success = bytesRead == 2 && response[0] == 0x05 && response[1] == 0x00;
-                if (success) proxy.Anonymity = ProxyAnonymity.Elite;
+                if (bytesRead == 2 && response[0] == 0x05)
+                {
+                    if (response[1] == 0x00)
+                    {
+                        success = true;
+                        proxy.Anonymity = ProxyAnonymity.Elite;
+                    }
+                    else if (response[1] == 0x02 && !string.IsNullOrEmpty(proxy.Username))
+                    {
+                        byte[] uBytes = Encoding.ASCII.GetBytes(proxy.Username);
+                        byte[] pBytes = Encoding.ASCII.GetBytes(proxy.Password ?? "");
+                        byte[] auth = new byte[1 + 1 + uBytes.Length + 1 + pBytes.Length];
+                        auth[0] = 0x01;
+                        auth[1] = (byte)uBytes.Length;
+                        Array.Copy(uBytes, 0, auth, 2, uBytes.Length);
+                        auth[2 + uBytes.Length] = (byte)pBytes.Length;
+                        Array.Copy(pBytes, 0, auth, 3 + uBytes.Length, pBytes.Length);
+                        await socket.SendAsync(auth, SocketFlags.None, cts.Token);
+                        byte[] authResp = new byte[2];
+                        int aRead = await socket.ReceiveAsync(authResp, SocketFlags.None, cts.Token);
+                        if (aRead == 2 && authResp[1] == 0x00)
+                        {
+                            success = true;
+                            proxy.Anonymity = ProxyAnonymity.Elite;
+                        }
+                    }
+                }
             }
             else
             {
-                string probe = $"GET http://1.1.1.1/ HTTP/1.1\r\nHost: 1.1.1.1\r\nConnection: close\r\n\r\n";
+                string authHeader = "";
+                if (!string.IsNullOrEmpty(proxy.Username))
+                {
+                    string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
+                    authHeader = $"Proxy-Authorization: Basic {creds}\r\n";
+                }
+                string probe = $"GET http://1.1.1.1/ HTTP/1.1\r\nHost: 1.1.1.1\r\n{authHeader}Connection: close\r\n\r\n";
                 await socket.SendAsync(Encoding.ASCII.GetBytes(probe), SocketFlags.None, cts.Token);
                 byte[] buf = new byte[512];
                 int bytesRead = await socket.ReceiveAsync(buf, SocketFlags.None, cts.Token);
@@ -152,12 +185,19 @@ public class LinuxProxyValidator
         return count;
     }
 
-    public List<HarvestedProxyModel> GetHealthyProxies(bool strictAnonymity = false, RotationStrategy strategy = RotationStrategy.RoundRobin)
+    public List<HarvestedProxyModel> GetHealthyProxies(
+        bool strictAnonymity = false,
+        RotationStrategy strategy = RotationStrategy.RoundRobin,
+        string? countryFilter = null)
     {
         var query = _pool.Values.Where(p => p.IsHealthy);
         if (strictAnonymity || strategy == RotationStrategy.EliteOnly)
         {
             query = query.Where(p => p.Anonymity == ProxyAnonymity.Elite);
+        }
+        if (!string.IsNullOrWhiteSpace(countryFilter) && !countryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(p => p.CountryCode.Equals(countryFilter, StringComparison.OrdinalIgnoreCase));
         }
         if (strategy == RotationStrategy.LowestLatency)
         {
@@ -168,3 +208,4 @@ public class LinuxProxyValidator
 
     public void Clear() => _pool.Clear();
 }
+

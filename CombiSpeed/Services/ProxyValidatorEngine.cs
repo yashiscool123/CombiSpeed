@@ -166,7 +166,13 @@ public class ProxyValidatorEngine
         await socket.ConnectAsync(proxy.Host, proxy.Port, ct);
 
         // Send a lightweight HTTP GET or CONNECT request to probe liveness
-        string probe = $"GET http://1.1.1.1/ HTTP/1.1\r\nHost: 1.1.1.1\r\nUser-Agent: CombiSpeed/2.1.0\r\nConnection: close\r\n\r\n";
+        string authHeader = "";
+        if (!string.IsNullOrEmpty(proxy.Username))
+        {
+            string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
+            authHeader = $"Proxy-Authorization: Basic {creds}\r\n";
+        }
+        string probe = $"GET http://1.1.1.1/ HTTP/1.1\r\nHost: 1.1.1.1\r\n{authHeader}User-Agent: CombiSpeed/2.1.1\r\nConnection: close\r\n\r\n";
         byte[] reqBytes = Encoding.ASCII.GetBytes(probe);
         await socket.SendAsync(reqBytes, SocketFlags.None, ct);
 
@@ -196,7 +202,7 @@ public class ProxyValidatorEngine
     }
 
     /// <summary>
-    /// Probes a SOCKS5 proxy via RFC 1928 handshake (Version 5, 1 Auth Method: No Auth 0x00).
+    /// Probes a SOCKS5 proxy via RFC 1928 handshake (Version 5, No Auth 0x00 and RFC 1929 Auth 0x02).
     /// </summary>
     private static async Task<bool> ProbeSocks5Async(HarvestedProxyModel proxy, CancellationToken ct)
     {
@@ -207,16 +213,42 @@ public class ProxyValidatorEngine
 
         await socket.ConnectAsync(proxy.Host, proxy.Port, ct);
 
-        // Handshake: [Version: 5, Methods: 1, Method: 0 (No Auth)]
-        byte[] greeting = { 0x05, 0x01, 0x00 };
+        // Handshake: [Version: 5, Methods: 1 or 2]
+        byte[] greeting = string.IsNullOrEmpty(proxy.Username)
+            ? new byte[] { 0x05, 0x01, 0x00 }
+            : new byte[] { 0x05, 0x02, 0x00, 0x02 };
+
         await socket.SendAsync(greeting, SocketFlags.None, ct);
 
         byte[] response = new byte[2];
         int bytesRead = await socket.ReceiveAsync(response, SocketFlags.None, ct);
-        if (bytesRead == 2 && response[0] == 0x05 && response[1] == 0x00)
+        if (bytesRead == 2 && response[0] == 0x05)
         {
-            proxy.Anonymity = ProxyAnonymity.Elite;
-            return true;
+            if (response[1] == 0x00) // No Auth Granted
+            {
+                proxy.Anonymity = ProxyAnonymity.Elite;
+                return true;
+            }
+            if (response[1] == 0x02 && !string.IsNullOrEmpty(proxy.Username)) // RFC 1929 Auth requested
+            {
+                byte[] uBytes = Encoding.ASCII.GetBytes(proxy.Username);
+                byte[] pBytes = Encoding.ASCII.GetBytes(proxy.Password ?? "");
+                byte[] auth = new byte[1 + 1 + uBytes.Length + 1 + pBytes.Length];
+                auth[0] = 0x01; // RFC 1929 Version
+                auth[1] = (byte)uBytes.Length;
+                Array.Copy(uBytes, 0, auth, 2, uBytes.Length);
+                auth[2 + uBytes.Length] = (byte)pBytes.Length;
+                Array.Copy(pBytes, 0, auth, 3 + uBytes.Length, pBytes.Length);
+
+                await socket.SendAsync(auth, SocketFlags.None, ct);
+                byte[] authResp = new byte[2];
+                int aRead = await socket.ReceiveAsync(authResp, SocketFlags.None, ct);
+                if (aRead == 2 && authResp[1] == 0x00)
+                {
+                    proxy.Anonymity = ProxyAnonymity.Elite;
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -268,15 +300,23 @@ public class ProxyValidatorEngine
     }
 
     /// <summary>
-    /// Retrieves a list of active healthy proxies filtered by user preferences.
+    /// Retrieves a list of active healthy proxies filtered by user preferences and country filter.
     /// </summary>
-    public List<HarvestedProxyModel> GetHealthyProxies(bool strictAnonymity = false, RotationStrategy strategy = RotationStrategy.RoundRobin)
+    public List<HarvestedProxyModel> GetHealthyProxies(
+        bool strictAnonymity = false,
+        RotationStrategy strategy = RotationStrategy.RoundRobin,
+        string? countryFilter = null)
     {
         var query = _pool.Values.Where(p => p.IsHealthy);
 
         if (strictAnonymity || strategy == RotationStrategy.EliteOnly)
         {
             query = query.Where(p => p.Anonymity == ProxyAnonymity.Elite);
+        }
+
+        if (!string.IsNullOrWhiteSpace(countryFilter) && !countryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(p => p.CountryCode.Equals(countryFilter, StringComparison.OrdinalIgnoreCase));
         }
 
         if (strategy == RotationStrategy.LowestLatency)
@@ -293,3 +333,4 @@ public class ProxyValidatorEngine
         OnLog?.Invoke("[Validator] Cleared all proxies from pool.");
     }
 }
+

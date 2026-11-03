@@ -122,19 +122,84 @@ public class MacRotatingProxyServer
 
             if (isConnect)
             {
-                string connectReq = $"CONNECT {target} HTTP/1.1\r\nHost: {target}\r\n\r\n";
-                await upstreamStream.WriteAsync(Encoding.ASCII.GetBytes(connectReq), ct);
-                byte[] respBuf = new byte[1024];
-                int respLen = await upstreamStream.ReadAsync(respBuf, ct);
-                string respStr = Encoding.ASCII.GetString(respBuf, 0, respLen);
-                if (!respStr.Contains("200")) return;
+                if (proxy.Protocol == ProxyProtocol.Socks5)
+                {
+                    byte[] greeting = string.IsNullOrEmpty(proxy.Username)
+                        ? new byte[] { 0x05, 0x01, 0x00 }
+                        : new byte[] { 0x05, 0x02, 0x00, 0x02 };
+                    await upstreamStream.WriteAsync(greeting, ct);
+                    byte[] gResp = new byte[2];
+                    int gLen = await upstreamStream.ReadAsync(gResp, ct);
+                    if (gLen != 2 || gResp[0] != 0x05) return;
 
-                string ok = "HTTP/1.1 200 Connection Established\r\n\r\n";
+                    if (gResp[1] == 0x02 && !string.IsNullOrEmpty(proxy.Username))
+                    {
+                        byte[] uB = Encoding.ASCII.GetBytes(proxy.Username);
+                        byte[] pB = Encoding.ASCII.GetBytes(proxy.Password ?? "");
+                        byte[] aB = new byte[1 + 1 + uB.Length + 1 + pB.Length];
+                        aB[0] = 0x01; aB[1] = (byte)uB.Length;
+                        Array.Copy(uB, 0, aB, 2, uB.Length);
+                        aB[2 + uB.Length] = (byte)pB.Length;
+                        Array.Copy(pB, 0, aB, 3 + uB.Length, pB.Length);
+                        await upstreamStream.WriteAsync(aB, ct);
+                        byte[] aResp = new byte[2];
+                        int aLen = await upstreamStream.ReadAsync(aResp, ct);
+                        if (aLen != 2 || aResp[1] != 0x00) return;
+                    }
+
+                    string host = target;
+                    int port = 443;
+                    if (target.Contains(':'))
+                    {
+                        var targetParts = target.Split(':');
+                        host = targetParts[0];
+                        _ = int.TryParse(targetParts[1], out port);
+                    }
+                    byte[] hB = Encoding.ASCII.GetBytes(host);
+                    byte[] sReq = new byte[4 + 1 + hB.Length + 2];
+                    sReq[0] = 0x05; sReq[1] = 0x01; sReq[2] = 0x00; sReq[3] = 0x03; sReq[4] = (byte)hB.Length;
+                    Array.Copy(hB, 0, sReq, 5, hB.Length);
+                    sReq[5 + hB.Length] = (byte)(port >> 8);
+                    sReq[6 + hB.Length] = (byte)(port & 0xFF);
+                    await upstreamStream.WriteAsync(sReq, ct);
+                    byte[] sResp = new byte[10];
+                    int sLen = await upstreamStream.ReadAsync(sResp, ct);
+                    if (sLen < 4 || sResp[1] != 0x00) return;
+                }
+                else
+                {
+                    string authHeader = "";
+                    if (!string.IsNullOrEmpty(proxy.Username))
+                    {
+                        string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
+                        authHeader = $"Proxy-Authorization: Basic {creds}\r\n";
+                    }
+                    string connectReq = $"CONNECT {target} HTTP/1.1\r\nHost: {target}\r\n{authHeader}Proxy-Connection: Keep-Alive\r\n\r\n";
+                    await upstreamStream.WriteAsync(Encoding.ASCII.GetBytes(connectReq), ct);
+                    byte[] respBuf = new byte[1024];
+                    int respLen = await upstreamStream.ReadAsync(respBuf, ct);
+                    string respStr = Encoding.ASCII.GetString(respBuf, 0, respLen);
+                    if (!respStr.Contains("200")) return;
+                }
+
+                string ok = "HTTP/1.1 200 Connection Established\r\nProxy-Agent: CombiSpeed-Rotator/2.1.1\r\n\r\n";
                 await clientStream.WriteAsync(Encoding.ASCII.GetBytes(ok), ct);
             }
             else
             {
-                await upstreamStream.WriteAsync(headerBuffer.AsMemory(0, bytesRead), ct);
+                if (!string.IsNullOrEmpty(proxy.Username) && !requestString.Contains("Proxy-Authorization:", StringComparison.OrdinalIgnoreCase))
+                {
+                    string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
+                    int firstCrLf = requestString.IndexOf("\r\n");
+                    string injectedReq = firstCrLf >= 0
+                        ? requestString.Insert(firstCrLf + 2, $"Proxy-Authorization: Basic {creds}\r\n")
+                        : requestString;
+                    await upstreamStream.WriteAsync(Encoding.ASCII.GetBytes(injectedReq), ct);
+                }
+                else
+                {
+                    await upstreamStream.WriteAsync(headerBuffer.AsMemory(0, bytesRead), ct);
+                }
             }
 
             var t1 = clientStream.CopyToAsync(upstreamStream, ct);
@@ -148,3 +213,4 @@ public class MacRotatingProxyServer
         }
     }
 }
+

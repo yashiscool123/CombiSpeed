@@ -285,3 +285,32 @@
   - macOS: publish/macos/CombiSpeed-v2.1.0-macos-x64.tar.gz and .zip
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.0.
+
+## Milestone 19: Advanced Geo-Targeting, Upstream Auth & Background Scheduler [COMPLETED]
+- [x] Increment version to 2.1.1 and versionCode: 18 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, MainViewModel.cs, App.xaml.cs, Install-CombiSpeed.bat, Info.plist, Program.cs, and CyberpunkSpa.cs).
+- [x] Implement GeoIP Country Code Detection & Geo-Targeted Filtering:
+  - Extracted country codes from JSON feeds, HTML tables, and URL queries in ProxyHarvesterService.cs (LinuxProxyHarvester.cs, MacProxyHarvester.cs).
+  - Added CountryFilter to RotatingProxyConfigModel and GetHealthyProxies query filtering.
+  - Implemented regional selection with graceful fallback in RotatingProxyRouter.cs.
+  - Added 1-click Country Filter dropdown (ALL, US, DE, GB, FR, CA, JP, NL, SG, IN) to Windows WPF Tab 4 and Linux/macOS Cyberpunk Web SPAs.
+- [x] Implement Autonomous Background Re-Harvest & Health Validation Scheduler:
+  - Created ProxySchedulerService.cs (LinuxProxyScheduler.cs, MacProxyScheduler.cs) managing non-blocking background timers.
+  - Implemented automated 30-minute background candidate scraping from default and custom URLs.
+  - Implemented automated 5-minute background health probing, latency refresh, and dead endpoint pruning.
+  - Added UI toggles for Auto-Harvest and Auto-Check with persistent configuration storage.
+- [x] Implement Upstream Proxy Authentication Support:
+  - Added automatic Proxy-Authorization: Basic <base64> injection for HTTP and HTTPS CONNECT upstream proxy tunnels.
+  - Added RFC 1929 Username/Password subnegotiation for SOCKS5 upstream proxies.
+  - Added credentials authentication verification in ProxyValidatorEngine.cs.
+- [x] Implement Modern JSON API Scraper & DataGrid UI Columns:
+  - Added JSON array/object parser in ProxyHarvesterService.cs for modern JSON proxy APIs.
+  - Added GEO country code columns to DataGrid in MainWindow.xaml and tables in CyberpunkSpa.cs.
+- [x] Comprehensive Self-Test & Verification:
+  - Expanded --verify-rotator self-test CLI verifying country filtering, JSON feed parsing, and scheduler lifecycle with 100% pass rate.
+  - Re-validated --verify-throttling, --verify-persistence, and --verify-benchmark across all operating systems.
+- [x] Publish and package release artifacts in publish/:
+  - Windows: publish/windows/CombiSpeed-v2.1.1-win-x64.zip
+  - Linux: publish/linux/CombiSpeed-v2.1.1-linux-x64.tar.gz and .zip
+  - macOS: publish/macos/CombiSpeed-v2.1.1-macos-x64.tar.gz and .zip
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.1.

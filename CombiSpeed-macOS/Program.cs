@@ -178,7 +178,13 @@ public class Program
         var proxyValidator = new MacProxyValidator();
         var rotatingRouter = new MacRotatingProxyRouter(proxyValidator, configModel.RotatingProxy, loadBalancer);
         var rotatingServer = new MacRotatingProxyServer(configModel.RotatingProxy, rotatingRouter, () => adapters);
-        if (configModel.RotatingProxy.EnableRotatingProxy) rotatingServer.Start();
+        var proxyScheduler = new MacProxyScheduler(proxyHarvester, proxyValidator, configModel.RotatingProxy);
+
+        if (configModel.RotatingProxy.EnableRotatingProxy)
+        {
+            rotatingServer.Start();
+            proxyScheduler.Start();
+        }
 
         var dashboard = new EmbeddedDashboardServer(
             configModel,
@@ -209,6 +215,7 @@ public class Program
             Console.WriteLine("\n[CombiSpeed macOS] Shutting down cleanly...");
             healthMonitor.Stop();
             proxyEngine.Stop();
+            proxyScheduler.Stop();
             rotatingServer.Stop();
             dashboard.Stop();
             proxyMgr.Disable();

@@ -168,13 +168,20 @@ public class RotatingProxyServer
                     // HTTPS CONNECT tunnel
                     if (proxy.Protocol == ProxyProtocol.Socks5)
                     {
-                        bool socksOk = await PerformSocks5ConnectAsync(upstreamStream, target, ct);
+                        bool socksOk = await PerformSocks5ConnectAsync(upstreamStream, target, proxy, ct);
                         if (!socksOk) throw new Exception("SOCKS5 CONNECT failed");
                     }
                     else
                     {
-                        // HTTP/HTTPS upstream proxy CONNECT
-                        string connectReq = $"CONNECT {target} HTTP/1.1\r\nHost: {target}\r\nProxy-Connection: Keep-Alive\r\n\r\n";
+                        // HTTP/HTTPS upstream proxy CONNECT with optional Proxy-Authorization
+                        string authHeader = "";
+                        if (!string.IsNullOrEmpty(proxy.Username))
+                        {
+                            string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
+                            authHeader = $"Proxy-Authorization: Basic {creds}\r\n";
+                        }
+
+                        string connectReq = $"CONNECT {target} HTTP/1.1\r\nHost: {target}\r\n{authHeader}Proxy-Connection: Keep-Alive\r\n\r\n";
                         byte[] connectBytes = Encoding.ASCII.GetBytes(connectReq);
                         await upstreamStream.WriteAsync(connectBytes, ct);
 
@@ -189,13 +196,26 @@ public class RotatingProxyServer
                     }
 
                     // Acknowledge connection established to client
-                    string okResponse = "HTTP/1.1 200 Connection Established\r\nProxy-Agent: CombiSpeed-Rotator/2.1.0\r\n\r\n";
+                    string okResponse = "HTTP/1.1 200 Connection Established\r\nProxy-Agent: CombiSpeed-Rotator/2.1.1\r\n\r\n";
                     await clientStream.WriteAsync(Encoding.ASCII.GetBytes(okResponse), ct);
                 }
                 else
                 {
-                    // Standard HTTP request: forward the original request header bytes
-                    await upstreamStream.WriteAsync(headerBuffer.AsMemory(0, bytesRead), ct);
+                    // Standard HTTP request: inject credentials if present, else forward original header bytes
+                    if (!string.IsNullOrEmpty(proxy.Username) && !requestString.Contains("Proxy-Authorization:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
+                        int firstCrLf = requestString.IndexOf("\r\n");
+                        string injectedReq = firstCrLf >= 0
+                            ? requestString.Insert(firstCrLf + 2, $"Proxy-Authorization: Basic {creds}\r\n")
+                            : requestString;
+                        byte[] injBytes = Encoding.ASCII.GetBytes(injectedReq);
+                        await upstreamStream.WriteAsync(injBytes, ct);
+                    }
+                    else
+                    {
+                        await upstreamStream.WriteAsync(headerBuffer.AsMemory(0, bytesRead), ct);
+                    }
                 }
 
                 // If handshake succeeded, break out of retry loop
@@ -230,15 +250,45 @@ public class RotatingProxyServer
         }
     }
 
-    private static async Task<bool> PerformSocks5ConnectAsync(NetworkStream stream, string target, CancellationToken ct)
+    private static async Task<bool> PerformSocks5ConnectAsync(
+        NetworkStream stream,
+        string target,
+        HarvestedProxyModel proxy,
+        CancellationToken ct)
     {
-        // 1. Auth greeting
-        byte[] greeting = { 0x05, 0x01, 0x00 };
+        // 1. Auth greeting: offer No Auth (0x00) and RFC 1929 User/Password (0x02)
+        byte[] greeting = string.IsNullOrEmpty(proxy.Username)
+            ? new byte[] { 0x05, 0x01, 0x00 }
+            : new byte[] { 0x05, 0x02, 0x00, 0x02 };
+
         await stream.WriteAsync(greeting, ct);
 
         byte[] resp = new byte[2];
         int read = await stream.ReadAsync(resp, ct);
-        if (read != 2 || resp[0] != 0x05 || resp[1] != 0x00) return false;
+        if (read != 2 || resp[0] != 0x05) return false;
+
+        if (resp[1] == 0x02 && !string.IsNullOrEmpty(proxy.Username))
+        {
+            // RFC 1929 Username/Password Subnegotiation
+            byte[] uBytes = Encoding.ASCII.GetBytes(proxy.Username);
+            byte[] pBytes = Encoding.ASCII.GetBytes(proxy.Password ?? "");
+            byte[] auth = new byte[1 + 1 + uBytes.Length + 1 + pBytes.Length];
+            auth[0] = 0x01; // RFC 1929 Version
+            auth[1] = (byte)uBytes.Length;
+            Array.Copy(uBytes, 0, auth, 2, uBytes.Length);
+            auth[2 + uBytes.Length] = (byte)pBytes.Length;
+            Array.Copy(pBytes, 0, auth, 3 + uBytes.Length, pBytes.Length);
+
+            await stream.WriteAsync(auth, ct);
+
+            byte[] authResp = new byte[2];
+            int aRead = await stream.ReadAsync(authResp, ct);
+            if (aRead < 2 || authResp[1] != 0x00) return false;
+        }
+        else if (resp[1] != 0x00)
+        {
+            return false;
+        }
 
         // 2. CONNECT request
         string host = target;
@@ -281,3 +331,4 @@ public class RotatingProxyServer
         return target;
     }
 }
+

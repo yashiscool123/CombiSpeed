@@ -28,9 +28,9 @@ public class ProxyHarvesterService
         @"(?:(?<proto>https?|socks[45]):\/\/)?(?<ip>(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3})[ \t:;,]+(?<port>\d{2,5})(?:[ \t:;,]+(?<user>[a-zA-Z0-9_\-\.]+)[ \t:;,]+(?<pass>[^\s\r\n]+))?",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    // HTML table parser fallback for sites displaying proxies in <td>IP</td><td>PORT</td>
+    // HTML table parser fallback for sites displaying proxies in <td>IP</td><td>PORT</td>(<td>Country</td>)
     private static readonly Regex HtmlTableRegex = new(
-        @"<td[^>]*>(?<ip>(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3})<\/td>\s*<td[^>]*>(?<port>\d{2,5})<\/td>",
+        @"<td[^>]*>(?<ip>(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3})<\/td>\s*<td[^>]*>(?<port>\d{2,5})<\/td>(?:\s*<td[^>]*>(?<country>[a-zA-Z]{2})<\/td>)?",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public event Action<string>? OnLog;
@@ -117,6 +117,76 @@ public class ProxyHarvesterService
         var results = new Dictionary<string, HarvestedProxyModel>(StringComparer.OrdinalIgnoreCase);
         if (string.IsNullOrWhiteSpace(rawText)) return results.Values.ToList();
 
+        string defaultCountry = "UN";
+        if (sourceIdentifier.Contains("country=", StringComparison.OrdinalIgnoreCase))
+        {
+            var cm = Regex.Match(sourceIdentifier, @"country=([a-zA-Z]{2})", RegexOptions.IgnoreCase);
+            if (cm.Success) defaultCountry = cm.Groups[1].Value.ToUpperInvariant();
+        }
+
+        // 0. JSON array or object parser for modern proxy APIs
+        string trimmed = rawText.TrimStart();
+        if ((trimmed.StartsWith("[") || trimmed.StartsWith("{")) && trimmed.Contains("\"ip\"", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(rawText);
+                var root = doc.RootElement;
+                var array = root.ValueKind == System.Text.Json.JsonValueKind.Array
+                    ? root.EnumerateArray()
+                    : root.TryGetProperty("data", out var d) && d.ValueKind == System.Text.Json.JsonValueKind.Array
+                        ? d.EnumerateArray()
+                        : root.TryGetProperty("proxies", out var p) && p.ValueKind == System.Text.Json.JsonValueKind.Array
+                            ? p.EnumerateArray()
+                            : System.Linq.Enumerable.Empty<System.Text.Json.JsonElement>();
+
+                foreach (var item in array)
+                {
+                    string? ip = null;
+                    if (item.TryGetProperty("ip", out var ipEl)) ip = ipEl.GetString();
+                    else if (item.TryGetProperty("host", out var hEl)) ip = hEl.GetString();
+
+                    int port = 0;
+                    if (item.TryGetProperty("port", out var portEl))
+                    {
+                        if (portEl.ValueKind == System.Text.Json.JsonValueKind.Number) port = portEl.GetInt32();
+                        else if (portEl.ValueKind == System.Text.Json.JsonValueKind.String) _ = int.TryParse(portEl.GetString(), out port);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(ip) || port <= 0 || port > 65535 || IsPrivateOrLoopbackIp(ip))
+                        continue;
+
+                    string country = defaultCountry;
+                    if (item.TryGetProperty("country", out var cEl)) country = cEl.GetString()?.ToUpperInvariant() ?? defaultCountry;
+                    else if (item.TryGetProperty("countryCode", out var ccEl)) country = ccEl.GetString()?.ToUpperInvariant() ?? defaultCountry;
+
+                    var proto = ProxyProtocol.Http;
+                    if (item.TryGetProperty("protocol", out var prEl)) proto = DetectProtocol(prEl.GetString() ?? "", sourceIdentifier);
+                    else if (item.TryGetProperty("protocols", out var prsEl) && prsEl.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        var first = prsEl.EnumerateArray().FirstOrDefault();
+                        if (first.ValueKind == System.Text.Json.JsonValueKind.String) proto = DetectProtocol(first.GetString() ?? "", sourceIdentifier);
+                    }
+
+                    string key = $"{ip}:{port}";
+                    results[key] = new HarvestedProxyModel
+                    {
+                        Host = ip,
+                        Port = port,
+                        Protocol = proto,
+                        CountryCode = country,
+                        SourceUrl = sourceIdentifier,
+                        LastChecked = DateTime.MinValue,
+                        IsHealthy = false
+                    };
+                }
+            }
+            catch
+            {
+                // Fall back to regex parsing on invalid JSON
+            }
+        }
+
         // 1. Standard regex match
         var matches = ProxyRegex.Matches(rawText);
         foreach (Match match in matches)
@@ -140,6 +210,7 @@ public class ProxyHarvesterService
                 Host = ip,
                 Port = port,
                 Protocol = protocol,
+                CountryCode = defaultCountry,
                 SourceUrl = sourceIdentifier,
                 Username = match.Groups["user"].Success ? match.Groups["user"].Value : null,
                 Password = match.Groups["pass"].Success ? match.Groups["pass"].Value : null,
@@ -148,7 +219,7 @@ public class ProxyHarvesterService
             };
         }
 
-        // 2. HTML table regex parser for pages formatted in <td>IP</td><td>PORT</td>
+        // 2. HTML table regex parser for pages formatted in <td>IP</td><td>PORT</td>(<td>Country</td>)
         if (rawText.Contains("<td", StringComparison.OrdinalIgnoreCase))
         {
             var tableMatches = HtmlTableRegex.Matches(rawText);
@@ -165,11 +236,16 @@ public class ProxyHarvesterService
                 string key = $"{ip}:{port}";
                 if (results.ContainsKey(key)) continue;
 
+                string country = match.Groups["country"].Success
+                    ? match.Groups["country"].Value.ToUpperInvariant()
+                    : defaultCountry;
+
                 results[key] = new HarvestedProxyModel
                 {
                     Host = ip,
                     Port = port,
                     Protocol = ProxyProtocol.Http,
+                    CountryCode = country,
                     SourceUrl = sourceIdentifier,
                     LastChecked = DateTime.MinValue,
                     IsHealthy = false

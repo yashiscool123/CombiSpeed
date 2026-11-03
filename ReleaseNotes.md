@@ -1,5 +1,35 @@
 # Release Notes
 
+## [2.1.1] - 2026-11-03 - Advanced Geo-Targeting, Upstream Auth & Background Scheduler Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🌍 GeoIP Country Detection & Geo-Targeted Rotation Filtering**:
+  - Implemented automatic extraction of ISO 3166-1 alpha-2 country codes across JSON APIs, URL parameters, and HTML tables.
+  - Added dedicated Country Filter selector (`ALL`, `US`, `DE`, `GB`, `FR`, `CA`, `JP`, `NL`, `SG`, `IN`) across Windows WPF and Linux/macOS Web SPAs.
+  - Router dispatches outbound connections strictly through proxies matching the chosen regional territory, with graceful fallback to the wider pool if a specific country's nodes are exhausted.
+- **🔄 Autonomous Background Auto-Harvest & Auto-Validation Scheduler**:
+  - Implemented `ProxySchedulerService.cs` (`LinuxProxyScheduler.cs`, `MacProxyScheduler.cs`) running background non-blocking timers.
+  - Automatically re-harvests fresh candidate proxies from open-source feeds and custom URLs every 30 minutes.
+  - Automatically re-probes pool health, updates RTT latencies, and prunes dead endpoints every 5 minutes.
+  - UI toggles: `Auto-Harvest (30m)` and `Auto-Check (5m)` with persistent disk storage.
+- **🔐 Upstream Proxy Authentication (HTTP Basic & SOCKS5 RFC 1929)**:
+  - Added transparent support for private authenticated proxies formatted as `IP:PORT:USER:PASS` or `PROTOCOL://USER:PASS@IP:PORT`.
+  - HTTP / HTTPS CONNECT: Automatically injects `Proxy-Authorization: Basic <base64>` header upstream.
+  - SOCKS5: Fully negotiates RFC 1929 Username/Password subnegotiation (method `0x02`) before issuing CONNECT commands.
+  - Validator prober validates authentication credentials during health checks.
+- **📊 JSON API Scraper & Multi-Platform UI Enhancements**:
+  - Added JSON array & object parser in `ProxyHarvesterService.cs` supporting modern proxy APIs.
+  - Added `GEO` column in Windows DataGrid and Linux/macOS Cyberpunk SPA proxy tables.
+  - Added `/api/rotating-proxy/config` REST endpoint in Linux and macOS embedded servers.
+- **✅ Self-Test Verification**:
+  - Expanded `--verify-rotator` CLI command to validate country filtering, JSON feed parsing, and scheduler lifecycle with 100% test pass rate.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.1-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.1-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.1-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.0] - 2026-11-03 - Automated Rotating Proxy Harvester & Multi-NIC Egress Release
 
 ### 🚀 Highlights & Engineering Advancements
