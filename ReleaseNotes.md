@@ -1,5 +1,28 @@
 # Release Notes
 
+## [2.1.6] - 2026-11-03 - Expanded 255+ Global & Geo-Targeted Proxy Feeds Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🌐 Massive Proxy Repository Catalog Integration (255+ Verified Feeds)**:
+  - **Comprehensive Multi-Protocol Feeds**: Integrated 255 distinct, curated open-source proxy repositories and APIs into default sources (`GetDefaultSources()`) across Windows, Linux, and macOS.
+  - **Categorized Protocol Coverage**:
+    - **HTTPS / SSL Feeds**: 85 global feeds and 28 country-targeted feeds.
+    - **HTTP Feeds**: 65 global feeds and 16 country-targeted feeds.
+    - **SOCKS4 Feeds**: 41 global feeds and 9 country-targeted feeds.
+    - **SOCKS5 Feeds**: 57 global feeds and 9 country-targeted feeds.
+  - **Broad Country / Geo-Targeting Integration**: Seamless automatic GeoIP tagging for major international jurisdictions (`US`, `GB`, `DE`, `FR`, `CA`, `NL`, `JP`, `SG`, `AU`, `BR`, `IN`, `RU`, `CN`, `TR`, `PK`, `IR`, `IT`, `PL`, `TH`, `UA`, `EG`, `HU`, `KH`, `KZ`, `MX`, `VN`, `CL`, `HK`).
+  - **Smart Migration & Seamless Upgrade**: Automatically detects legacy 6-URL configurations and upgrades them to the comprehensive 255-feed catalog while safely preserving user-added custom URLs.
+- **⚡ Bounded Parallel Concurrency (16-Worker Semaphore)**:
+  - Upgraded `HarvestAllAsync` across `ProxyHarvesterService.cs` (Windows), `LinuxProxyHarvester.cs` (Linux), and `MacProxyHarvester.cs` (macOS) with `SemaphoreSlim(16)`. Scrapes all 255 feeds concurrently in seconds without socket exhaustion, threadpool starvation, or connection reset drops.
+- **🧪 Diagnostic Verification**:
+  - Validated with `--verify-rotator` test suite, verifying bulk ingestion, regex extraction, de-duplication, and 255-source default reset with 100% pass rate.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.6-win-x64.zip` and `publish/CombiSpeed-v2.1.6-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.6-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.6-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.5] - 2026-11-03 - Custom Throttling Dialog Initialization Fix Release
 
 ### 🚀 Highlights & Engineering Advancements

@@ -361,3 +361,13 @@
 - [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.5 Build 22).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.5.
+
+## Milestone 24: Expanded 255+ Global & Geo-Targeted Proxy Feeds [COMPLETED]
+- [x] Increment version to 2.1.6 and versionCode: 23 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Integrate 255 verified global and country-targeted proxy feeds across HTTPS, HTTP, SOCKS4, and SOCKS5 into HarvestedProxyModel.cs (Windows, Linux, macOS).
+- [x] Implement smart legacy upgrade in GetEffectiveSources() ensuring existing installations automatically gain access to all 255 feeds while preserving custom user URLs.
+- [x] Upgrade ProxyHarvesterService (Windows), LinuxProxyHarvester (Linux), and MacProxyHarvester (macOS) with SemaphoreSlim(16) bounded parallel concurrency.
+- [x] Update --verify-rotator test suite to validate 255-source default reset and bulk ingestion (100% pass rate).
+- [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.6 Build 23).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.6.

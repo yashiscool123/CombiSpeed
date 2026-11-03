@@ -46,7 +46,19 @@ public class MacProxyHarvester
         OnLog?.Invoke($"[Harvester] Harvesting from {distinctSources.Count} sources...");
 
         var candidates = new Dictionary<string, HarvestedProxyModel>(StringComparer.OrdinalIgnoreCase);
-        var tasks = distinctSources.Select(url => ScrapeUrlAsync(url, ct)).ToList();
+        using var semaphore = new SemaphoreSlim(16);
+        var tasks = distinctSources.Select(async url =>
+        {
+            await semaphore.WaitAsync(ct);
+            try
+            {
+                return await ScrapeUrlAsync(url, ct);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }).ToList();
 
         var results = await Task.WhenAll(tasks);
 

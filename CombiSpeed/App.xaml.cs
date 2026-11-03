@@ -403,8 +403,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.5";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 22)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.6";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 23)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);
@@ -715,11 +715,11 @@ public partial class App : Application
                     throw new Exception("GetEffectiveSources failed to return parsed repository URLs!");
                 }
                 config.ResetSourcesToDefault();
-                if (config.RepositorySources.Count != 6)
+                if (config.RepositorySources.Count != 255)
                 {
-                    throw new Exception("ResetSourcesToDefault failed to restore default open-source list!");
+                    throw new Exception($"ResetSourcesToDefault failed! Expected 255 default sources, got {config.RepositorySources.Count}");
                 }
-                Log(" [PASS] Bulk proxy repository sources parsing, de-duplication, and reset verified successfully.");
+                Log($" [PASS] Bulk proxy repository sources parsing, de-duplication, and reset verified successfully ({config.RepositorySources.Count} verified sources restored).");
 
                 // 7. Test Multi-Faceted Sorting & Filtering
                 Log("[TEST 7/7] Testing Multi-Faceted Sorting & Filtering (Latency, Source, Protocol, Status)...");

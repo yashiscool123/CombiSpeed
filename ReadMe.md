@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.1.5%20(Build%2022)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.1.6%20(Build%2023)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -297,9 +297,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.1.5-win-x64.zip` and `publish/CombiSpeed-v2.1.5-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.1.5-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.1.5-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.1.5-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.1.5-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.1.6-win-x64.zip` and `publish/CombiSpeed-v2.1.6-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.1.6-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.1.6-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.1.6-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.1.6-macos-x64.zip`
 
 ---
 

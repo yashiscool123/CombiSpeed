@@ -55,3 +55,5 @@
 - [x] Critical crash resilience, named XAML resource definitions, and global crash logging to %LOCALAPPDATA%\CombiSpeed\crash.log (v2.1.2).
 - [x] Bulk proxy repository sources management with multi-line paste, validation, and reset to defaults (v2.1.3).
 - [x] Interactive multi-faceted sorting and filtering for proxy URLs (latency tiers, dynamic source discovery, protocol, real-time search, and column sorting) (v2.1.4).
+- [x] CustomThrottleDialog XAML initialization race condition fix with _isReady readiness gate and safe null-guards (v2.1.5).
+- [x] Integration of 255+ verified global & geo-targeted proxy repository feeds (HTTPS, HTTP, SOCKS4, SOCKS5) with 16-worker bounded parallel harvesting across Windows, Linux, and macOS (v2.1.6).
