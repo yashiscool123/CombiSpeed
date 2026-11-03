@@ -225,6 +225,7 @@ public class RotatingProxyServer
             {
                 proxy.Failures++;
                 proxy.IsHealthy = false;
+                _router.MarkUnavailable(proxy.Endpoint);
                 upstreamStream?.Dispose();
                 upstreamSocket?.Dispose();
                 upstreamStream = null;

@@ -1,8 +1,8 @@
 {
   "$schema": "./version.schema.json",
-  "version": "2.1.6",
-  "versionCode": 23,
-  "releaseName": "CombiSpeed v2.1.6 - Expanded 255+ Global & Geo-Targeted Proxy Feeds",
+  "version": "2.1.7",
+  "versionCode": 24,
+  "releaseName": "CombiSpeed v2.1.7 - Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction",
   "minWindowsVersion": "10.0.17763.0",
   "dotnetVersion": "8.0",
   "releaseDate": "2026-11-03"

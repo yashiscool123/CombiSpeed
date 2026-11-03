@@ -210,6 +210,7 @@ public class LinuxRotatingProxyServer
         {
             proxy.Failures++;
             proxy.IsHealthy = false;
+            _router.MarkUnavailable(proxy.Endpoint);
         }
     }
 }

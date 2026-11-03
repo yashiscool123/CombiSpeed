@@ -554,6 +554,14 @@ public class MainViewModel : INotifyPropertyChanged
 
         // Check if Windows Proxy is currently active in registry
         IsWindowsProxyActive = _proxyManager.GetSystemProxyStatus(out _);
+
+        // Pre-warm proxy pool from persistent healthy proxy storage
+        int prewarmed = _proxyValidator.LoadHealthyProxies();
+        if (prewarmed > 0)
+        {
+            HarvestStatusText = $"Loaded {prewarmed} verified healthy proxies from persistent disk storage.";
+            RefreshProxyCollection();
+        }
     }
 
     public void SaveCurrentCombinationImmediate()

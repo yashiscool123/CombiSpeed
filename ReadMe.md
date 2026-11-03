@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.1.6%20(Build%2023)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.1.7%20(Build%2024)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -29,7 +29,13 @@ This bypasses default routing limitations and forces traffic simultaneously acro
 
 ## 🚀 Key Features
 
-1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1, v2.1.3 & v2.1.4)**:
+1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1, v2.1.3, v2.1.4, v2.1.6 & v2.1.7)**:
+   - **Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction (NEW in v2.1.7)**:
+     - **Strictly Healthy Disk Persistence**: Automatically serializes only verified healthy proxies (`IsHealthy == true && Failures == 0`) to `%LOCALAPPDATA%\CombiSpeed\healthy_proxies.json` (Windows), `~/.config/combispeed/healthy_proxies.json` (Linux), and `~/Library/Application Support/CombiSpeed/healthy_proxies.json` (macOS). Dead or unverified nodes are strictly filtered out and never saved.
+     - **Instant Cold Startup Pre-Warming**: Restores cached healthy proxies into memory immediately on app launch across all platforms, delivering instant proxy rotation without waiting for a fresh scraping cycle.
+     - **Immediate Unavailable Eviction**: Upstream proxies that fail during live TCP connection or tunneling in `RotatingProxyRouter` / `RotatingProxyServer`, or fail periodic validation / dead pruning, are instantly marked unavailable, purged from the pool, and evicted from persistent disk storage.
+   - **Massive 255+ Global & Geo-Targeted Proxy Feeds Catalog (NEW in v2.1.6)**:
+     Integrated 255 curated open-source proxy repository feeds and APIs across HTTPS (85 global, 28 country), HTTP (65 global, 16 country), SOCKS4 (41 global, 9 country), and SOCKS5 (57 global, 9 country), with 16-worker bounded parallel scraping concurrency.
    - **Multi-Source Open-Source Proxy Harvester**:
      Automatically scrapes fresh proxy candidate pools from top-tier maintained open-source repositories and APIs out of the box (*TheSpeedX/PROXY-List*, *monosans/proxy-list*, *clarketm/proxy-list*, *proxyscrape API*), custom user URLs/APIs, pastebins, or local `.txt` lists.
    - **Bulk Proxy Repository Sources & Feed URLs Management (NEW in v2.1.3)**:
@@ -297,9 +303,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.1.6-win-x64.zip` and `publish/CombiSpeed-v2.1.6-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.1.6-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.1.6-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.1.6-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.1.6-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.1.7-win-x64.zip` and `publish/CombiSpeed-v2.1.7-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.1.7-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.1.7-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.1.7-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.1.7-macos-x64.zip`
 
 ---
 

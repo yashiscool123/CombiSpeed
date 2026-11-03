@@ -1,19 +1,29 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using CombiSpeed.Models;
 
 namespace CombiSpeed.Services;
 
 /// <summary>
 /// High-concurrency multi-protocol proxy validator that measures real-world RTT latency,
-/// verifies HTTP/SOCKS protocol compliance, evaluates anonymity tiers, and prunes dead endpoints.
+/// verifies HTTP/SOCKS protocol compliance, evaluates anonymity tiers, prunes dead endpoints,
+/// and persists verified healthy proxies to disk with automatic eviction on unavailability.
 /// </summary>
-public class ProxyValidatorEngine
+public class ProxyValidatorEngine : IDisposable
 {
     private readonly ConcurrentDictionary<string, HarvestedProxyModel> _pool = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _saveLock = new();
+    private Timer? _saveDebounceTimer;
+
+    public string StorageFilePath { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "CombiSpeed",
+        "healthy_proxies.json");
 
     public event Action<string>? OnLog;
     public event Action<HarvestedProxyModel>? OnProxyStatusChanged;
@@ -22,6 +32,125 @@ public class ProxyValidatorEngine
     public int HealthyCount => _pool.Values.Count(p => p.IsHealthy);
 
     public IEnumerable<HarvestedProxyModel> AllProxies => _pool.Values;
+
+    /// <summary>
+    /// Loads persisted healthy proxies from disk storage into the active pool.
+    /// </summary>
+    public int LoadHealthyProxies(string? customPath = null)
+    {
+        lock (_saveLock)
+        {
+            try
+            {
+                string targetPath = customPath ?? StorageFilePath;
+                if (!File.Exists(targetPath)) return 0;
+
+                string json = File.ReadAllText(targetPath);
+                var loaded = JsonSerializer.Deserialize<List<HarvestedProxyModel>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (loaded == null || loaded.Count == 0) return 0;
+
+                int loadedCount = 0;
+                foreach (var proxy in loaded)
+                {
+                    if (proxy.IsHealthy && proxy.Failures == 0)
+                    {
+                        _pool[proxy.Endpoint] = proxy;
+                        loadedCount++;
+                    }
+                }
+
+                OnLog?.Invoke($"[Validator] Loaded {loadedCount} healthy proxies from persistent storage ({Path.GetFileName(targetPath)}).");
+                return loadedCount;
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[Validator] Error loading healthy proxies: {ex.Message}");
+                return 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Debounced save that commits verified healthy proxies to disk after 400ms of inactivity.
+    /// </summary>
+    public void RequestSaveHealthy(string? customPath = null)
+    {
+        lock (_saveLock)
+        {
+            _saveDebounceTimer?.Dispose();
+            _saveDebounceTimer = new Timer(_ =>
+            {
+                SaveHealthyProxies(customPath);
+            }, null, 400, Timeout.Infinite);
+        }
+    }
+
+    /// <summary>
+    /// Saves only verified healthy proxies (IsHealthy == true and Failures == 0) to persistent disk storage.
+    /// </summary>
+    public int SaveHealthyProxies(string? customPath = null)
+    {
+        lock (_saveLock)
+        {
+            try
+            {
+                string targetPath = customPath ?? StorageFilePath;
+                string? dir = Path.GetDirectoryName(targetPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                // Filter ONLY verified good proxies: IsHealthy == true and Failures == 0
+                var goodProxies = _pool.Values
+                    .Where(p => p.IsHealthy && p.Failures == 0)
+                    .OrderBy(p => p.LatencyMs)
+                    .ToList();
+
+                string json = JsonSerializer.Serialize(goodProxies, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                string tempPath = targetPath + ".tmp";
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, targetPath, overwrite: true);
+
+                OnLog?.Invoke($"[Validator] Persisted {goodProxies.Count} healthy proxies to disk ({Path.GetFileName(targetPath)}).");
+                return goodProxies.Count;
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[Validator] Error persisting healthy proxies: {ex.Message}");
+                return 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Immediately marks a proxy as unavailable, removes it from memory pool, and evicts it from persistent storage.
+    /// </summary>
+    public bool MarkUnavailable(string endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint)) return false;
+
+        if (_pool.TryGetValue(endpoint, out var proxy))
+        {
+            proxy.IsHealthy = false;
+            proxy.Failures++;
+            _pool.TryRemove(endpoint, out _);
+            OnProxyStatusChanged?.Invoke(proxy);
+            RequestSaveHealthy();
+            OnLog?.Invoke($"[Validator] Evicted unavailable proxy {endpoint} from active pool and persistent storage.");
+            return true;
+        }
+
+        return false;
+    }
 
     public void AddOrUpdateCandidate(HarvestedProxyModel proxy)
     {
@@ -81,6 +210,7 @@ public class ProxyValidatorEngine
 
         await Task.WhenAll(tasks);
 
+        SaveHealthyProxies();
         OnLog?.Invoke($"[Validator] Validation finished. {healthy} of {list.Count} proxies verified healthy & responsive.");
         return healthy;
     }
@@ -92,6 +222,7 @@ public class ProxyValidatorEngine
     {
         var sw = Stopwatch.StartNew();
         bool success = false;
+        bool wasHealthy = proxy.IsHealthy;
 
         try
         {
@@ -130,6 +261,8 @@ public class ProxyValidatorEngine
                 {
                     proxy.Anonymity = ProxyAnonymity.Anonymous;
                 }
+
+                RequestSaveHealthy();
             }
             else
             {
@@ -137,6 +270,12 @@ public class ProxyValidatorEngine
                 proxy.Failures++;
                 proxy.LatencyMs = 999;
                 proxy.LastChecked = DateTime.Now;
+
+                if (wasHealthy)
+                {
+                    _pool.TryRemove(proxy.Endpoint, out _);
+                    RequestSaveHealthy();
+                }
             }
         }
         catch
@@ -145,6 +284,12 @@ public class ProxyValidatorEngine
             proxy.Failures++;
             proxy.LatencyMs = 999;
             proxy.LastChecked = DateTime.Now;
+
+            if (wasHealthy)
+            {
+                _pool.TryRemove(proxy.Endpoint, out _);
+                RequestSaveHealthy();
+            }
         }
 
         OnProxyStatusChanged?.Invoke(proxy);
@@ -282,11 +427,11 @@ public class ProxyValidatorEngine
     }
 
     /// <summary>
-    /// Prunes proxies that have accumulated failures beyond the threshold.
+    /// Prunes proxies that have accumulated failures beyond the threshold or are unhealthy.
     /// </summary>
     public int PruneDead(int maxFailures = 2)
     {
-        var deadKeys = _pool.Where(kvp => kvp.Value.Failures >= maxFailures).Select(kvp => kvp.Key).ToList();
+        var deadKeys = _pool.Where(kvp => kvp.Value.Failures >= maxFailures || !kvp.Value.IsHealthy).Select(kvp => kvp.Key).ToList();
         int count = 0;
         foreach (var key in deadKeys)
         {
@@ -295,7 +440,8 @@ public class ProxyValidatorEngine
                 count++;
             }
         }
-        OnLog?.Invoke($"[Validator] Pruned {count} dead proxies from pool.");
+        SaveHealthyProxies();
+        OnLog?.Invoke($"[Validator] Pruned {count} dead proxies from pool and updated persistent storage.");
         return count;
     }
 
@@ -348,7 +494,17 @@ public class ProxyValidatorEngine
     public void Clear()
     {
         _pool.Clear();
-        OnLog?.Invoke("[Validator] Cleared all proxies from pool.");
+        SaveHealthyProxies();
+        OnLog?.Invoke("[Validator] Cleared all proxies from pool and persistent storage.");
+    }
+
+    public void Dispose()
+    {
+        lock (_saveLock)
+        {
+            _saveDebounceTimer?.Dispose();
+            _saveDebounceTimer = null;
+        }
     }
 }
 

@@ -422,6 +422,30 @@
                     "progress": "Milestone 24 completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-025",
+            "userQuery": "Also, save only good proxies persistently and remove them once they become unavailable.",
+            "status": "completed",
+            "createdAt": "2026-11-03T19:18:00+05:30",
+            "updatedAt": "2026-11-03T19:41:00+05:30",
+            "progress": "Delivered Milestone 25: Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction across Windows, Linux, and macOS. Implemented persistent disk storage (healthy_proxies.json) in ProxyValidatorEngine, LinuxProxyValidator, and MacProxyValidator saving strictly verified good proxies (IsHealthy == true && Failures == 0). Enabled automatic cold-startup pre-warming in MainViewModel and CLI programs. Implemented immediate unavailable proxy eviction via MarkUnavailable(endpoint) in live socket routing (RotatingProxyRouter/RotatingProxyServer) and validation drops. Added debounced atomic disk saving. Passed 100% of test suites (--verify-rotator, --verify-throttling, --verify-persistence). Bumped version to v2.1.7 (Build 24) and published standalone release packages.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2501",
+                    "timestamp": "2026-11-03T19:25:00+05:30",
+                    "inputs": "User request to persist only healthy proxies and evict unavailable nodes.",
+                    "outputs": "Implemented SaveHealthyProxies, LoadHealthyProxies, MarkUnavailable, and debounced RequestSaveHealthy in ProxyValidatorEngine, LinuxProxyValidator, and MacProxyValidator. Integrated routing eviction in RotatingProxyRouter and RotatingProxyServer.",
+                    "progress": "Core persistence and eviction engines implemented across Windows, Linux, and macOS."
+                },
+                {
+                    "checkpointId": "CP-2502",
+                    "timestamp": "2026-11-03T19:41:00+05:30",
+                    "inputs": "Automated verification, release packaging, documentation synchronization, and git check-in.",
+                    "outputs": "Added [TEST 8/8] to --verify-rotator and integrated verification into --verify-persistence on Linux and macOS (100% PASS). Rebuilt and packaged release archives in publish/ for Windows, Linux, and macOS under v2.1.7 (Build 24). Synchronized documentation and task memory.",
+                    "progress": "Milestone 25 completed with 100% verification and clean packaging."
+                }
+            ]
         }
     ]
 }

@@ -210,6 +210,7 @@ public class MacRotatingProxyServer
         {
             proxy.Failures++;
             proxy.IsHealthy = false;
+            _router.MarkUnavailable(proxy.Endpoint);
         }
     }
 }

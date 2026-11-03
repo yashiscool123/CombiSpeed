@@ -1,15 +1,25 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using CombiSpeed.Linux.Models;
 
 namespace CombiSpeed.Linux.Services;
 
-public class LinuxProxyValidator
+public class LinuxProxyValidator : IDisposable
 {
     private readonly ConcurrentDictionary<string, HarvestedProxyModel> _pool = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _saveLock = new();
+    private Timer? _saveDebounceTimer;
+
+    public string StorageFilePath { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        ".config",
+        "combispeed",
+        "healthy_proxies.json");
 
     public event Action<string>? OnLog;
 
@@ -17,6 +27,123 @@ public class LinuxProxyValidator
     public int HealthyCount => _pool.Values.Count(p => p.IsHealthy);
 
     public IEnumerable<HarvestedProxyModel> AllProxies => _pool.Values;
+
+    /// <summary>
+    /// Loads persisted healthy proxies from disk storage into the active pool.
+    /// </summary>
+    public int LoadHealthyProxies(string? customPath = null)
+    {
+        lock (_saveLock)
+        {
+            try
+            {
+                string targetPath = customPath ?? StorageFilePath;
+                if (!File.Exists(targetPath)) return 0;
+
+                string json = File.ReadAllText(targetPath);
+                var loaded = JsonSerializer.Deserialize<List<HarvestedProxyModel>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (loaded == null || loaded.Count == 0) return 0;
+
+                int loadedCount = 0;
+                foreach (var proxy in loaded)
+                {
+                    if (proxy.IsHealthy && proxy.Failures == 0)
+                    {
+                        _pool[proxy.Endpoint] = proxy;
+                        loadedCount++;
+                    }
+                }
+
+                OnLog?.Invoke($"[Validator] Loaded {loadedCount} healthy proxies from persistent storage ({Path.GetFileName(targetPath)}).");
+                return loadedCount;
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[Validator] Error loading healthy proxies: {ex.Message}");
+                return 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Debounced save that commits verified healthy proxies to disk after 400ms of inactivity.
+    /// </summary>
+    public void RequestSaveHealthy(string? customPath = null)
+    {
+        lock (_saveLock)
+        {
+            _saveDebounceTimer?.Dispose();
+            _saveDebounceTimer = new Timer(_ =>
+            {
+                SaveHealthyProxies(customPath);
+            }, null, 400, Timeout.Infinite);
+        }
+    }
+
+    /// <summary>
+    /// Saves only verified healthy proxies (IsHealthy == true and Failures == 0) to persistent disk storage.
+    /// </summary>
+    public int SaveHealthyProxies(string? customPath = null)
+    {
+        lock (_saveLock)
+        {
+            try
+            {
+                string targetPath = customPath ?? StorageFilePath;
+                string? dir = Path.GetDirectoryName(targetPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                var goodProxies = _pool.Values
+                    .Where(p => p.IsHealthy && p.Failures == 0)
+                    .OrderBy(p => p.LatencyMs)
+                    .ToList();
+
+                string json = JsonSerializer.Serialize(goodProxies, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                string tempPath = targetPath + ".tmp";
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, targetPath, overwrite: true);
+
+                OnLog?.Invoke($"[Validator] Persisted {goodProxies.Count} healthy proxies to disk ({Path.GetFileName(targetPath)}).");
+                return goodProxies.Count;
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[Validator] Error persisting healthy proxies: {ex.Message}");
+                return 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Immediately marks a proxy as unavailable, removes it from memory pool, and evicts it from persistent storage.
+    /// </summary>
+    public bool MarkUnavailable(string endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint)) return false;
+
+        if (_pool.TryGetValue(endpoint, out var proxy))
+        {
+            proxy.IsHealthy = false;
+            proxy.Failures++;
+            _pool.TryRemove(endpoint, out _);
+            RequestSaveHealthy();
+            OnLog?.Invoke($"[Validator] Evicted unavailable proxy {endpoint} from active pool and persistent storage.");
+            return true;
+        }
+
+        return false;
+    }
 
     public void AddCandidates(IEnumerable<HarvestedProxyModel> proxies)
     {
@@ -65,6 +192,7 @@ public class LinuxProxyValidator
         });
 
         await Task.WhenAll(tasks);
+        SaveHealthyProxies();
         OnLog?.Invoke($"[Validator] Verified {healthy} healthy proxies of {list.Count}.");
         return healthy;
     }
@@ -73,6 +201,7 @@ public class LinuxProxyValidator
     {
         var sw = Stopwatch.StartNew();
         bool success = false;
+        bool wasHealthy = proxy.IsHealthy;
 
         try
         {
@@ -126,20 +255,19 @@ public class LinuxProxyValidator
                     string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
                     authHeader = $"Proxy-Authorization: Basic {creds}\r\n";
                 }
-                string probe = $"GET http://1.1.1.1/ HTTP/1.1\r\nHost: 1.1.1.1\r\n{authHeader}Connection: close\r\n\r\n";
+                string probe = $"GET http://1.1.1.1/ HTTP/1.1\r\nHost: 1.1.1.1\r\n{authHeader}User-Agent: CombiSpeed/2.1.1\r\nConnection: close\r\n\r\n";
                 await socket.SendAsync(Encoding.ASCII.GetBytes(probe), SocketFlags.None, cts.Token);
-                byte[] buf = new byte[512];
-                int bytesRead = await socket.ReceiveAsync(buf, SocketFlags.None, cts.Token);
+
+                byte[] buffer = new byte[512];
+                int bytesRead = await socket.ReceiveAsync(buffer, SocketFlags.None, cts.Token);
                 if (bytesRead > 0)
                 {
-                    string resp = Encoding.ASCII.GetString(buf, 0, bytesRead);
-                    success = resp.StartsWith("HTTP/1.0 200") || resp.StartsWith("HTTP/1.1 200") ||
-                              resp.StartsWith("HTTP/1.0 301") || resp.StartsWith("HTTP/1.1 301") ||
-                              resp.StartsWith("HTTP/1.0 302") || resp.StartsWith("HTTP/1.1 302");
-                    if (success)
+                    string resp = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                    if (resp.StartsWith("HTTP/1.0 200") || resp.StartsWith("HTTP/1.1 200") || resp.Contains(" 200 OK") ||
+                        resp.StartsWith("HTTP/1.1 301") || resp.StartsWith("HTTP/1.1 302"))
                     {
-                        proxy.Anonymity = resp.Contains("Via:", StringComparison.OrdinalIgnoreCase) ||
-                                          resp.Contains("X-Forwarded-For:", StringComparison.OrdinalIgnoreCase)
+                        success = true;
+                        proxy.Anonymity = resp.Contains("Via:") || resp.Contains("X-Forwarded-For:")
                             ? ProxyAnonymity.Transparent
                             : ProxyAnonymity.Elite;
                     }
@@ -154,6 +282,7 @@ public class LinuxProxyValidator
                 proxy.Successes++;
                 proxy.Failures = 0;
                 proxy.LastChecked = DateTime.Now;
+                RequestSaveHealthy();
             }
             else
             {
@@ -161,6 +290,12 @@ public class LinuxProxyValidator
                 proxy.Failures++;
                 proxy.LatencyMs = 999;
                 proxy.LastChecked = DateTime.Now;
+
+                if (wasHealthy)
+                {
+                    _pool.TryRemove(proxy.Endpoint, out _);
+                    RequestSaveHealthy();
+                }
             }
         }
         catch
@@ -169,6 +304,12 @@ public class LinuxProxyValidator
             proxy.Failures++;
             proxy.LatencyMs = 999;
             proxy.LastChecked = DateTime.Now;
+
+            if (wasHealthy)
+            {
+                _pool.TryRemove(proxy.Endpoint, out _);
+                RequestSaveHealthy();
+            }
         }
 
         return proxy.IsHealthy;
@@ -176,12 +317,13 @@ public class LinuxProxyValidator
 
     public int PruneDead(int maxFailures = 2)
     {
-        var deadKeys = _pool.Where(kvp => kvp.Value.Failures >= maxFailures).Select(kvp => kvp.Key).ToList();
+        var deadKeys = _pool.Where(kvp => kvp.Value.Failures >= maxFailures || !kvp.Value.IsHealthy).Select(kvp => kvp.Key).ToList();
         int count = 0;
         foreach (var key in deadKeys)
         {
             if (_pool.TryRemove(key, out _)) count++;
         }
+        SaveHealthyProxies();
         return count;
     }
 
@@ -221,6 +363,18 @@ public class LinuxProxyValidator
         return query.ToList();
     }
 
-    public void Clear() => _pool.Clear();
-}
+    public void Clear()
+    {
+        _pool.Clear();
+        SaveHealthyProxies();
+    }
 
+    public void Dispose()
+    {
+        lock (_saveLock)
+        {
+            _saveDebounceTimer?.Dispose();
+            _saveDebounceTimer = null;
+        }
+    }
+}

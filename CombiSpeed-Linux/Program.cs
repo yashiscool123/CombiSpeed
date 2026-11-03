@@ -13,8 +13,8 @@ public class Program
         if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) || a.Equals("-v", StringComparison.OrdinalIgnoreCase)))
         {
             var ver = typeof(Program).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.6";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 23) - Linux Edition");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.7";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 24) - Linux Edition");
             Console.WriteLine("Multi-WAN Channel Bonding & Dynamic Bandwidth QoS Shaper");
             Console.WriteLine("Platform: Linux x64/arm64 (.NET 8.0)");
             return;
@@ -99,6 +99,45 @@ public class Program
                 if (File.Exists(tempPac)) File.Delete(tempPac);
                 Console.WriteLine("[PASS] PAC file generation and export verified.");
 
+                // Test Healthy Proxy Persistence & Eviction
+                string tempProxyJson = Path.Combine(Path.GetTempPath(), "combispeed_test_linux_proxies.json");
+                try
+                {
+                    using var validator = new LinuxProxyValidator();
+                    validator.StorageFilePath = tempProxyJson;
+
+                    var pGood1 = new HarvestedProxyModel { Host = "1.2.3.4", Port = 8080, IsHealthy = true, Failures = 0, LatencyMs = 45 };
+                    var pGood2 = new HarvestedProxyModel { Host = "5.6.7.8", Port = 3128, IsHealthy = true, Failures = 0, LatencyMs = 90 };
+                    var pDead = new HarvestedProxyModel { Host = "9.9.9.9", Port = 1080, IsHealthy = false, Failures = 3, LatencyMs = 999 };
+
+                    validator.AddCandidates(new[] { pGood1, pGood2, pDead });
+                    int savedCount = validator.SaveHealthyProxies(tempProxyJson);
+                    if (savedCount != 2) throw new Exception($"Expected 2 healthy proxies saved, got {savedCount}");
+
+                    string content = File.ReadAllText(tempProxyJson);
+                    if (content.Contains("9.9.9.9")) throw new Exception("Dead proxy was persisted to disk!");
+                    if (!content.Contains("1.2.3.4") || !content.Contains("5.6.7.8")) throw new Exception("Good proxies missing from disk!");
+
+                    // Test reloading into new instance
+                    using var validator2 = new LinuxProxyValidator();
+                    int loadedProxies = validator2.LoadHealthyProxies(tempProxyJson);
+                    if (loadedProxies != 2) throw new Exception($"Expected 2 healthy proxies loaded, got {loadedProxies}");
+
+                    // Test unavailable eviction
+                    bool evicted = validator2.MarkUnavailable("1.2.3.4:8080");
+                    if (!evicted) throw new Exception("MarkUnavailable failed to evict proxy!");
+                    if (validator2.TotalCount != 1) throw new Exception($"Expected 1 remaining proxy in pool, got {validator2.TotalCount}");
+
+                    validator2.SaveHealthyProxies(tempProxyJson);
+                    string updatedContent = File.ReadAllText(tempProxyJson);
+                    if (updatedContent.Contains("1.2.3.4")) throw new Exception("Unavailable proxy was not evicted from disk!");
+                    Console.WriteLine("[PASS] Linux healthy proxy persistence & dynamic unavailable eviction verified.");
+                }
+                finally
+                {
+                    if (File.Exists(tempProxyJson)) File.Delete(tempProxyJson);
+                }
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL LINUX PERSISTENCE & COMBINATION TESTS PASSED (100% OK)         ");
                 Console.WriteLine("=====================================================================");
@@ -151,9 +190,9 @@ public class Program
                                         a.Equals("--daemon", StringComparison.OrdinalIgnoreCase));
 
         var curVer = typeof(Program).Assembly.GetName().Version;
-        string curVerStr = curVer != null ? $"v{curVer.Major}.{curVer.Minor}.{curVer.Build}" : "v2.1.6";
+        string curVerStr = curVer != null ? $"v{curVer.Major}.{curVer.Minor}.{curVer.Build}" : "v2.1.7";
         Console.WriteLine("=====================================================================");
-        Console.WriteLine($"   CombiSpeed {curVerStr} (Build 23) - Multi-WAN Bandwidth Aggregator (Linux) ");
+        Console.WriteLine($"   CombiSpeed {curVerStr} (Build 24) - Multi-WAN Bandwidth Aggregator (Linux) ");
         Console.WriteLine("=====================================================================");
 
         var storageService = new LinuxSettingsStorage();

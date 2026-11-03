@@ -371,3 +371,14 @@
 - [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.6 Build 23).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.6.
+
+## Milestone 25: Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction [COMPLETED]
+- [x] Increment version to 2.1.7 and versionCode: 24 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Implement persistent disk storage for verified healthy proxies (`healthy_proxies.json`) in `ProxyValidatorEngine` (Windows), `LinuxProxyValidator` (Linux), and `MacProxyValidator` (macOS) ensuring only nodes with `IsHealthy == true && Failures == 0` are persisted.
+- [x] Implement cold-startup pre-warming by auto-loading persisted healthy proxies into the active pool on launch in `MainViewModel.cs` (Windows), `CombiSpeed-Linux/Program.cs`, and `CombiSpeed-macOS/Program.cs`.
+- [x] Implement dynamic immediate eviction via `MarkUnavailable(endpoint)` across router, server, and validator upon live routing socket connection/tunnel failures or health check validation failures.
+- [x] Implement atomic `.tmp` file move and 400ms debounced disk saving to prevent I/O thrashing during parallel bulk validation.
+- [x] Add automated test step `[TEST 8/8]` to `--verify-rotator` (Windows) and add persistence & eviction verification to `--verify-persistence` (Linux & macOS) (100% pass rate).
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.1.7 Build 24).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.7.

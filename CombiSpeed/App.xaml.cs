@@ -403,8 +403,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.6";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 23)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.7";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 24)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);
@@ -768,6 +768,75 @@ public partial class App : Application
                     throw new Exception("LowestLatency sorting failed to order proxies by ascending latency!");
                 }
                 Log($" [PASS] LowestLatency sorting verified: {string.Join(" < ", sortedLatency.Select(p => $"{p.LatencyMs}ms"))}");
+
+                // 8. Test Healthy Proxy Disk Persistence & Unavailable Eviction
+                Log("[TEST 8/8] Testing Healthy Proxy Disk Persistence & Dynamic Unavailable Eviction...");
+                string tempProxyJson = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "combispeed_test_wpf_proxies.json");
+                try
+                {
+                    using var persistEngine = new ProxyValidatorEngine();
+                    persistEngine.StorageFilePath = tempProxyJson;
+
+                    var pGood1 = new HarvestedProxyModel { Host = "104.21.5.19", Port = 8080, Protocol = ProxyProtocol.Http, IsHealthy = true, Failures = 0, LatencyMs = 50 };
+                    var pGood2 = new HarvestedProxyModel { Host = "172.67.182.11", Port = 3128, Protocol = ProxyProtocol.Https, IsHealthy = true, Failures = 0, LatencyMs = 75 };
+                    var pDead = new HarvestedProxyModel { Host = "198.51.100.99", Port = 1080, Protocol = ProxyProtocol.Socks5, IsHealthy = false, Failures = 3, LatencyMs = 999 };
+
+                    persistEngine.AddCandidates(new[] { pGood1, pGood2, pDead });
+                    int savedCount = persistEngine.SaveHealthyProxies(tempProxyJson);
+                    Log($"Saved {savedCount} healthy proxies to disk (expected 2).");
+                    if (savedCount != 2)
+                    {
+                        throw new Exception($"SaveHealthyProxies failed! Expected 2 healthy proxies, got {savedCount}");
+                    }
+
+                    string fileJson = System.IO.File.ReadAllText(tempProxyJson);
+                    if (fileJson.Contains("198.51.100.99"))
+                    {
+                        throw new Exception("Dead proxy was persisted to disk! Persistence must only store verified healthy proxies.");
+                    }
+                    if (!fileJson.Contains("104.21.5.19") || !fileJson.Contains("172.67.182.11"))
+                    {
+                        throw new Exception("Verified healthy proxies are missing from persistent JSON store!");
+                    }
+                    Log(" [PASS] Persistence filtered dead endpoints and saved strictly healthy proxies.");
+
+                    // Pre-warm fresh engine instance from persistent storage
+                    using var prewarmedEngine = new ProxyValidatorEngine();
+                    int loadedCount = prewarmedEngine.LoadHealthyProxies(tempProxyJson);
+                    Log($"Pre-warmed new validator instance with {loadedCount} healthy proxies from disk.");
+                    if (loadedCount != 2 || prewarmedEngine.TotalCount != 2 || prewarmedEngine.HealthyCount != 2)
+                    {
+                        throw new Exception($"LoadHealthyProxies failed! Expected 2 pre-warmed proxies, got {loadedCount}");
+                    }
+                    Log(" [PASS] Pre-warming proxy pool from disk validated successfully.");
+
+                    // Test immediate eviction upon unavailability
+                    bool evicted = prewarmedEngine.MarkUnavailable("104.21.5.19:8080");
+                    if (!evicted)
+                    {
+                        throw new Exception("MarkUnavailable failed to evict unavailable proxy!");
+                    }
+                    if (prewarmedEngine.TotalCount != 1 || prewarmedEngine.HealthyCount != 1)
+                    {
+                        throw new Exception($"Expected 1 remaining healthy proxy in pool, got {prewarmedEngine.TotalCount}");
+                    }
+
+                    prewarmedEngine.SaveHealthyProxies(tempProxyJson);
+                    string updatedJson = System.IO.File.ReadAllText(tempProxyJson);
+                    if (updatedJson.Contains("104.21.5.19"))
+                    {
+                        throw new Exception("Unavailable proxy was not evicted from persistent disk storage!");
+                    }
+                    if (!updatedJson.Contains("172.67.182.11"))
+                    {
+                        throw new Exception("Remaining good proxy was accidentally deleted!");
+                    }
+                    Log(" [PASS] Dynamic unavailable proxy eviction from memory pool and persistent storage verified.");
+                }
+                finally
+                {
+                    if (System.IO.File.Exists(tempProxyJson)) System.IO.File.Delete(tempProxyJson);
+                }
 
                 Log("\n[ALL PASS] Rotating Proxy & Harvester Engine self-test PASSED with 100% SUCCESS!");
                 System.IO.File.WriteAllText("rotator_test.log", logSb.ToString());

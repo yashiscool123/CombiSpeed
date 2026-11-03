@@ -144,7 +144,13 @@ public class RotatingProxyRouter
         {
             Interlocked.Increment(ref FailedRotations);
             socket.Dispose();
+            _validator.MarkUnavailable(proxy.Endpoint);
             throw;
         }
     }
+
+    /// <summary>
+    /// Evicts an unavailable upstream proxy from the router pool and persistent storage immediately.
+    /// </summary>
+    public bool MarkUnavailable(string endpoint) => _validator.MarkUnavailable(endpoint);
 }

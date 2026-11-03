@@ -1,5 +1,25 @@
 # Release Notes
 
+## [2.1.7] - 2026-11-03 - Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction Release
+
+### 🚀 Highlights & Engineering Advancements
+- **💾 Persistent Healthy Proxy Storage & Pre-Warming**:
+  - **Strictly Healthy Persistence**: Only verified healthy proxies (`IsHealthy == true && Failures == 0`) are written to persistent storage (`healthy_proxies.json` located at `%LOCALAPPDATA%\CombiSpeed\healthy_proxies.json` on Windows, `~/.config/combispeed/healthy_proxies.json` on Linux, and `~/Library/Application Support/CombiSpeed/healthy_proxies.json` on macOS). Dead or unverified endpoints are strictly filtered out and never saved.
+  - **Atomic Safe Writes**: Persistence utilizes temp file writes (`.tmp`) with atomic replace/move semantics, completely protecting against partial writes or file corruption across application life cycles.
+  - **Instant Startup Pre-Warming**: Automatically reloads the cached healthy proxies on app launch and initialization across Windows WPF, Linux daemon/CLI, and macOS, providing instant proxy routing availability with zero wait time for a 30-minute harvesting scrape cycle.
+- **⚡ Dynamic Unavailable Proxy Eviction**:
+  - **Immediate Routing Eviction**: In `RotatingProxyRouter` and `RotatingProxyServer` (and their Linux/macOS native counterparts), any upstream proxy that fails TCP connection handshake or returns non-200 tunnel status during live request routing is immediately marked unavailable via `MarkUnavailable(endpoint)`, purged from the in-memory candidate pool (`_pool.TryRemove`), and evicted from the persistent disk storage file.
+  - **Health Validation Eviction**: If any previously healthy proxy fails validation during routine health checks (`ValidateSingleAsync` or `PruneDead`), it is automatically evicted from memory and disk.
+  - **Debounced Thread-Safe Auto-Save**: Validation and status changes trigger a 400ms debounced disk write to eliminate I/O thrashing during high-concurrency (60-worker) validation operations.
+- **🧪 Comprehensive Test Suite (100% PASS)**:
+  - Added dedicated test step `[TEST 8/8]` to `--verify-rotator` (Windows) and integrated verification into `--verify-persistence` (Linux & macOS) verifying healthy filtering, cold startup pre-warming, and dynamic eviction upon unavailable event triggers.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.7-win-x64.zip` and `publish/CombiSpeed-v2.1.7-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.7-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.7-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.6] - 2026-11-03 - Expanded 255+ Global & Geo-Targeted Proxy Feeds Release
 
 ### 🚀 Highlights & Engineering Advancements

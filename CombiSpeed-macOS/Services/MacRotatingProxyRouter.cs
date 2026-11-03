@@ -83,7 +83,10 @@ public class MacRotatingProxyRouter
         catch
         {
             socket.Dispose();
+            _validator.MarkUnavailable(proxy.Endpoint);
             throw;
         }
     }
+
+    public bool MarkUnavailable(string endpoint) => _validator.MarkUnavailable(endpoint);
 }
