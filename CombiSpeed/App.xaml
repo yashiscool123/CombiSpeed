@@ -12,6 +12,8 @@
         <conv:EqualityToBooleanConverter x:Key="EqualityToBooleanConverter"/>
         <conv:EqualityToVisibilityConverter x:Key="EqualityToVisibilityConverter"/>
         <conv:ScaleToPercentStringConverter x:Key="ScaleToPercentStringConverter"/>
+        <conv:BoolToRotatorStatusConverter x:Key="BoolToRotatorStatusConverter"/>
+        <conv:BoolToOnlineStatusConverter x:Key="BoolToOnlineStatusConverter"/>
 
         <!-- Color Palette (WCAG 2.1 AAA/AA High-Contrast Compliant) -->
         <SolidColorBrush x:Key="CyberBg" Color="#080C14"/>

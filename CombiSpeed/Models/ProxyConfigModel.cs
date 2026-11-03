@@ -39,6 +39,9 @@ public class ProxyConfigModel
     public SpeedShaperMode ShaperMode { get; set; } = SpeedShaperMode.MaximumBandwidth;
     public bool EnableDynamicShaping { get; set; } = true;
 
+    // Rotating Proxy & Harvester Configuration
+    public RotatingProxyConfigModel RotatingProxy { get; set; } = new();
+
     // Accessibility & UI Display Preferences (WCAG 2.1 AA)
     public bool IsHighContrast { get; set; } = false;
     public double UiScale { get; set; } = 1.0; // 1.0 = 100%, 1.15 = 115%, 1.30 = 130%

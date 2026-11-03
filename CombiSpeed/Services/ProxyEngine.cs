@@ -43,6 +43,9 @@ public class ProxyEngine : IDisposable
     public event Action<AuditLogModel>? OnAuditLog;
     public event Action? OnTelemetryTick;
 
+    private int _httpPort = 8080;
+    private int _socksPort = 1080;
+
     public ProxyEngine(LoadBalancerEngine loadBalancer, Func<List<NetworkAdapterModel>> getAdapters)
     {
         _loadBalancer = loadBalancer;
@@ -60,6 +63,8 @@ public class ProxyEngine : IDisposable
     {
         if (IsRunning) return;
 
+        _httpPort = httpPort;
+        _socksPort = socksPort;
         _cts = new CancellationTokenSource();
         StartedAt = DateTime.Now;
 
@@ -170,7 +175,7 @@ public class ProxyEngine : IDisposable
                 // Built-in PAC (Proxy Auto-Config) Script Server
                 if (method == "GET" && (uriStr.Contains("proxy.pac", StringComparison.OrdinalIgnoreCase) || uriStr.EndsWith("/pac", StringComparison.OrdinalIgnoreCase)))
                 {
-                    string pacScript = PacConfigModel.Current.GeneratePacScript();
+                    string pacScript = PacConfigModel.Current.GeneratePacScript(_httpPort, _socksPort);
                     byte[] pacBytes = Encoding.UTF8.GetBytes(pacScript);
                     string pacResponse = $"HTTP/1.1 200 OK\r\nContent-Type: application/x-ns-proxy-autoconfig; charset=utf-8\r\nContent-Length: {pacBytes.Length}\r\nConnection: close\r\n\r\n";
                     await clientStream.WriteAsync(Encoding.ASCII.GetBytes(pacResponse), token);

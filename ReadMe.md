@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.0.2%20(Build%2016)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.1.0%20(Build%2017)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -29,7 +29,25 @@ This bypasses default routing limitations and forces traffic simultaneously acro
 
 ## 🚀 Key Features
 
-1. **Speed Combining & Unified Bandwidth Pooling (NEW in v2.0.2)**:
+1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0)**:
+   - **Multi-Source Open-Source Proxy Harvester**:
+     Automatically scrapes fresh proxy candidate pools from top-tier maintained open-source repositories and APIs out of the box (*TheSpeedX/PROXY-List*, *monosans/proxy-list*, *clarketm/proxy-list*, *proxyscrape API*), custom user URLs/APIs, pastebins, or local `.txt` lists.
+   - **Universal Heuristic Regex Scraper**:
+     Intelligently extracts proxies from unstructured plain text, CSV, JSON, and HTML tables (`<td>IP</td><td>PORT</td>`) supporting `IP:PORT`, `PROTOCOL://IP:PORT`, and authenticated `IP:PORT:USER:PASS` lines. Automatically isolates and purges RFC 1918 private subnets and loopback addresses.
+   - **High-Concurrency Multi-Protocol Validator**:
+     Semaphore-bounded parallel async prober testing HTTP, HTTPS CONNECT, SOCKS4, and RFC 1928 SOCKS5 endpoints in milliseconds without UI freezing or thread starvation. Accurately measures real-time RTT latency (ms) and detects anonymity tiers (Elite, Anonymous, Transparent).
+   - **Dynamic Rotation & Sticky Session Strategies**:
+     - `Round Robin (Per-Request)`: Rotates to a new healthy upstream proxy on every HTTP/HTTPS request (ideal for large-scale web scraping, price intelligence, and QA automation).
+     - `Sticky Domain (Host Affinity)`: Retains the same upstream proxy for requests targeting the same host (e.g. `*.target.com`), preserving login sessions and OAuth cookies.
+     - `Sticky Session (Duration)`: Preserves proxy affinity per connection or client session for a user-configurable duration (e.g. 5–30 minutes).
+     - `Lowest Latency (Fastest)`: Dynamically routes through the top fastest responsive proxies ($< 250\text{ ms}$).
+     - `Elite Only`: Restricts rotation strictly to high-anonymity Elite proxies that leak zero proxy headers (`Via`, `X-Forwarded-For`).
+   - **The "Double-Layer" Multi-NIC Egress MOAT**:
+     CombiSpeed uniquely binds outbound proxy connections across local physical network adapters (`Socket.Bind(adapterIp, 0)`). Local traffic is distributed across Ethernet, Wi-Fi, and Cellular dongles while simultaneously rotating global public IPs, eliminating both local router connection bottlenecks and remote rate limits!
+   - **Dedicated Port & Smart PAC Integration**:
+     Runs a dedicated rotating proxy listener on port `8081` alongside the high-speed bonded port `8080`. Supports `PacAction.RotatingProxy` in PAC scripts to route specific scraping domains to `8081` while streaming and bulk downloads stay on the unthrottled bonded port `8080`.
+
+2. **Speed Combining & Unified Bandwidth Pooling (v2.0.2)**:
    - **Combine Speeds Mode**: Bandwidth across all active connections and adapters is pooled additively ($TotalSpeed = Speed_{NIC1} + Speed_{NIC2} + \dots$). Eliminates artificial fractional slicing or partitioning where adapters were throttled to fractional percentages (e.g. 50% or 25%).
    - **Unified Combined Speed Cap**: Configured bandwidth caps (e.g. 500 Mbps) enforce the combined aggregate total across all connections simultaneously. Individual connections have access to the full combined speed pool rather than being choked by split sub-limits.
    - **Multi-NIC Parallel Range Chunk Speed Combiner**: Implemented in `ProxyEngine.cs` for HTTP file transfers. Detects chunkable resources ($\ge 512\text{ KB}$ with HTTP Range support) and streams byte chunks concurrently across all active physical adapters, combining the physical wire speeds of multiple adapters for a single file download!

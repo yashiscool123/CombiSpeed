@@ -6,7 +6,8 @@ public enum PacAction
 {
     Bonded,
     Direct,
-    Socks5Only
+    Socks5Only,
+    RotatingProxy
 }
 
 public class PacRuleModel
@@ -94,6 +95,7 @@ public class PacConfigModel
             {
                 PacAction.Direct => "\"DIRECT\"",
                 PacAction.Socks5Only => $"\"SOCKS5 127.0.0.1:{socksPort}; SOCKS 127.0.0.1:{socksPort}; DIRECT\"",
+                PacAction.RotatingProxy => $"\"PROXY 127.0.0.1:8081; DIRECT\"",
                 _ => $"\"PROXY 127.0.0.1:{httpPort}; SOCKS5 127.0.0.1:{socksPort}; DIRECT\""
             };
 

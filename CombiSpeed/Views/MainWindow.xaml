@@ -29,10 +29,12 @@
         <KeyBinding Gesture="Ctrl+D2" Command="{Binding SelectTabCommand}" CommandParameter="1"/>
         <KeyBinding Gesture="Ctrl+D3" Command="{Binding SelectTabCommand}" CommandParameter="2"/>
         <KeyBinding Gesture="Ctrl+D4" Command="{Binding SelectTabCommand}" CommandParameter="3"/>
+        <KeyBinding Gesture="Ctrl+D5" Command="{Binding SelectTabCommand}" CommandParameter="4"/>
         <KeyBinding Gesture="Ctrl+NumPad1" Command="{Binding SelectTabCommand}" CommandParameter="0"/>
         <KeyBinding Gesture="Ctrl+NumPad2" Command="{Binding SelectTabCommand}" CommandParameter="1"/>
         <KeyBinding Gesture="Ctrl+NumPad3" Command="{Binding SelectTabCommand}" CommandParameter="2"/>
         <KeyBinding Gesture="Ctrl+NumPad4" Command="{Binding SelectTabCommand}" CommandParameter="3"/>
+        <KeyBinding Gesture="Ctrl+NumPad5" Command="{Binding SelectTabCommand}" CommandParameter="4"/>
     </Window.InputBindings>
 
     <Border Background="{DynamicResource CyberBg}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1">
@@ -632,6 +634,156 @@
                                             <DataGridTextColumn Header="VOLUME" Binding="{Binding VolumeFormatted}" Width="90"/>
                                             <DataGridTextColumn Header="DURATION" Binding="{Binding DurationMs, StringFormat='{}{0}ms'}" Width="90"/>
                                             <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="90"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ========================================== -->
+                <!-- TAB 4: ROTATING PROXY & HARVESTER          -->
+                <!-- ========================================== -->
+                <TabItem Header="🔄 Rotating Proxy &amp; Harvester" Style="{StaticResource SegmentedTabItem}" AutomationProperties.Name="Rotating Proxy and Harvester Tab">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                        <StackPanel>
+                            <!-- Rotating Proxy Hero Card -->
+                            <Border Background="{DynamicResource CyberSurface}" CornerRadius="16" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <TextBlock Text="AUTOMATED ROTATING PROXY HARVESTER &amp; DISPATCHER" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,8,0"/>
+                                            <Border Background="#1E293B" CornerRadius="4" Padding="6,1">
+                                                <TextBlock Text="{Binding RotatingProxyPort, StringFormat='{}Port: {0}'}" FontSize="10" Foreground="#38BDF8" FontFamily="Consolas"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Double-Layer Multi-NIC Egress &amp; Open-Source Harvester" FontSize="20" FontWeight="Black" Foreground="{DynamicResource TextPrimary}"/>
+                                        <TextBlock Text="Harvests live proxies from curated open-source feeds &amp; custom URLs, validates health &amp; anonymity, and rotates upstream requests across local physical network adapters." FontSize="12" Foreground="#CBD5E1" Margin="0,4,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Action Buttons -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="{Binding IsRotatingProxyRunning, Converter={StaticResource BoolToRotatorStatusConverter}}" Command="{Binding ToggleRotatingProxyCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold"/>
+                                        <Button Content="⚡ Harvest Proxies" Command="{Binding HarvestProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold"/>
+                                        <Button Content="🔍 Validate Pool" Command="{Binding ValidatePoolCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8"/>
+                                        <Button Content="💾 Export Working" Command="{Binding ExportWorkingProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8"/>
+                                        <Button Content="📂 Import File" Command="{Binding ImportProxiesFileCommand}" Style="{StaticResource CyberButton}" Padding="12,8"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Telemetry Metric Cards -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Card 1: Total Harvested -->
+                                <Border Grid.Column="0" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="TOTAL HARVESTED" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding TotalHarvestedCount}" FontSize="22" FontWeight="Black" Foreground="#00F0FF" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Candidates in database" FontSize="11" Foreground="#CBD5E1" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Card 2: Verified Healthy -->
+                                <Border Grid.Column="1" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="VERIFIED ACTIVE POOL" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding VerifiedHealthyCount}" FontSize="22" FontWeight="Black" Foreground="#10B981" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Ready for instant rotation" FontSize="11" Foreground="#CBD5E1" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Card 3: Average Latency -->
+                                <Border Grid.Column="2" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="AVERAGE POOL LATENCY" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding AveragePingMs, StringFormat='{}{0} ms'}" FontSize="22" FontWeight="Black" Foreground="#F59E0B" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Real-time RTT response" FontSize="11" Foreground="#CBD5E1" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Card 4: Rotator Port & Status -->
+                                <Border Grid.Column="3" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="LISTENING ENDPOINT" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding RotatingProxyPort, StringFormat='{}127.0.0.1:{0}'}" FontSize="18" FontWeight="Black" Foreground="#38BDF8" Margin="0,6,0,0" FontFamily="Consolas"/>
+                                        <TextBlock Text="{Binding IsRotatingProxyRunning, Converter={StaticResource BoolToOnlineStatusConverter}}" FontSize="11" FontWeight="Bold" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Configuration & Strategy Controls -->
+                            <Border Background="{DynamicResource CyberSurface}" CornerRadius="16" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Strategy Selector -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Rotation Strategy:" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <ComboBox ItemsSource="{Binding RotationStrategies}" SelectedItem="{Binding SelectedRotationStrategy}" Width="240" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- Status message / Progress -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
+                                        <TextBlock Text="{Binding HarvestStatusText}" FontSize="11" Foreground="#38BDF8" TextTrimming="CharacterEllipsis"/>
+                                        <ProgressBar Value="{Binding HarvestProgress}" Maximum="100" Height="4" Margin="0,4,0,0" Background="#1E293B" Foreground="#00F0FF" Visibility="{Binding IsHarvestingOrValidating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+
+                                    <!-- Toggles: Multi-NIC Chaining & Strict Anonymity -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <CheckBox IsChecked="{Binding ChainPhysicalAdapters, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,16,0" ToolTip="Dispatches outgoing proxy connections across all enabled physical adapters">
+                                            <TextBlock Text="⚡ Multi-NIC Chaining" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
+                                        </CheckBox>
+                                        <CheckBox IsChecked="{Binding StrictAnonymity, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,16,0" ToolTip="Restricts rotation strictly to Elite and Anonymous proxies">
+                                            <TextBlock Text="🛡 Elite &amp; Anon Only" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
+                                        </CheckBox>
+                                        <Button Content="🗑 Prune Dead" Command="{Binding PruneDeadProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"/>
+                                        <Button Content="✕ Clear All" Command="{Binding ClearProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Live Harvested & Verified Proxy Pool DataGrid -->
+                            <Border Background="{DynamicResource CyberSurface}" CornerRadius="16" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,10">
+                                        <TextBlock Text="LIVE HARVESTED PROXY POOL (Top Responsive Endpoints)" FontSize="12" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Connect applications or scrapers to: http://127.0.0.1:8081" FontSize="11" Foreground="#CBD5E1" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
+                                    </Grid>
+
+                                    <DataGrid ItemsSource="{Binding HarvestedProxies}" AutoGenerateColumns="False" IsReadOnly="True" Height="360" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" AutomationProperties.Name="Harvested Proxies Table">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="STATUS" Width="90">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                                                            <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold" Foreground="#040810"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTextColumn Header="ENDPOINT (HOST:PORT)" Binding="{Binding Endpoint}" Width="180" FontFamily="Consolas"/>
+                                            <DataGridTextColumn Header="PROTOCOL" Binding="{Binding FormattedProtocol}" Width="95"/>
+                                            <DataGridTextColumn Header="ANONYMITY" Binding="{Binding FormattedAnonymity}" Width="110"/>
+                                            <DataGridTextColumn Header="LATENCY" Binding="{Binding LatencyMs, StringFormat='{}{0}ms'}" Width="85"/>
+                                            <DataGridTextColumn Header="FAILURES" Binding="{Binding Failures}" Width="75"/>
+                                            <DataGridTextColumn Header="SUCCESSES" Binding="{Binding Successes}" Width="85"/>
+                                            <DataGridTextColumn Header="SOURCE REPOSITORY / URL" Binding="{Binding SourceUrl}" Width="*"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </StackPanel>

@@ -18,6 +18,9 @@ public class EmbeddedDashboardServer
     private readonly MacProxyManager _proxyManager;
     private readonly MacVirtualBridgeManager _bridgeManager;
     private readonly MacSettingsStorage _storage;
+    private readonly MacRotatingProxyServer? _rotatingServer;
+    private readonly MacProxyHarvester? _harvester;
+    private readonly MacProxyValidator? _validator;
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
     private bool _isEngineActive = true;
@@ -32,7 +35,10 @@ public class EmbeddedDashboardServer
         MacBandwidthThrottler throttler,
         MacProxyManager proxyManager,
         MacVirtualBridgeManager bridgeManager,
-        MacSettingsStorage storage)
+        MacSettingsStorage storage,
+        MacRotatingProxyServer? rotatingServer = null,
+        MacProxyHarvester? harvester = null,
+        MacProxyValidator? validator = null)
     {
         _config = config;
         _adapters = adapters;
@@ -42,6 +48,9 @@ public class EmbeddedDashboardServer
         _proxyManager = proxyManager;
         _bridgeManager = bridgeManager;
         _storage = storage;
+        _rotatingServer = rotatingServer;
+        _harvester = harvester;
+        _validator = validator;
     }
 
     public void Start(bool openBrowser = true)
@@ -157,6 +166,76 @@ public class EmbeddedDashboardServer
                 res.ContentType = "application/x-ns-proxy-autoconfig";
                 res.Headers.Add("Content-Disposition", "attachment; filename=\"proxy.pac\"");
                 res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/status")
+            {
+                var status = new
+                {
+                    isRunning = _rotatingServer?.IsRunning ?? false,
+                    port = _config.RotatingProxy.RotatingProxyPort,
+                    strategy = _config.RotatingProxy.Strategy.ToString(),
+                    poolCount = _validator?.TotalCount ?? 0,
+                    healthyCount = _validator?.HealthyCount ?? 0,
+                    chainPhysicalAdapters = _config.RotatingProxy.ChainPhysicalAdapters,
+                    strictAnonymity = _config.RotatingProxy.StrictAnonymity
+                };
+                string json = JsonSerializer.Serialize(status);
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/pool")
+            {
+                var list = _validator?.AllProxies.OrderByDescending(p => p.IsHealthy).ThenBy(p => p.LatencyMs).Take(150).ToList() ?? new();
+                string json = JsonSerializer.Serialize(list);
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/harvest" && req.HttpMethod == "POST")
+            {
+                _ = Task.Run(async () =>
+                {
+                    if (_harvester != null && _validator != null)
+                    {
+                        var sources = RotatingProxyConfigModel.GetDefaultSources();
+                        var harvested = await _harvester.HarvestAllAsync(sources, 500);
+                        _validator.AddCandidates(harvested);
+                        await _validator.ValidateAllAsync(harvested.Take(50), 30, 2000);
+                    }
+                });
+                string json = JsonSerializer.Serialize(new { status = "Harvest started" });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/validate" && req.HttpMethod == "POST")
+            {
+                _ = Task.Run(async () =>
+                {
+                    if (_validator != null)
+                    {
+                        await _validator.ValidateAllAsync(null, 40, 2000);
+                    }
+                });
+                string json = JsonSerializer.Serialize(new { status = "Validation started" });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/toggle" && req.HttpMethod == "POST")
+            {
+                if (_rotatingServer != null)
+                {
+                    if (_rotatingServer.IsRunning) _rotatingServer.Stop();
+                    else _rotatingServer.Start();
+                }
+                string json = JsonSerializer.Serialize(new { isRunning = _rotatingServer?.IsRunning ?? false });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
                 await res.OutputStream.WriteAsync(bytes);
             }
             else if (path == "/api/telemetry")

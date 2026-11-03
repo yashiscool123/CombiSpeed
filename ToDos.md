@@ -260,3 +260,28 @@
   - macOS: publish/macos/CombiSpeed-v2.0.2-macos-x64.tar.gz and .zip
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.0.2.
+
+## Milestone 18: Rotating Proxy Harvester & Multi-NIC Egress Dispatcher [COMPLETED]
+- [x] Increment version to 2.1.0 and versionCode: 17 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, MainViewModel.cs, App.xaml.cs, Install-CombiSpeed.bat, Info.plist, Program.cs, and CyberpunkSpa.cs).
+- [x] Implement Phase 1: Ingestion & Live Multi-Protocol Validator:
+  - Created HarvestedProxyModel.cs in Windows, Linux, and macOS supporting ProxyProtocol (HTTP, HTTPS, SOCKS4, SOCKS5), ProxyAnonymity (Transparent, Anonymous, Elite), latency tracking, fail count, and success rate.
+  - Implemented ProxyHarvesterService.cs (LinuxProxyHarvester.cs, MacProxyHarvester.cs) with regex parsing for IP:PORT, PROTOCOL://IP:PORT, USER:PASS@IP:PORT, HTML table <td> tags, 10+ open-source proxy feeds, custom URL scraper, and local file import/export.
+  - Implemented ProxyValidatorEngine.cs (LinuxProxyValidator.cs, MacProxyValidator.cs) with semaphore-bounded concurrent async probing across HTTP/HTTPS/SOCKS4/SOCKS5, real RTT calculation, anonymity verification, and auto-pruning.
+- [x] Implement Phase 2: Rotating Proxy Router & Local Multi-NIC Socket Chaining MOAT:
+  - Created RotatingProxyRouter.cs (LinuxRotatingProxyRouter.cs, MacRotatingProxyRouter.cs) supporting 5 dynamic dispatch strategies: RoundRobin, StickyDomain (consistent domain pinning), StickySession (configurable duration), LowestLatency (fastest tested RTT), and EliteOnly (highest anonymity tier).
+  - Implemented Multi-NIC Egress Chaining: physical adapter socket binding (Socket.Bind(new IPEndPoint(adapterIp, 0))) chained with upstream rotating proxy servers, providing dual-layer anonymity and load aggregation.
+  - Implemented RotatingProxyServer.cs (LinuxRotatingProxyServer.cs, MacRotatingProxyServer.cs) on port 8081 with duplex streaming, HTTP/HTTPS CONNECT tunneling, upstream SOCKS5 handshakes, and 2-attempt circuit-breaker retry.
+  - Integrated with PAC script engine (PacRuleModel.cs, PacConfigModel.cs) to route targeted traffic via PacAction.RotatingProxy to 127.0.0.1:8081.
+- [x] Implement Phase 3: Cyberpunk Dashboard UI & Multi-OS Parity:
+  - Added Tab 4 "🔄 Rotating Proxy & Harvester" to Windows WPF MainWindow.xaml with real-time status indicators, pool stats, rotation strategy selector, quick actions (⚡ Harvest Feeds, 🩺 Validate Pool, ✂ Prune Dead, 🧹 Clear, 📤 Export, 📥 Import), and live DataGrid with protocol and anonymity badges.
+  - Added /api/rotating-proxy/status, /api/rotating-proxy/pool, /api/rotating-proxy/harvest, /api/rotating-proxy/validate, /api/rotating-proxy/toggle REST endpoints to EmbeddedDashboardServer.cs on Linux and macOS.
+  - Added dedicated Rotating Proxy tab and management controls to CyberpunkSpa.cs on Linux and macOS with live AJAX polling.
+- [x] Implement Phase 4: Diagnostic Self-Tests & Multi-OS Verification:
+  - Added --verify-rotator CLI self-test flag in App.xaml.cs verifying regex extraction, validator concurrency, Round-Robin rotation, Sticky Domain pinning, and port 8999 end-to-end loopback tunneling with 100% pass rate.
+  - Re-validated --verify-throttling, --verify-persistence, and --verify-benchmark across Windows, Linux, and macOS.
+- [x] Publish and package release artifacts in publish/:
+  - Windows: publish/windows/CombiSpeed-v2.1.0-win-x64.zip
+  - Linux: publish/linux/CombiSpeed-v2.1.0-linux-x64.tar.gz and .zip
+  - macOS: publish/macos/CombiSpeed-v2.1.0-macos-x64.tar.gz and .zip
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.0.

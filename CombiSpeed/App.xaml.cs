@@ -1,6 +1,9 @@
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Windows;
+using CombiSpeed.Models;
 using CombiSpeed.Services;
 using CombiSpeed.ViewModels;
 
@@ -146,11 +149,11 @@ public partial class App : Application
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"[FAIL] Persistence verification failed: {ex.Message}");
                 Console.ResetColor();
-                Shutdown(1);
+                Environment.Exit(1);
                 return;
             }
 
-            Shutdown(0);
+            Environment.Exit(0);
             return;
         }
 
@@ -318,11 +321,11 @@ public partial class App : Application
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"[FAIL] Throttling verification failed: {ex.Message}");
                 Console.ResetColor();
-                Shutdown(1);
+                Environment.Exit(1);
                 return;
             }
 
-            Shutdown(0);
+            Environment.Exit(0);
             return;
         }
 
@@ -332,11 +335,11 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.2";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 16)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.0";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 17)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
-            Shutdown(0);
+            Environment.Exit(0);
             return;
         }
 
@@ -357,7 +360,7 @@ public partial class App : Application
                 }
                 System.IO.File.WriteAllText(fullPath, pac, System.Text.Encoding.UTF8);
                 Console.WriteLine($"[CombiSpeed] Successfully exported PAC file to: {fullPath}");
-                Shutdown(0);
+                Environment.Exit(0);
                 return;
             }
             catch (Exception ex)
@@ -365,7 +368,7 @@ public partial class App : Application
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"[CombiSpeed] ERROR: Failed to export PAC file: {ex.Message}");
                 Console.ResetColor();
-                Shutdown(1);
+                Environment.Exit(1);
                 return;
             }
         }
@@ -403,7 +406,7 @@ public partial class App : Application
                 }
 
                 Console.WriteLine("[PASS] Speed benchmark successfully executed!");
-                Shutdown(0);
+                Environment.Exit(0);
                 return;
             }
             catch (Exception ex)
@@ -412,7 +415,172 @@ public partial class App : Application
                 Console.WriteLine($"[FAIL] Benchmark failed with exception: {ex.GetType().Name} - {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
                 Console.ResetColor();
-                Shutdown(1);
+                Environment.Exit(1);
+                return;
+            }
+        }
+
+        if (e.Args.Any(a => a.Equals("--verify-rotator", StringComparison.OrdinalIgnoreCase)))
+        {
+            AttachConsole(-1);
+            var logSb = new System.Text.StringBuilder();
+            void Log(string msg) { Console.WriteLine(msg); logSb.AppendLine(msg); }
+
+            Log("=====================================================================");
+            Log("        CombiSpeed Rotating Proxy & Harvester Engine Self-Test       ");
+            Log("=====================================================================");
+
+            try
+            {
+                var harvester = new ProxyHarvesterService();
+                var validator = new ProxyValidatorEngine();
+                var config = new RotatingProxyConfigModel
+                {
+                    RotatingProxyPort = 8999,
+                    Strategy = RotationStrategy.RoundRobin,
+                    ChainPhysicalAdapters = false
+                };
+                var loadBalancer = new LoadBalancerEngine();
+                var router = new RotatingProxyRouter(validator, config, loadBalancer);
+
+                // 1. Test Proxy Extraction & Regex Engine
+                Log("[TEST 1/4] Testing Universal Proxy Scraper & Regex Parser...");
+                string testSample = @"
+                    # Sample proxies list
+                    142.250.190.46:80
+                    http://172.217.16.206:8080
+                    socks5://142.250.72.110:1080:testuser:testpass
+                    invalid_line_here
+                    127.0.0.1:8080 (should be discarded as loopback)
+                    192.168.1.1:8080 (should be discarded as private)
+                    <td>104.21.5.19</td> <td>8080</td>
+                ";
+
+                var extracted = harvester.ExtractProxiesFromText(testSample, "UnitTestSource");
+                Log($"Extracted {extracted.Count} valid proxies from sample (expected >= 4).");
+                if (extracted.Count < 4)
+                {
+                    throw new Exception($"Proxy extraction failed! Expected at least 4 proxies, found {extracted.Count}");
+                }
+                if (extracted.Any(p => p.Host == "127.0.0.1" || p.Host == "192.168.1.1"))
+                {
+                    throw new Exception("Private/Loopback IP was not filtered out by harvester!");
+                }
+
+                var socksProxy = extracted.FirstOrDefault(p => p.Protocol == ProxyProtocol.Socks5);
+                if (socksProxy == null || socksProxy.Port != 1080 || socksProxy.Username != "testuser")
+                {
+                    throw new Exception("SOCKS5 proxy with credentials was not parsed accurately!");
+                }
+                Log(" [PASS] Proxy extraction & regex parser verified successfully.");
+
+                // 2. Test Validator Engine Pool Management
+                Log("[TEST 2/4] Testing Validator Engine Pool & Anonymity Filters...");
+                validator.AddCandidates(extracted);
+                if (validator.TotalCount < 4)
+                {
+                    throw new Exception($"Validator failed to store candidates! Pool count: {validator.TotalCount}");
+                }
+
+                // Simulate validation status
+                var p1 = extracted[0];
+                p1.IsHealthy = true;
+                p1.LatencyMs = 65;
+                p1.Anonymity = ProxyAnonymity.Elite;
+
+                var p2 = extracted[1];
+                p2.IsHealthy = true;
+                p2.LatencyMs = 180;
+                p2.Anonymity = ProxyAnonymity.Anonymous;
+
+                var p3 = extracted[2];
+                p3.IsHealthy = false;
+                p3.Failures = 3;
+
+                validator.AddOrUpdateCandidate(p1);
+                validator.AddOrUpdateCandidate(p2);
+                validator.AddOrUpdateCandidate(p3);
+
+                var healthy = validator.GetHealthyProxies();
+                if (healthy.Count != 2)
+                {
+                    throw new Exception($"GetHealthyProxies returned {healthy.Count}, expected 2.");
+                }
+
+                var eliteOnly = validator.GetHealthyProxies(strictAnonymity: true);
+                if (eliteOnly.Count != 1 || eliteOnly[0].Endpoint != p1.Endpoint)
+                {
+                    throw new Exception("Strict anonymity filter failed!");
+                }
+
+                int pruned = validator.PruneDead(maxFailures: 2);
+                Log($"Pruned {pruned} dead proxies (expected >= 1).");
+                if (pruned < 1)
+                {
+                    throw new Exception("PruneDead failed to remove dead proxies!");
+                }
+                Log(" [PASS] Validator engine pool and filters verified successfully.");
+
+                // 3. Test Rotation Strategies (Round-Robin & Sticky Domain)
+                Log("[TEST 3/4] Testing Rotation Strategies (Round-Robin & Sticky Domain)...");
+                config.Strategy = RotationStrategy.RoundRobin;
+                var rot1 = router.SelectUpstreamProxy();
+                var rot2 = router.SelectUpstreamProxy();
+                if (rot1 == null || rot2 == null)
+                {
+                    throw new Exception("Round-robin router returned null proxy!");
+                }
+                Log($"Rotations: 1st -> {rot1.Endpoint}, 2nd -> {rot2.Endpoint}");
+
+                // Sticky Domain Test
+                config.Strategy = RotationStrategy.StickyDomain;
+                config.StickySessionMinutes = 5;
+                var stick1 = router.SelectUpstreamProxy(targetHost: "api.target.com");
+                var stick2 = router.SelectUpstreamProxy(targetHost: "api.target.com");
+                var stick3 = router.SelectUpstreamProxy(targetHost: "api.target.com");
+                if (stick1 == null || stick1.Endpoint != stick2?.Endpoint || stick1.Endpoint != stick3?.Endpoint)
+                {
+                    throw new Exception("Sticky Domain failed to retain identical proxy for same host!");
+                }
+                Log($"Sticky Domain affinity verified for host 'api.target.com' -> {stick1.Endpoint}");
+                Log(" [PASS] Rotation strategies verified successfully.");
+
+                // 4. Test Server Listener & Loopback End-to-End
+                Log("[TEST 4/4] Testing RotatingProxyServer Listener & Loopback Dispatch...");
+                var server = new RotatingProxyServer(config, router, () => new List<NetworkAdapterModel>());
+                server.Start();
+                if (!server.IsRunning)
+                {
+                    throw new Exception($"RotatingProxyServer failed to start on port {config.RotatingProxyPort}!");
+                }
+
+                // Probe listener socket
+                using (var probeSocket = new Socket(SocketType.Stream, ProtocolType.Tcp))
+                {
+                    probeSocket.Connect("127.0.0.1", config.RotatingProxyPort);
+                    if (!probeSocket.Connected)
+                    {
+                        throw new Exception("Could not connect to active RotatingProxyServer socket!");
+                    }
+                }
+
+                server.Stop();
+                if (server.IsRunning)
+                {
+                    throw new Exception("RotatingProxyServer failed to stop cleanly!");
+                }
+                Log(" [PASS] RotatingProxyServer listener and lifecycle verified successfully.");
+
+                Log("\n[ALL PASS] Rotating Proxy & Harvester Engine self-test PASSED with 100% SUCCESS!");
+                System.IO.File.WriteAllText("rotator_test.log", logSb.ToString());
+                Environment.Exit(0);
+                return;
+            }
+            catch (Exception ex)
+            {
+                Log($"\n[FAIL] Rotating Proxy self-test FAILED with exception: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
+                System.IO.File.WriteAllText("rotator_test.log", logSb.ToString());
+                Environment.Exit(1);
                 return;
             }
         }

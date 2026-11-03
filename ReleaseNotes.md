@@ -1,5 +1,42 @@
 # Release Notes
 
+## [2.1.0] - 2026-11-03 - Automated Rotating Proxy Harvester & Multi-NIC Egress Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🔄 Automated Rotating Proxy Harvester & Scraper**:
+  - Implemented `ProxyHarvesterService.cs` (`LinuxProxyHarvester.cs`, `MacProxyHarvester.cs`) to automatically scrape proxy candidate pools from maintained open-source repositories (*TheSpeedX*, *monosans*, *clarketm*, *proxyscrape API*) and custom user URLs/APIs.
+  - Universal regex parser extracts proxies from raw text, CSV, JSON, and HTML tables (`<td>IP</td><td>PORT</td>`) with support for `IP:PORT`, `PROTOCOL://IP:PORT`, and authenticated `IP:PORT:USER:PASS`.
+  - Automatically isolates and discards loopback and RFC 1918 private subnets.
+- **⚡ Parallel Multi-Protocol Health & Anonymity Validator**:
+  - Implemented `ProxyValidatorEngine.cs` using semaphore-bounded asynchronous probing for HTTP, HTTPS CONNECT, SOCKS4, and RFC 1928 SOCKS5 endpoints.
+  - Accurately measures real-time RTT latency (ms), verifies protocol compliance, detects anonymity levels (Elite, Anonymous, Transparent), and automatically prunes dead endpoints.
+- **🛡️ Dynamic Rotation & Sticky Session Engine**:
+  - Implemented `RotatingProxyRouter.cs` supporting:
+    - `Round Robin`: Rotates to a new proxy on every single request.
+    - `Sticky Domain`: Retains the same upstream proxy for requests targeting the same host, preserving login sessions and OAuth cookies.
+    - `Sticky Session`: Retains proxy affinity per client connection for a configurable duration (5–30 mins).
+    - `Lowest Latency`: Rotates among the fastest verified responsive proxies ($< 250\text{ ms}$).
+    - `Elite Only`: Restricts rotation strictly to high-anonymity Elite proxies.
+  - Transparent circuit breaker automatically re-routes failed requests through alternative healthy proxies before returning an error to the client.
+- **🌐 The "Double-Layer" Multi-NIC Egress MOAT**:
+  - Combines local multi-WAN physical socket binding (`Socket.Bind(adapterIp, 0)`) with global upstream proxy rotation.
+  - Outbound proxy traffic is distributed across local physical adapters (Ethernet, Wi-Fi, Cellular) to prevent local router bottlenecks while rotating global public WAN IPs.
+- **🎛️ Dual-Port Architecture & Smart PAC Integration**:
+  - Dedicated Rotating Proxy listener on port `8081` alongside high-speed bonded port `8080`.
+  - Added `PacAction.RotatingProxy` in PAC configurations, allowing users to direct scraping targets to port `8081` while streaming stays on port `8080`.
+- **💻 Cross-Platform Dashboard Parity**:
+  - Windows: Added dedicated "🔄 Rotating Proxy & Harvester" tab with live DataGrid, control bar, and telemetry.
+  - Linux & macOS: Added REST endpoints (`/api/rotating-proxy/*`) and dedicated Rotating Proxy view in Cyberpunk Web SPA.
+- **✅ Comprehensive Verification**:
+  - Added `--verify-rotator` self-test suite covering universal proxy regex extraction, validator pool management, rotation strategies, and loopback dispatch.
+  - 100% test pass rate across `--verify-rotator`, `--verify-throttling`, `--verify-persistence`, and `--verify-benchmark`.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.0-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.0-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.0-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.0.2] - 2026-11-02 - Speed Combining & Unified Bandwidth Pooling Release
 
 ### 🚀 Highlights & Engineering Advancements

@@ -506,7 +506,7 @@ public static class CyberpunkSpa
                 <p>MULTI-ADAPTER SPEED BONDING & QOS SHAPER</p>
             </div>
             <div class="header-badges">
-                <span class="badge badge-cyan">v2.0.2</span>
+                <span class="badge badge-cyan">v2.1.0</span>
                 <span class="badge">{{osName}}</span>
             </div>
         </div>
@@ -553,6 +553,7 @@ public static class CyberpunkSpa
             <button class="tab-btn" onclick="switchTab('tabAdapters')">🖧 Combined Adapters</button>
             <button class="tab-btn" onclick="switchTab('tabShaper')">🚀 Speed Shaper & QoS</button>
             <button class="tab-btn" onclick="switchTab('tabAudit')">📜 Connection Audit</button>
+            <button class="tab-btn" onclick="switchTab('tabRotator')">🔄 Rotating Proxy</button>
         </div>
 
         <!-- TAB 1: Overview -->
@@ -647,6 +648,61 @@ public static class CyberpunkSpa
                         </tr>
                     </thead>
                     <tbody id="auditRows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 5: Rotating Proxy & Harvester -->
+        <div id="tabRotator" class="tab-panel">
+            <div class="shaper-card" style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <div>
+                        <span style="font-size: 14px; font-weight: 700; color: var(--cyan);">AUTOMATED ROTATING PROXY HARVESTER &amp; DISPATCHER</span>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Harvests open-source proxies, evaluates anonymity &amp; latency, and rotates requests across physical adapters.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-cyber btn-cyber-primary" id="btnToggleRotator" onclick="toggleRotator()">▶ Start Rotator</button>
+                        <button class="btn-cyber" onclick="triggerHarvest()">⚡ Harvest Proxies</button>
+                        <button class="btn-cyber" onclick="triggerValidate()">🔍 Validate Pool</button>
+                    </div>
+                </div>
+                <div class="metrics-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 14px;">
+                    <div class="metric-card cyan">
+                        <div class="metric-title">Total Candidates</div>
+                        <div class="metric-value" id="rotatorPoolCount">0</div>
+                        <div class="metric-sub">In database</div>
+                    </div>
+                    <div class="metric-card emerald">
+                        <div class="metric-title">Verified Active</div>
+                        <div class="metric-value" id="rotatorHealthyCount">0</div>
+                        <div class="metric-sub">Ready to rotate</div>
+                    </div>
+                    <div class="metric-card purple">
+                        <div class="metric-title">Rotator Endpoint</div>
+                        <div class="metric-value" style="font-size: 18px;" id="rotatorEndpoint">127.0.0.1:8081</div>
+                        <div class="metric-sub" id="rotatorStatusPill">STOPPED</div>
+                    </div>
+                    <div class="metric-card amber">
+                        <div class="metric-title">Rotation Strategy</div>
+                        <div class="metric-value" style="font-size: 18px;" id="rotatorStrategy">Round Robin</div>
+                        <div class="metric-sub">Multi-NIC Bound</div>
+                    </div>
+                </div>
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>STATUS</th>
+                            <th>ENDPOINT</th>
+                            <th>PROTOCOL</th>
+                            <th>ANONYMITY</th>
+                            <th>LATENCY</th>
+                            <th>FAILURES</th>
+                            <th>SOURCE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rotatorRows">
+                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No proxies harvested yet. Click "⚡ Harvest Proxies" to populate.</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -1046,8 +1102,59 @@ public static class CyberpunkSpa
             ctx.stroke();
         }
 
+        async function fetchRotator() {
+            try {
+                const res = await fetch('/api/rotating-proxy/status');
+                const st = await res.json();
+                document.getElementById('rotatorPoolCount').innerText = st.poolCount;
+                document.getElementById('rotatorHealthyCount').innerText = st.healthyCount;
+                document.getElementById('rotatorEndpoint').innerText = '127.0.0.1:' + st.port;
+                document.getElementById('rotatorStrategy').innerText = st.strategy;
+                document.getElementById('rotatorStatusPill').innerText = st.isRunning ? 'ONLINE (ACTIVE)' : 'STOPPED';
+                document.getElementById('rotatorStatusPill').style.color = st.isRunning ? 'var(--emerald)' : 'var(--text-muted)';
+                document.getElementById('btnToggleRotator').innerText = st.isRunning ? '🛑 Stop Rotator' : '▶ Start Rotator';
+
+                if (currentTab === 'tabRotator') {
+                    const poolRes = await fetch('/api/rotating-proxy/pool');
+                    const pool = await poolRes.json();
+                    if (pool && pool.length > 0) {
+                        document.getElementById('rotatorRows').innerHTML = pool.map(p => `
+                            <tr>
+                                <td><span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${p.IsHealthy ? 'var(--emerald)' : 'var(--red)'}; color: #000;">${p.IsHealthy ? p.LatencyMs + 'ms' : 'FAIL'}</span></td>
+                                <td style="font-family: Consolas;">${p.Endpoint}</td>
+                                <td>${p.FormattedProtocol}</td>
+                                <td>${p.FormattedAnonymity}</td>
+                                <td>${p.LatencyMs} ms</td>
+                                <td>${p.Failures}</td>
+                                <td style="font-size: 10px; color: var(--text-muted);">${p.SourceUrl || 'Open-Source'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function triggerHarvest() {
+            await fetch('/api/rotating-proxy/harvest', { method: 'POST' });
+            alert('Harvesting initiated! Fresh candidate proxies are being scraped from open-source feeds.');
+            fetchRotator();
+        }
+
+        async function triggerValidate() {
+            await fetch('/api/rotating-proxy/validate', { method: 'POST' });
+            alert('Validation initiated! Testing health and latency in parallel.');
+            fetchRotator();
+        }
+
+        async function toggleRotator() {
+            await fetch('/api/rotating-proxy/toggle', { method: 'POST' });
+            fetchRotator();
+        }
+
         window.onload = () => {
             pollTelemetry();
+            fetchRotator();
+            setInterval(fetchRotator, 3000);
             drawWaveform();
         };
     </script>

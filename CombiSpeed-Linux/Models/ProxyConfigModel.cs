@@ -34,6 +34,9 @@ public class ProxyConfigModel
     public bool EnableVirtualBridge { get; set; } = false;
     public bool EnablePac { get; set; } = false;
 
+    // Rotating Proxy & Harvester Configuration
+    public RotatingProxyConfigModel RotatingProxy { get; set; } = new();
+
     // Accessibility preferences
     public bool IsHighContrast { get; set; } = false;
     public double UiScale { get; set; } = 1.0;

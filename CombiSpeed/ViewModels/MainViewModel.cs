@@ -61,6 +61,10 @@ public class MainViewModel : INotifyPropertyChanged
     private readonly ConfigurationStore _configStore = new();
     private readonly HealthMonitor _healthMonitor;
     private readonly ProxyEngine _proxyEngine;
+    private readonly ProxyHarvesterService _proxyHarvester = new();
+    private readonly ProxyValidatorEngine _proxyValidator = new();
+    private readonly RotatingProxyRouter _rotatingRouter;
+    private readonly RotatingProxyServer _rotatingProxyServer;
 
     private readonly DispatcherTimer _uiTimer;
     private readonly List<double> _downloadHistory = new(new double[60]);
@@ -105,7 +109,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.2";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.0";
         }
     }
 
@@ -114,8 +118,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.2";
-            return $"{verStr} (Build 16)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.0";
+            return $"{verStr} (Build 17)";
         }
     }
 
@@ -329,6 +333,15 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand SaveProfileCommand { get; }
     public ICommand DeleteProfileCommand { get; }
 
+    // Rotating Proxy & Harvester Commands
+    public ICommand HarvestProxiesCommand { get; }
+    public ICommand ValidatePoolCommand { get; }
+    public ICommand PruneDeadProxiesCommand { get; }
+    public ICommand ClearProxiesCommand { get; }
+    public ICommand ExportWorkingProxiesCommand { get; }
+    public ICommand ImportProxiesFileCommand { get; }
+    public ICommand ToggleRotatingProxyCommand { get; }
+
     public SpeedTester SpeedTesterService => _speedTester;
     public LoadBalancerEngine LoadBalancerService => _loadBalancer;
 
@@ -347,6 +360,43 @@ public class MainViewModel : INotifyPropertyChanged
         SaveCurrentSettingsCommand = new RelayCommand(SaveCurrentCombinationImmediate);
         SaveProfileCommand = new RelayCommand(SaveCurrentCombinationImmediate);
         DeleteProfileCommand = new RelayCommand(DeleteCurrentProfile);
+
+        // Rotating Proxy Commands
+        HarvestProxiesCommand = new RelayCommand(async () => await HarvestProxiesAsync());
+        ValidatePoolCommand = new RelayCommand(async () => await ValidatePoolAsync());
+        PruneDeadProxiesCommand = new RelayCommand(PruneDeadProxies);
+        ClearProxiesCommand = new RelayCommand(ClearProxies);
+        ExportWorkingProxiesCommand = new RelayCommand(async () => await ExportWorkingProxiesAsync());
+        ImportProxiesFileCommand = new RelayCommand(async () => await ImportProxiesFileAsync());
+        ToggleRotatingProxyCommand = new RelayCommand(ToggleRotatingProxy);
+
+        _rotatingRouter = new RotatingProxyRouter(_proxyValidator, Config.RotatingProxy, _loadBalancer);
+        _rotatingProxyServer = new RotatingProxyServer(Config.RotatingProxy, _rotatingRouter, () => _networkDetector.GetAllCached());
+
+        _rotatingProxyServer.OnLog += log =>
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                AuditLogs.Insert(0, new AuditLogModel { Protocol = "ROTATOR", TargetHost = log, Status = "OK", Timestamp = DateTime.Now });
+                while (AuditLogs.Count > 100) AuditLogs.RemoveAt(AuditLogs.Count - 1);
+            });
+        };
+
+        _proxyValidator.OnLog += msg =>
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                HarvestStatusText = msg;
+            });
+        };
+
+        _proxyHarvester.OnLog += msg =>
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                HarvestStatusText = msg;
+            });
+        };
 
         // Restore saved Config
         if (_configStore.Data.Config != null)
@@ -696,6 +746,9 @@ public class MainViewModel : INotifyPropertyChanged
                 await _virtualBridgeManager.StopBridgeAsync();
             }
 
+            _rotatingProxyServer.Stop();
+            IsRotatingProxyRunning = false;
+
             await _proxyEngine.StopAsync();
             IsEngineRunning = false;
         }
@@ -707,6 +760,12 @@ public class MainViewModel : INotifyPropertyChanged
 
             await _proxyEngine.StartAsync(Config.HttpPort, Config.SocksPort);
             IsEngineRunning = true;
+
+            if (Config.RotatingProxy.EnableRotatingProxy)
+            {
+                _rotatingProxyServer.Start();
+                IsRotatingProxyRunning = _rotatingProxyServer.IsRunning;
+            }
 
             if (Config.EnableVirtualBridge)
             {
@@ -892,6 +951,279 @@ public class MainViewModel : INotifyPropertyChanged
         Config.IsScreenReaderOptimized = IsScreenReaderOptimized;
         _configStore.SaveImmediate(Adapters, Config, ActiveProfileName);
         AutoSaveStatusText = "Accessibility Settings Saved";
+    }
+
+    // ==========================================
+    // ROTATING PROXY & HARVESTER SUBSYSTEM
+    // ==========================================
+
+    public ObservableCollection<HarvestedProxyModel> HarvestedProxies { get; } = new();
+
+    private int _totalHarvestedCount;
+    public int TotalHarvestedCount
+    {
+        get => _totalHarvestedCount;
+        set => SetField(ref _totalHarvestedCount, value);
+    }
+
+    private int _verifiedHealthyCount;
+    public int VerifiedHealthyCount
+    {
+        get => _verifiedHealthyCount;
+        set => SetField(ref _verifiedHealthyCount, value);
+    }
+
+    private int _averagePingMs;
+    public int AveragePingMs
+    {
+        get => _averagePingMs;
+        set => SetField(ref _averagePingMs, value);
+    }
+
+    private bool _isHarvestingOrValidating;
+    public bool IsHarvestingOrValidating
+    {
+        get => _isHarvestingOrValidating;
+        set => SetField(ref _isHarvestingOrValidating, value);
+    }
+
+    private string _harvestStatusText = "Ready to harvest open-source proxies";
+    public string HarvestStatusText
+    {
+        get => _harvestStatusText;
+        set => SetField(ref _harvestStatusText, value);
+    }
+
+    private int _harvestProgress;
+    public int HarvestProgress
+    {
+        get => _harvestProgress;
+        set => SetField(ref _harvestProgress, value);
+    }
+
+    private bool _isRotatingProxyRunning;
+    public bool IsRotatingProxyRunning
+    {
+        get => _isRotatingProxyRunning;
+        set => SetField(ref _isRotatingProxyRunning, value);
+    }
+
+    public ObservableCollection<string> RotationStrategies { get; } = new()
+    {
+        "Round Robin (Per-Request)",
+        "Sticky Domain (Host Affinity)",
+        "Sticky Session (Duration)",
+        "Lowest Latency (Fastest)",
+        "Elite Anonymity Only"
+    };
+
+    private string _selectedRotationStrategy = "Round Robin (Per-Request)";
+    public string SelectedRotationStrategy
+    {
+        get => _selectedRotationStrategy;
+        set
+        {
+            if (SetField(ref _selectedRotationStrategy, value))
+            {
+                Config.RotatingProxy.Strategy = value switch
+                {
+                    "Sticky Domain (Host Affinity)" => RotationStrategy.StickyDomain,
+                    "Sticky Session (Duration)" => RotationStrategy.StickySession,
+                    "Lowest Latency (Fastest)" => RotationStrategy.LowestLatency,
+                    "Elite Anonymity Only" => RotationStrategy.EliteOnly,
+                    _ => RotationStrategy.RoundRobin
+                };
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
+    public bool ChainPhysicalAdapters
+    {
+        get => Config.RotatingProxy.ChainPhysicalAdapters;
+        set
+        {
+            if (Config.RotatingProxy.ChainPhysicalAdapters != value)
+            {
+                Config.RotatingProxy.ChainPhysicalAdapters = value;
+                OnPropertyChanged();
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
+    public bool StrictAnonymity
+    {
+        get => Config.RotatingProxy.StrictAnonymity;
+        set
+        {
+            if (Config.RotatingProxy.StrictAnonymity != value)
+            {
+                Config.RotatingProxy.StrictAnonymity = value;
+                OnPropertyChanged();
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
+    public int RotatingProxyPort
+    {
+        get => Config.RotatingProxy.RotatingProxyPort;
+        set
+        {
+            if (Config.RotatingProxy.RotatingProxyPort != value && value > 1024 && value < 65535)
+            {
+                Config.RotatingProxy.RotatingProxyPort = value;
+                OnPropertyChanged();
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
+    public async Task HarvestProxiesAsync()
+    {
+        if (IsHarvestingOrValidating) return;
+        IsHarvestingOrValidating = true;
+        HarvestProgress = 10;
+        HarvestStatusText = "Harvesting from open-source repositories & feeds...";
+
+        try
+        {
+            var sources = RotatingProxyConfigModel.GetDefaultSources();
+            if (Config.RotatingProxy.CustomSources != null && Config.RotatingProxy.CustomSources.Count > 0)
+            {
+                sources.AddRange(Config.RotatingProxy.CustomSources);
+            }
+
+            var harvested = await _proxyHarvester.HarvestAllAsync(sources, Config.RotatingProxy.MaxPoolSize);
+            _proxyValidator.AddCandidates(harvested);
+
+            HarvestProgress = 60;
+            HarvestStatusText = $"Harvested {harvested.Count} candidates. Validating top candidates...";
+
+            var toValidate = harvested.Take(80).ToList();
+            var prog = new Progress<int>(pct => HarvestProgress = 60 + (pct * 40 / 100));
+            await _proxyValidator.ValidateAllAsync(toValidate, Config.RotatingProxy.ConcurrencyLimit, Config.RotatingProxy.MaxTimeoutMs, prog);
+
+            RefreshProxyCollection();
+            HarvestStatusText = $"Harvest complete! {VerifiedHealthyCount} verified working proxies in pool.";
+        }
+        catch (Exception ex)
+        {
+            HarvestStatusText = $"Harvest error: {ex.Message}";
+        }
+        finally
+        {
+            HarvestProgress = 100;
+            IsHarvestingOrValidating = false;
+        }
+    }
+
+    public async Task ValidatePoolAsync()
+    {
+        if (IsHarvestingOrValidating || _proxyValidator.TotalCount == 0) return;
+        IsHarvestingOrValidating = true;
+        HarvestProgress = 0;
+        HarvestStatusText = "Validating proxy pool...";
+
+        try
+        {
+            var prog = new Progress<int>(pct => HarvestProgress = pct);
+            await _proxyValidator.ValidateAllAsync(null, Config.RotatingProxy.ConcurrencyLimit, Config.RotatingProxy.MaxTimeoutMs, prog);
+            RefreshProxyCollection();
+            HarvestStatusText = $"Validation complete. {VerifiedHealthyCount} healthy proxies verified.";
+        }
+        catch (Exception ex)
+        {
+            HarvestStatusText = $"Validation error: {ex.Message}";
+        }
+        finally
+        {
+            HarvestProgress = 100;
+            IsHarvestingOrValidating = false;
+        }
+    }
+
+    public void PruneDeadProxies()
+    {
+        int pruned = _proxyValidator.PruneDead();
+        RefreshProxyCollection();
+        HarvestStatusText = $"Pruned {pruned} dead proxies from pool.";
+    }
+
+    public void ClearProxies()
+    {
+        _proxyValidator.Clear();
+        RefreshProxyCollection();
+        HarvestStatusText = "Proxy pool cleared.";
+    }
+
+    public async Task ExportWorkingProxiesAsync()
+    {
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
+            FileName = "working_proxies.txt"
+        };
+
+        if (sfd.ShowDialog() == true)
+        {
+            await _proxyHarvester.ExportToFileAsync(sfd.FileName, _proxyValidator.AllProxies, workingOnly: true);
+            HarvestStatusText = $"Exported working proxies to {System.IO.Path.GetFileName(sfd.FileName)}";
+        }
+    }
+
+    public async Task ImportProxiesFileAsync()
+    {
+        var ofd = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Text & CSV Files (*.txt;*.csv)|*.txt;*.csv|All Files (*.*)|*.*"
+        };
+
+        if (ofd.ShowDialog() == true)
+        {
+            var imported = await _proxyHarvester.ImportFromFileAsync(ofd.FileName);
+            _proxyValidator.AddCandidates(imported);
+            RefreshProxyCollection();
+            HarvestStatusText = $"Imported {imported.Count} proxies. Click Validate Pool to test them.";
+        }
+    }
+
+    public void ToggleRotatingProxy()
+    {
+        if (IsRotatingProxyRunning)
+        {
+            _rotatingProxyServer.Stop();
+            IsRotatingProxyRunning = false;
+            HarvestStatusText = "Rotating proxy server stopped.";
+        }
+        else
+        {
+            _rotatingProxyServer.Start();
+            IsRotatingProxyRunning = _rotatingProxyServer.IsRunning;
+            HarvestStatusText = IsRotatingProxyRunning
+                ? $"Rotating proxy server active on port {RotatingProxyPort}"
+                : "Failed to start rotating proxy server.";
+        }
+    }
+
+    private void RefreshProxyCollection()
+    {
+        Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            HarvestedProxies.Clear();
+            var all = _proxyValidator.AllProxies.OrderByDescending(p => p.IsHealthy).ThenBy(p => p.LatencyMs).Take(300);
+            foreach (var p in all)
+            {
+                HarvestedProxies.Add(p);
+            }
+
+            TotalHarvestedCount = _proxyValidator.TotalCount;
+            VerifiedHealthyCount = _proxyValidator.HealthyCount;
+
+            var healthy = _proxyValidator.GetHealthyProxies();
+            AveragePingMs = healthy.Count > 0 ? (int)healthy.Average(p => p.LatencyMs) : 0;
+        });
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

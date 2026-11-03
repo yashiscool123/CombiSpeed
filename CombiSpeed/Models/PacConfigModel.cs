@@ -54,7 +54,7 @@ public class PacConfigModel : INotifyPropertyChanged
     /// <summary>
     /// Compiles user-defined domain rules into a standard, RFC-compliant JavaScript PAC function.
     /// </summary>
-    public string GeneratePacScript(int httpPort = 8080, int socksPort = 1080)
+    public string GeneratePacScript(int httpPort = 8080, int socksPort = 1080, int rotatingPort = 8081)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// CombiSpeed Dynamic Proxy Auto-Config (PAC) Script");
@@ -94,6 +94,7 @@ public class PacConfigModel : INotifyPropertyChanged
             {
                 PacAction.Direct => "\"DIRECT\"",
                 PacAction.Socks5Only => $"\"SOCKS5 127.0.0.1:{socksPort}; SOCKS 127.0.0.1:{socksPort}; DIRECT\"",
+                PacAction.RotatingProxy => $"\"PROXY 127.0.0.1:{rotatingPort}; DIRECT\"",
                 _ => $"\"PROXY 127.0.0.1:{httpPort}; SOCKS5 127.0.0.1:{socksPort}; DIRECT\""
             };
 

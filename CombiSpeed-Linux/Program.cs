@@ -12,7 +12,7 @@ public class Program
         // 1. Version information
         if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) || a.Equals("-v", StringComparison.OrdinalIgnoreCase)))
         {
-            Console.WriteLine("CombiSpeed v2.0.2 (Build 16) - Linux Edition");
+            Console.WriteLine("CombiSpeed v2.1.0 (Build 17) - Linux Edition");
             Console.WriteLine("Multi-WAN Channel Bonding & Dynamic Bandwidth QoS Shaper");
             Console.WriteLine("Platform: Linux x64/arm64 (.NET 8.0)");
             return;
@@ -149,7 +149,7 @@ public class Program
                                         a.Equals("--daemon", StringComparison.OrdinalIgnoreCase));
 
         Console.WriteLine("=====================================================================");
-        Console.WriteLine("   CombiSpeed v2.0.2 - Multi-WAN Bandwidth Aggregator (Linux)        ");
+        Console.WriteLine("   CombiSpeed v2.1.0 - Multi-WAN Bandwidth Aggregator (Linux)        ");
         Console.WriteLine("=====================================================================");
 
         var storageService = new LinuxSettingsStorage();
@@ -174,6 +174,12 @@ public class Program
         var bridgeMgr = new LinuxVirtualBridgeManager();
         if (configModel.EnableVirtualBridge) bridgeMgr.Connect(adapters.Count(a => a.IsEnabled));
 
+        var proxyHarvester = new LinuxProxyHarvester();
+        var proxyValidator = new LinuxProxyValidator();
+        var rotatingRouter = new LinuxRotatingProxyRouter(proxyValidator, configModel.RotatingProxy, loadBalancer);
+        var rotatingServer = new LinuxRotatingProxyServer(configModel.RotatingProxy, rotatingRouter, () => adapters);
+        if (configModel.RotatingProxy.EnableRotatingProxy) rotatingServer.Start();
+
         var dashboard = new EmbeddedDashboardServer(
             configModel,
             adapters,
@@ -182,12 +188,16 @@ public class Program
             throttlerEngine,
             proxyMgr,
             bridgeMgr,
-            storageService);
+            storageService,
+            rotatingServer,
+            proxyHarvester,
+            proxyValidator);
 
         dashboard.Start(openBrowser: !isHeadless);
 
         Console.WriteLine($"[CombiSpeed Linux] SOCKS5 Proxy listening on 127.0.0.1:{configModel.SocksPort}");
         Console.WriteLine($"[CombiSpeed Linux] HTTP Proxy listening on 127.0.0.1:{configModel.HttpPort}");
+        Console.WriteLine($"[CombiSpeed Linux] Rotating Proxy listening on 127.0.0.1:{configModel.RotatingProxy.RotatingProxyPort}");
         Console.WriteLine($"[CombiSpeed Linux] Dynamic PAC URL: http://127.0.0.1:{configModel.HttpPort}/proxy.pac");
         Console.WriteLine($"[CombiSpeed Linux] Web UI Dashboard: http://127.0.0.1:{dashboard.Port}/");
         Console.WriteLine("[CombiSpeed Linux] Press Ctrl+C to terminate cleanly.");
@@ -199,6 +209,7 @@ public class Program
             Console.WriteLine("\n[CombiSpeed Linux] Shutting down cleanly...");
             healthMonitor.Stop();
             proxyEngine.Stop();
+            rotatingServer.Stop();
             dashboard.Stop();
             proxyMgr.Disable();
             tcs.TrySetResult();

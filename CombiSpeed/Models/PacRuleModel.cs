@@ -5,9 +5,10 @@ namespace CombiSpeed.Models;
 
 public enum PacAction
 {
-    Bonded,   // Route through CombiSpeed multi-WAN bonded pipeline
-    Direct,   // Bypass proxy directly through default network
-    Socks5Only // Route explicitly through SOCKS5
+    Bonded,         // Route through CombiSpeed multi-WAN bonded pipeline
+    Direct,         // Bypass proxy directly through default network
+    Socks5Only,     // Route explicitly through SOCKS5
+    RotatingProxy   // Route through CombiSpeed Rotating Proxy pool (port 8081)
 }
 
 public class PacRuleModel : INotifyPropertyChanged
