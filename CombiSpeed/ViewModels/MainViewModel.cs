@@ -1130,12 +1130,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         try
         {
-            var sources = RotatingProxyConfigModel.GetDefaultSources();
-            if (Config.RotatingProxy.CustomSources != null && Config.RotatingProxy.CustomSources.Count > 0)
-            {
-                sources.AddRange(Config.RotatingProxy.CustomSources);
-            }
-
+            var sources = Config.RotatingProxy.GetEffectiveSources();
             var harvested = await _proxyHarvester.HarvestAllAsync(sources, Config.RotatingProxy.MaxPoolSize);
             _proxyValidator.AddCandidates(harvested);
 

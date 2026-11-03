@@ -664,6 +664,7 @@ public static class CyberpunkSpa
                         <button class="btn-cyber btn-cyber-primary" id="btnToggleRotator" onclick="toggleRotator()">▶ Start Rotator</button>
                         <button class="btn-cyber" onclick="triggerHarvest()">⚡ Harvest Proxies</button>
                         <button class="btn-cyber" onclick="triggerValidate()">🔍 Validate Pool</button>
+                        <button class="btn-cyber" onclick="openSourcesModal()">🌐 Sources...</button>
                     </div>
                 </div>
                 <div class="metrics-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 14px;">
@@ -832,6 +833,34 @@ public static class CyberpunkSpa
                 <div id="testAdapterList" style="margin-top: 18px; text-align: left; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;"></div>
                 <p id="testStatus" style="font-size: 12px; color: var(--text-muted); margin-top: 14px;">Ready to run multi-stream speed test across all active adapters.</p>
                 <button id="btnRunTest" class="btn-cyber btn-cyber-primary" style="margin-top: 18px; width: 100%;" onclick="runBenchmark()">Start Benchmark</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proxy Repository Sources & URLs Modal -->
+    <div id="modalProxySources" class="modal-overlay">
+        <div class="modal-card" style="max-width: 650px; width: 90%;">
+            <div class="modal-header">
+                <h2 style="font-size: 15px; color: var(--cyan);">🌐 PROXY REPOSITORY SOURCES &amp; FEED URLS</h2>
+                <button class="btn-cyber" onclick="closeModal('modalProxySources')">✕</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                <p style="font-size: 11px; color: var(--text-muted); margin: 0;">
+                    Bulk add or edit proxy repository and feed URLs (one URL per line). Lines starting with # or // are ignored.
+                </p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; color: var(--cyan); font-weight: bold;" id="sourcesCountBadge">Active URLs: 0</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn-cyber" style="font-size: 11px; padding: 4px 8px;" onclick="resetSourcesToDefault()">↺ Reset Defaults</button>
+                        <button class="btn-cyber" style="font-size: 11px; padding: 4px 8px;" onclick="document.getElementById('txtProxySourcesArea').value = ''; updateSourcesCount();">🧹 Clear</button>
+                    </div>
+                </div>
+                <textarea id="txtProxySourcesArea" class="select-dark" style="width: 100%; height: 260px; font-family: Consolas; font-size: 12px; line-height: 1.5; resize: vertical;" placeholder="https://raw.githubusercontent.com/...&#10;https://api.proxyscrape.com/..." oninput="updateSourcesCount()"></textarea>
+                <div id="sourcesFeedback" style="font-size: 11px; color: var(--emerald); min-height: 16px;"></div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                    <button class="btn-cyber" onclick="closeModal('modalProxySources')">Cancel</button>
+                    <button class="btn-cyber btn-cyber-primary" onclick="saveProxySources()">💾 Save Sources</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1195,6 +1224,53 @@ public static class CyberpunkSpa
         async function toggleRotator() {
             await fetch('/api/rotating-proxy/toggle', { method: 'POST' });
             fetchRotator();
+        }
+
+        async function openSourcesModal() {
+            try {
+                const res = await fetch('/api/rotating-proxy/sources');
+                const data = await res.json();
+                document.getElementById('txtProxySourcesArea').value = data.rawText || '';
+                updateSourcesCount();
+                document.getElementById('sourcesFeedback').innerText = '';
+                document.getElementById('modalProxySources').classList.add('open');
+            } catch (err) {
+                alert('Failed to load proxy sources: ' + err.message);
+            }
+        }
+
+        function updateSourcesCount() {
+            const text = document.getElementById('txtProxySourcesArea').value || '';
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#') && !l.startsWith('//') && (l.startsWith('http://') || l.startsWith('https://')));
+            document.getElementById('sourcesCountBadge').innerText = 'Active URLs: ' + lines.length;
+        }
+
+        async function resetSourcesToDefault() {
+            try {
+                const res = await fetch('/api/rotating-proxy/sources/reset', { method: 'POST' });
+                const data = await res.json();
+                document.getElementById('txtProxySourcesArea').value = (data.sources || []).join('\n');
+                updateSourcesCount();
+                document.getElementById('sourcesFeedback').innerText = 'Restored ' + data.count + ' default repository URLs.';
+            } catch (err) {
+                document.getElementById('sourcesFeedback').innerText = 'Reset error: ' + err.message;
+            }
+        }
+
+        async function saveProxySources() {
+            const rawText = document.getElementById('txtProxySourcesArea').value || '';
+            try {
+                const res = await fetch('/api/rotating-proxy/sources', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rawText })
+                });
+                const data = await res.json();
+                document.getElementById('sourcesFeedback').innerText = 'Saved ' + data.count + ' repository URLs successfully!';
+                setTimeout(() => { closeModal('modalProxySources'); }, 800);
+            } catch (err) {
+                document.getElementById('sourcesFeedback').innerText = 'Save error: ' + err.message;
+            }
         }
 
         window.onload = () => {

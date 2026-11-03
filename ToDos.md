@@ -324,3 +324,16 @@
 - [x] Rebuild and publish release artifacts in publish/ for Windows, Linux, and macOS (v2.1.2 Build 19).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Check in code and tag v2.1.2 in git.
+
+## Milestone 21: Bulk Add & Edit Proxy Repository Sources / URLs [COMPLETED]
+- [x] Increment version to 2.1.3 and versionCode: 20 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Enhance RotatingProxyConfigModel with RepositorySources, GetEffectiveSources(), SetSourcesFromText(), and ResetSourcesToDefault() across Windows, Linux, and macOS.
+- [x] Create Windows WPF ProxySourcesDialog.xaml and ProxySourcesDialog.xaml.cs with bulk multi-line text editor, active URL live counter, clipboard paste, and guidelines.
+- [x] Add "🌐 Sources..." button to Tab 4 toolbar in MainWindow.xaml and wire event handler in MainWindow.xaml.cs.
+- [x] Implement REST API endpoints in Linux and macOS EmbeddedDashboardServer.cs: GET /api/rotating-proxy/sources, POST /api/rotating-proxy/sources, and POST /api/rotating-proxy/sources/reset.
+- [x] Integrate interactive Cyberpunk Web modal in CyberpunkSpa.cs for Linux and macOS with live AJAX persistence.
+- [x] Wire effective sources into manual harvester and background 30-minute auto-harvest scheduler across all platforms.
+- [x] Add [TEST 6/6] to --verify-rotator test suite validating bulk multi-line parsing, comment stripping, URL validation, and reset to defaults (100% pass rate).
+- [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.3 Build 20).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.3.

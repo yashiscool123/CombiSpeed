@@ -81,6 +81,11 @@ public class RotatingProxyConfigModel
 
     public List<string> CustomSources { get; set; } = new();
 
+    /// <summary>
+    /// Complete list of active proxy repository and feed URLs used by the harvester.
+    /// </summary>
+    public List<string> RepositorySources { get; set; } = GetDefaultSources();
+
     public static List<string> GetDefaultSources() => new()
     {
         "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
@@ -90,5 +95,85 @@ public class RotatingProxyConfigModel
         "https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt",
         "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"
     };
+
+    /// <summary>
+    /// Returns the active combined list of proxy repository sources.
+    /// </summary>
+    public List<string> GetEffectiveSources()
+    {
+        var list = new List<string>();
+        if (RepositorySources != null && RepositorySources.Count > 0)
+        {
+            list.AddRange(RepositorySources);
+        }
+        else
+        {
+            list.AddRange(GetDefaultSources());
+        }
+
+        if (CustomSources != null && CustomSources.Count > 0)
+        {
+            list.AddRange(CustomSources);
+        }
+
+        return list.Where(u => !string.IsNullOrWhiteSpace(u))
+                   .Select(u => u.Trim())
+                   .Distinct(StringComparer.OrdinalIgnoreCase)
+                   .ToList();
+    }
+
+    /// <summary>
+    /// Resets repository sources back to official default open-source feeds.
+    /// </summary>
+    public void ResetSourcesToDefault()
+    {
+        RepositorySources = GetDefaultSources();
+        CustomSources.Clear();
+    }
+
+    /// <summary>
+    /// Parses and bulk-imports repository URLs from multi-line text (ignoring empty lines and # comments).
+    /// </summary>
+    public int SetSourcesFromText(string rawText)
+    {
+        if (string.IsNullOrWhiteSpace(rawText))
+        {
+            RepositorySources = new List<string>();
+            return 0;
+        }
+
+        var lines = rawText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var validUrls = new List<string>();
+
+        foreach (var rawLine in lines)
+        {
+            string line = rawLine.Trim();
+            if (string.IsNullOrEmpty(line) || line.StartsWith("#") || line.StartsWith("//"))
+            {
+                continue;
+            }
+
+            if (Uri.TryCreate(line, UriKind.Absolute, out var uri) &&
+                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                if (!validUrls.Contains(line, StringComparer.OrdinalIgnoreCase))
+                {
+                    validUrls.Add(line);
+                }
+            }
+        }
+
+        RepositorySources = validUrls;
+        return validUrls.Count;
+    }
+
+    /// <summary>
+    /// Serializes effective sources into multi-line text format.
+    /// </summary>
+    public string GetSourcesAsText()
+    {
+        var sources = GetEffectiveSources();
+        return string.Join(Environment.NewLine, sources);
+    }
 }
 

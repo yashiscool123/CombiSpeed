@@ -1,5 +1,29 @@
 # Release Notes
 
+## [2.1.3] - 2026-11-03 - Bulk Proxy Repository Sources Management Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🌐 Bulk Proxy Repository Sources & Feed URLs Management**:
+  - **Configurable Repository Sources**: Added `RepositorySources` to `RotatingProxyConfigModel` across Windows, Linux, and macOS, allowing users to define, edit, add, or customize raw text repository URLs, GitHub raw files, and JSON APIs.
+  - **Bulk Multi-Line Parsing & Sanitization**: Implemented `SetSourcesFromText()`, stripping inline/full-line comments (`#` or `//`), ignoring blank lines, validating HTTP/HTTPS URL syntax, and de-duplicating feeds.
+  - **Reset to Verified Defaults**: Added 1-click restore functionality to re-populate the official verified open-source proxy repositories (*TheSpeedX*, *monosans*, *clarketm*, *proxyscrape API*).
+- **🖥️ Windows WPF `ProxySourcesDialog.xaml` Modal**:
+  - Added dedicated **"🌐 Sources..."** button to Tab 4 toolbar in `MainWindow.xaml`.
+  - Created accessible dark cyberpunk glassmorphic modal with real-time active URL counter badge, clipboard pasting, guidelines, and instant configuration persistence.
+- **🐧 Linux & 🍎 macOS REST APIs & Cyberpunk Web Modal**:
+  - Implemented `/api/rotating-proxy/sources` (`GET`, `POST`) and `/api/rotating-proxy/sources/reset` (`POST`) endpoints in embedded dashboard servers.
+  - Integrated interactive Cyberpunk SPA modal in `CyberpunkSpa.cs` with live URL counting, textarea editor, and seamless AJAX persistence.
+- **🔄 Harvester & Background Scheduler Integration**:
+  - Wired `GetEffectiveSources()` directly into manual harvester triggers and autonomous 30-minute background auto-harvest timers.
+- **✅ Automated Verification**:
+  - Added `[TEST 6/6]` to `--verify-rotator` CLI suite verifying bulk ingestion, comment stripping, URL validation, and default reset with 100% pass rate.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.3-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.3-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.3-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.2] - 2026-11-03 - Windows Executable XAML Startup Fix & Crash Resilience Release
 
 ### 🚀 Highlights & Engineering Advancements

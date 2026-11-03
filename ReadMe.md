@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.1.2%20(Build%2019)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.1.3%20(Build%2020)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -29,9 +29,11 @@ This bypasses default routing limitations and forces traffic simultaneously acro
 
 ## 🚀 Key Features
 
-1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1)**:
+1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1 & v2.1.3)**:
    - **Multi-Source Open-Source Proxy Harvester**:
      Automatically scrapes fresh proxy candidate pools from top-tier maintained open-source repositories and APIs out of the box (*TheSpeedX/PROXY-List*, *monosans/proxy-list*, *clarketm/proxy-list*, *proxyscrape API*), custom user URLs/APIs, pastebins, or local `.txt` lists.
+   - **Bulk Proxy Repository Sources & Feed URLs Management (NEW in v2.1.3)**:
+     Allows users to bulk add, view, edit, or customize any number of proxy feed URLs and repository endpoints. Features multi-line text editing (`ProxySourcesDialog.xaml` in Windows, Web modal in Linux/macOS SPAs), live URL counting, automatic comment ignoring (`#` or `//`), HTTP/HTTPS URL validation, de-duplication, clipboard pasting, and 1-click restore to verified default repositories.
    - **Universal Heuristic Regex & JSON API Scraper**:
      Intelligently extracts proxies from unstructured plain text, CSV, JSON arrays/objects (`{"ip":"...", "port":8080, "country":"US"}`), and HTML tables (`<td>IP</td><td>PORT</td><td>Country</td>`) supporting `IP:PORT`, `PROTOCOL://IP:PORT`, and authenticated `IP:PORT:USER:PASS` lines. Automatically isolates and purges RFC 1918 private subnets and loopback addresses.
    - **High-Concurrency Multi-Protocol Validator**:

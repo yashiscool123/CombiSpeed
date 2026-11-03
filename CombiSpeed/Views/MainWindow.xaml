@@ -671,6 +671,7 @@
                                         <Button Content="{Binding IsRotatingProxyRunning, Converter={StaticResource BoolToRotatorStatusConverter}}" Command="{Binding ToggleRotatingProxyCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold"/>
                                         <Button Content="⚡ Harvest Proxies" Command="{Binding HarvestProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold"/>
                                         <Button Content="🔍 Validate Pool" Command="{Binding ValidatePoolCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8"/>
+                                        <Button Content="🌐 Sources..." Click="OpenProxySources_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8" ToolTip="Bulk add, edit, or customize proxy repository URLs &amp; APIs" AutomationProperties.Name="Bulk Add and Edit Proxy Repository Sources"/>
                                         <Button Content="💾 Export Working" Command="{Binding ExportWorkingProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8"/>
                                         <Button Content="📂 Import File" Command="{Binding ImportProxiesFileCommand}" Style="{StaticResource CyberButton}" Padding="12,8"/>
                                     </StackPanel>

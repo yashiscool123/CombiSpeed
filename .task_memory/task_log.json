@@ -326,6 +326,30 @@
                     "progress": "All tasks completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-021",
+            "userQuery": "Allow option to bulk add /edit the proxy repository sources / urls.",
+            "status": "completed",
+            "createdAt": "2026-11-03T17:00:00+05:30",
+            "updatedAt": "2026-11-03T17:14:00+05:30",
+            "progress": "Delivered Milestone 21: Bulk Add & Edit Proxy Repository Sources / URLs across Windows, Linux, and macOS. Implemented multi-line parser SetSourcesFromText() with comment ignoring (#, //), de-duplication, and URL validation. Created Windows WPF ProxySourcesDialog.xaml with real-time URL count, clipboard pasting, and reset to defaults. Added REST endpoints (/api/rotating-proxy/sources, /api/rotating-proxy/sources/reset) and responsive Cyberpunk Web modal in Linux/macOS. Updated harvester and 30m auto-harvest scheduler. Passed 100% of diagnostic tests ([TEST 6/6] in --verify-rotator). Published release v2.1.3 (Build 20).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2101",
+                    "timestamp": "2026-11-03T17:01:00+05:30",
+                    "inputs": "User requested: Allow option to bulk add /edit the proxy repository sources / urls.",
+                    "outputs": "Architected Bulk Sources Management: (1) RotatingProxyConfigModel.RepositorySources with GetEffectiveSources(), SetSourcesFromText(), and ResetSourcesToDefault(); (2) Windows WPF ProxySourcesDialog.xaml with bulk multi-line editor, real-time count, validation, and clipboard paste; (3) Linux & macOS REST endpoints (/api/rotating-proxy/sources) and interactive Web SPA modal; (4) Harvester & Scheduler integration; (5) Unit testing & verification.",
+                    "progress": "Task registered and architecture established."
+                },
+                {
+                    "checkpointId": "CP-2102",
+                    "timestamp": "2026-11-03T17:14:00+05:30",
+                    "inputs": "Implementation, cross-platform compilation, automated test verification, documentation, and release packaging.",
+                    "outputs": "Created ProxySourcesDialog.xaml/.cs, updated MainWindow.xaml/.cs, updated EmbeddedDashboardServer.cs and CyberpunkSpa.cs, updated ProxySchedulerService and harvesters. Added [TEST 6/6] to --verify-rotator (100% PASS). Bumped to v2.1.3 (Build 20). Published packages for Windows, Linux, and macOS in publish/.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
         }
     ]
 }

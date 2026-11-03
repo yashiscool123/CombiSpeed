@@ -104,4 +104,17 @@ public partial class MainWindow : Window
     {
         ViewModel?.OpenAccessibilityDialog();
     }
+
+    private void OpenProxySources_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+        var dlg = new ProxySourcesDialog(ViewModel.Config.RotatingProxy)
+        {
+            Owner = this
+        };
+        if (dlg.ShowDialog() == true)
+        {
+            ViewModel.SaveCurrentCombinationImmediate();
+        }
+    }
 }

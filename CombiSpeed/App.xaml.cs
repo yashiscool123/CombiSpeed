@@ -371,8 +371,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.2";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 19)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.3";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 20)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);
@@ -658,6 +658,36 @@ public partial class App : Application
                     scheduler.Stop();
                 }
                 Log(" [PASS] Country filtering, JSON feed extraction, and scheduler verified successfully.");
+
+                // 6. Test Bulk Proxy Repository Sources Management
+                Log("[TEST 6/6] Testing Bulk Proxy Sources Ingestion & Parsing...");
+                string testBulkSources = @"
+                    # Primary open-source feeds
+                    https://raw.githubusercontent.com/test/repo1/http.txt
+                    https://raw.githubusercontent.com/test/repo2/socks5.txt
+                    // Secondary comment line
+                    https://api.testscrape.com/v2/json
+                    not_a_valid_url
+                    ftp://invalid-scheme.com
+                    https://raw.githubusercontent.com/test/repo1/http.txt
+                ";
+                int imported = config.SetSourcesFromText(testBulkSources);
+                Log($"Imported {imported} valid URLs from multi-line text (expected 3).");
+                if (imported != 3 || config.RepositorySources.Count != 3)
+                {
+                    throw new Exception($"Bulk source parsing failed! Expected 3 valid sources, got {imported}");
+                }
+                var effective = config.GetEffectiveSources();
+                if (effective.Count != 3 || !effective.Contains("https://api.testscrape.com/v2/json"))
+                {
+                    throw new Exception("GetEffectiveSources failed to return parsed repository URLs!");
+                }
+                config.ResetSourcesToDefault();
+                if (config.RepositorySources.Count != 6)
+                {
+                    throw new Exception("ResetSourcesToDefault failed to restore default open-source list!");
+                }
+                Log(" [PASS] Bulk proxy repository sources parsing, de-duplication, and reset verified successfully.");
 
                 Log("\n[ALL PASS] Rotating Proxy & Harvester Engine self-test PASSED with 100% SUCCESS!");
                 System.IO.File.WriteAllText("rotator_test.log", logSb.ToString());

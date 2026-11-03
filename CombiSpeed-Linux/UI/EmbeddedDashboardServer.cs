@@ -217,13 +217,69 @@ public class EmbeddedDashboardServer
                 res.ContentLength64 = bytes.Length;
                 await res.OutputStream.WriteAsync(bytes);
             }
+            else if (path == "/api/rotating-proxy/sources" && req.HttpMethod == "GET")
+            {
+                var effective = _config.RotatingProxy.GetEffectiveSources();
+                var responseObj = new
+                {
+                    sources = effective,
+                    count = effective.Count,
+                    defaultSources = RotatingProxyConfigModel.GetDefaultSources(),
+                    rawText = string.Join("\n", effective)
+                };
+                string json = JsonSerializer.Serialize(responseObj);
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/sources" && req.HttpMethod == "POST")
+            {
+                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
+                string body = await reader.ReadToEndAsync();
+                var doc = JsonDocument.Parse(body);
+                int count = 0;
+                if (doc.RootElement.TryGetProperty("rawText", out var rawProp))
+                {
+                    count = _config.RotatingProxy.SetSourcesFromText(rawProp.GetString() ?? "");
+                }
+                else if (doc.RootElement.TryGetProperty("sources", out var sourcesProp) && sourcesProp.ValueKind == JsonValueKind.Array)
+                {
+                    var newSources = new List<string>();
+                    foreach (var elem in sourcesProp.EnumerateArray())
+                    {
+                        string? url = elem.GetString();
+                        if (!string.IsNullOrWhiteSpace(url)) newSources.Add(url.Trim());
+                    }
+                    _config.RotatingProxy.RepositorySources = newSources;
+                    count = newSources.Count;
+                }
+
+                _storage.Save(_adapters, _config);
+                string json = JsonSerializer.Serialize(new { status = "Saved", count, sources = _config.RotatingProxy.GetEffectiveSources() });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/sources/reset" && req.HttpMethod == "POST")
+            {
+                _config.RotatingProxy.ResetSourcesToDefault();
+                _storage.Save(_adapters, _config);
+                var effective = _config.RotatingProxy.GetEffectiveSources();
+                string json = JsonSerializer.Serialize(new { status = "Reset", count = effective.Count, sources = effective });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
             else if (path == "/api/rotating-proxy/harvest" && req.HttpMethod == "POST")
             {
                 _ = Task.Run(async () =>
                 {
                     if (_harvester != null && _validator != null)
                     {
-                        var sources = RotatingProxyConfigModel.GetDefaultSources();
+                        var sources = _config.RotatingProxy.GetEffectiveSources();
                         var harvested = await _harvester.HarvestAllAsync(sources, 500);
                         _validator.AddCandidates(harvested);
                         await _validator.ValidateAllAsync(harvested.Take(50), 30, 2000);

@@ -59,10 +59,7 @@ public class LinuxProxyScheduler : IDisposable
         try
         {
             OnLog?.Invoke("[Scheduler] Initiating scheduled background proxy harvest...");
-            var sources = RotatingProxyConfigModel.GetDefaultSources()
-                .Concat(_config.CustomSources)
-                .Distinct()
-                .ToList();
+            var sources = _config.GetEffectiveSources();
 
             var candidates = await _harvester.HarvestAllAsync(sources, _config.MaxPoolSize);
             _validator.AddCandidates(candidates);
