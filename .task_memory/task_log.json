@@ -446,6 +446,30 @@
                     "progress": "Milestone 25 completed with 100% verification and clean packaging."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-026",
+            "userQuery": "CombiSpeed encountered an unhandled error: Only one usage of each socket address (protocol/network address/port) is normally permitted at VirtualBridgeServer.StartAsync(Int32 port) line 42",
+            "status": "completed",
+            "createdAt": "2026-11-03T22:35:00+05:30",
+            "updatedAt": "2026-11-03T22:48:00+05:30",
+            "progress": "Delivered Milestone 26: Socket Address Reuse & Intelligent Port Conflict Self-Healing across Windows, Linux, and macOS. Resolved SocketException (10048 / 10013) during Virtual Bridge and proxy engine startups by configuring ExclusiveAddressUse = false and SO_REUSEADDR socket options. Implemented 20-attempt port conflict fallback scanning loops across all socket listeners with audit logging. Added safe cleanup of pre-existing bridge instances in VirtualBridgeManager. Shielded MainViewModel.TogglePowerAsync() and ToggleVirtualBridgeAsync() with top-level try-catch guards to protect the UI dispatcher thread. Added automated collision test to --verify-throttling (100% PASS). Bumped version to v2.1.8 (Build 25) and published release packages.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2601",
+                    "timestamp": "2026-11-03T22:38:00+05:30",
+                    "inputs": "Unhandled SocketException crash report in VirtualBridgeServer.StartAsync on port 8443 when turning on bonding or restarting bridge.",
+                    "outputs": "Diagnosed Windows socket address exclusivity and TIME_WAIT lingering. Configured ExclusiveAddressUse = false and SO_REUSEADDR on TcpListener.Server socket before binding. Added 20-port fallback scanning loops across VirtualBridgeServer, ProxyEngine, RotatingProxyServer, LinuxProxyEngine, MacProxyEngine, LinuxRotatingProxyServer, and MacRotatingProxyServer.",
+                    "progress": "Core socket listener and fallback engine changes applied."
+                },
+                {
+                    "checkpointId": "CP-2602",
+                    "timestamp": "2026-11-03T22:48:00+05:30",
+                    "inputs": "Verification, release packaging, documentation synchronization, and git check-in.",
+                    "outputs": "Added automated port collision test in --verify-throttling test suite (100% PASS). Built release packages in publish/ for Windows, Linux, and macOS under v2.1.8 (Build 25). Updated KnownIssues.md, ReadMe.md, ReleaseNotes.md, ToDos.md, and version definitions.",
+                    "progress": "Milestone 26 completed with 100% test pass rate and clean build."
+                }
+            ]
         }
     ]
 }

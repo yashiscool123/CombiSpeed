@@ -1,8 +1,8 @@
 {
   "$schema": "./version.schema.json",
-  "version": "2.1.7",
-  "versionCode": 24,
-  "releaseName": "CombiSpeed v2.1.7 - Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction",
+  "version": "2.1.8",
+  "versionCode": 25,
+  "releaseName": "CombiSpeed v2.1.8 - Socket Address Reuse & Port Conflict Self-Healing Release",
   "minWindowsVersion": "10.0.17763.0",
   "dotnetVersion": "8.0",
   "releaseDate": "2026-11-03"

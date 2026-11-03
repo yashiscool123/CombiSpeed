@@ -38,10 +38,67 @@ public class VirtualBridgeServer : IDisposable
         if (IsRunning) return;
 
         _cts = new CancellationTokenSource();
-        _listener = new TcpListener(IPAddress.Any, port);
-        _listener.Start(100);
+        int attempts = 0;
+        int currentPort = port;
+        TcpListener? activeListener = null;
+
+        while (attempts < 20)
+        {
+            try
+            {
+                var listener = new TcpListener(IPAddress.Any, currentPort);
+                listener.ExclusiveAddressUse = false;
+                listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                listener.Start(100);
+                activeListener = listener;
+                break;
+            }
+            catch (SocketException)
+            {
+                currentPort++;
+                attempts++;
+            }
+            catch (Exception ex)
+            {
+                OnAuditLog?.Invoke(new AuditLogModel
+                {
+                    Protocol = "BRIDGE",
+                    TargetHost = $"127.0.0.1:{currentPort}",
+                    Status = $"Bind Failed: {ex.Message}",
+                    Timestamp = DateTime.Now
+                });
+                break;
+            }
+        }
+
+        if (activeListener == null)
+        {
+            IsRunning = false;
+            _model.IsConnected = false;
+            OnAuditLog?.Invoke(new AuditLogModel
+            {
+                Protocol = "BRIDGE",
+                TargetHost = $"Port {port}",
+                Status = $"Gateway bind failed: ports {port}-{currentPort} are in use.",
+                Timestamp = DateTime.Now
+            });
+            return;
+        }
+
+        _listener = activeListener;
         IsRunning = true;
         _model.IsConnected = true;
+
+        if (currentPort != port)
+        {
+            OnAuditLog?.Invoke(new AuditLogModel
+            {
+                Protocol = "BRIDGE",
+                TargetHost = $"127.0.0.1:{currentPort}",
+                Status = $"Port {port} in use; automatically shifted gateway listener to port {currentPort}",
+                Timestamp = DateTime.Now
+            });
+        }
 
         _ = AcceptLoopAsync(_listener, _cts.Token);
     }

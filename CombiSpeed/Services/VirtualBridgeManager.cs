@@ -29,16 +29,46 @@ public class VirtualBridgeManager : IDisposable
 
     public async Task StartBridgeAsync(int port, LoadBalancerEngine lb, Func<List<NetworkAdapterModel>> getAdapters, BandwidthThrottler? throttler = null)
     {
-        _bridgeServer = new VirtualBridgeServer(lb, getAdapters, _model, throttler);
-        _bridgeServer.OnAuditLog += log => OnAuditLog?.Invoke(log);
-        await _bridgeServer.StartAsync(port);
-
-        // Provision and connect the Windows adapter connection profile
-        _ = Task.Run(async () =>
+        if (_bridgeServer != null)
         {
-            await EnsureProfileCreatedAsync();
-            await ConnectAsync();
-        });
+            try { await _bridgeServer.StopAsync(); } catch { }
+            _bridgeServer.Dispose();
+            _bridgeServer = null;
+        }
+
+        try
+        {
+            _bridgeServer = new VirtualBridgeServer(lb, getAdapters, _model, throttler);
+            _bridgeServer.OnAuditLog += log => OnAuditLog?.Invoke(log);
+            await _bridgeServer.StartAsync(port);
+
+            if (_bridgeServer.IsRunning)
+            {
+                // Provision and connect the Windows adapter connection profile
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await EnsureProfileCreatedAsync();
+                        await ConnectAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[VirtualBridgeManager] Profile connect error: {ex.Message}");
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            OnAuditLog?.Invoke(new AuditLogModel
+            {
+                Protocol = "BRIDGE",
+                TargetHost = $"Port {port}",
+                Status = $"Bridge start error: {ex.Message}",
+                Timestamp = DateTime.Now
+            });
+        }
     }
 
     public async Task StopBridgeAsync()

@@ -803,47 +803,74 @@ public class MainViewModel : INotifyPropertyChanged
         }
         else
         {
-            _loadBalancer.Mode = Config.RoutingMode;
-            _loadBalancer.PrimaryAdapterId = Config.PrimaryAdapterId;
-            _proxyEngine.UpdateThrottling(Adapters, Config);
-
-            await _proxyEngine.StartAsync(Config.HttpPort, Config.SocksPort);
-            IsEngineRunning = true;
-
-            if (Config.RotatingProxy.EnableRotatingProxy)
+            try
             {
-                _rotatingProxyServer.Start();
-                IsRotatingProxyRunning = _rotatingProxyServer.IsRunning;
+                _loadBalancer.Mode = Config.RoutingMode;
+                _loadBalancer.PrimaryAdapterId = Config.PrimaryAdapterId;
+                _proxyEngine.UpdateThrottling(Adapters, Config);
+
+                await _proxyEngine.StartAsync(Config.HttpPort, Config.SocksPort);
+                IsEngineRunning = _proxyEngine.IsRunning;
+
+                if (Config.RotatingProxy.EnableRotatingProxy)
+                {
+                    _rotatingProxyServer.Start();
+                    IsRotatingProxyRunning = _rotatingProxyServer.IsRunning;
+                }
+
+                if (Config.EnableVirtualBridge)
+                {
+                    await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached(), _proxyEngine.Throttler);
+                }
+
+                if (Config.EnablePac)
+                {
+                    _proxyManager.EnablePac(Config.PacUrl);
+                    IsWindowsProxyActive = true;
+                }
+                else if (Config.EnableWindowsProxy)
+                {
+                    _proxyManager.Enable(Config.HttpPort, Config.SocksPort);
+                    IsWindowsProxyActive = true;
+                }
             }
-
-            if (Config.EnableVirtualBridge)
+            catch (Exception ex)
             {
-                await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached(), _proxyEngine.Throttler);
-            }
-
-            if (Config.EnablePac)
-            {
-                _proxyManager.EnablePac(Config.PacUrl);
-                IsWindowsProxyActive = true;
-            }
-            else if (Config.EnableWindowsProxy)
-            {
-                _proxyManager.Enable(Config.HttpPort, Config.SocksPort);
-                IsWindowsProxyActive = true;
+                AuditLogs.Insert(0, new AuditLogModel
+                {
+                    Protocol = "ENGINE",
+                    TargetHost = "PowerToggle",
+                    Status = $"Start Error: {ex.Message}",
+                    Timestamp = DateTime.Now
+                });
+                IsEngineRunning = _proxyEngine.IsRunning;
             }
         }
     }
 
     public async Task ToggleVirtualBridgeAsync()
     {
-        if (VirtualBridge.IsConnected)
+        try
         {
-            await _virtualBridgeManager.StopBridgeAsync();
+            if (VirtualBridge.IsConnected)
+            {
+                await _virtualBridgeManager.StopBridgeAsync();
+            }
+            else
+            {
+                _proxyEngine.UpdateThrottling(Adapters, Config);
+                await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached(), _proxyEngine.Throttler);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            _proxyEngine.UpdateThrottling(Adapters, Config);
-            await _virtualBridgeManager.StartBridgeAsync(Config.VirtualBridgePort, _loadBalancer, () => _networkDetector.GetAllCached(), _proxyEngine.Throttler);
+            AuditLogs.Insert(0, new AuditLogModel
+            {
+                Protocol = "BRIDGE",
+                TargetHost = $"Port {Config.VirtualBridgePort}",
+                Status = $"Toggle Error: {ex.Message}",
+                Timestamp = DateTime.Now
+            });
         }
     }
 

@@ -38,9 +38,37 @@ public class MacRotatingProxyServer
         try
         {
             _cts = new CancellationTokenSource();
-            _listener = new TcpListener(IPAddress.Loopback, _config.RotatingProxyPort);
-            _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            _listener.Start(256);
+            int curPort = _config.RotatingProxyPort;
+            int attempts = 0;
+            TcpListener? activeListener = null;
+
+            while (attempts < 20)
+            {
+                try
+                {
+                    var listener = new TcpListener(IPAddress.Loopback, curPort);
+                    listener.ExclusiveAddressUse = false;
+                    listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                    listener.Start(256);
+                    activeListener = listener;
+                    break;
+                }
+                catch (SocketException)
+                {
+                    curPort++;
+                    attempts++;
+                }
+            }
+
+            if (activeListener == null)
+            {
+                _isRunning = false;
+                OnLog?.Invoke($"[RotatingProxy] Failed to start: all ports {_config.RotatingProxyPort}-{curPort} unavailable.");
+                return;
+            }
+
+            _listener = activeListener;
+            _config.RotatingProxyPort = curPort;
             _isRunning = true;
             OnLog?.Invoke($"[RotatingProxy] macOS Rotating Proxy server listening on 127.0.0.1:{_config.RotatingProxyPort}");
             _ = AcceptLoopAsync(_cts.Token);

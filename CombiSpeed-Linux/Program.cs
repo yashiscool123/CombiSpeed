@@ -13,8 +13,8 @@ public class Program
         if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) || a.Equals("-v", StringComparison.OrdinalIgnoreCase)))
         {
             var ver = typeof(Program).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.7";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 24) - Linux Edition");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.8";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 25) - Linux Edition");
             Console.WriteLine("Multi-WAN Channel Bonding & Dynamic Bandwidth QoS Shaper");
             Console.WriteLine("Platform: Linux x64/arm64 (.NET 8.0)");
             return;
@@ -190,9 +190,9 @@ public class Program
                                         a.Equals("--daemon", StringComparison.OrdinalIgnoreCase));
 
         var curVer = typeof(Program).Assembly.GetName().Version;
-        string curVerStr = curVer != null ? $"v{curVer.Major}.{curVer.Minor}.{curVer.Build}" : "v2.1.7";
+        string curVerStr = curVer != null ? $"v{curVer.Major}.{curVer.Minor}.{curVer.Build}" : "v2.1.8";
         Console.WriteLine("=====================================================================");
-        Console.WriteLine($"   CombiSpeed {curVerStr} (Build 24) - Multi-WAN Bandwidth Aggregator (Linux) ");
+        Console.WriteLine($"   CombiSpeed {curVerStr} (Build 25) - Multi-WAN Bandwidth Aggregator (Linux) ");
         Console.WriteLine("=====================================================================");
 
         var storageService = new LinuxSettingsStorage();

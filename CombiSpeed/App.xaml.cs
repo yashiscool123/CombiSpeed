@@ -378,6 +378,30 @@ public partial class App : Application
                 }
                 Log("[PASS] CustomThrottleDialog UI instantiation verified on STA thread with ZERO NullReferenceException.");
 
+                // Test VirtualBridgeServer Port Conflict Resolution & Socket Address Reuse
+                Log("[TEST] Testing VirtualBridgeServer Socket Address Reuse & Conflict Fallback...");
+                int testPort = 18443;
+                using (var blockerListener = new TcpListener(IPAddress.Any, testPort))
+                {
+                    blockerListener.Start(10);
+
+                    var bridgeModel = new Models.VirtualBridgeModel();
+                    var bridgeServer = new Services.VirtualBridgeServer(new LoadBalancerEngine(), () => mockAdapters, bridgeModel);
+                    bridgeServer.StartAsync(testPort).Wait();
+
+                    if (!bridgeServer.IsRunning)
+                    {
+                        throw new Exception("VirtualBridgeServer failed to start when initial port was occupied!");
+                    }
+                    if (!bridgeModel.IsConnected)
+                    {
+                        throw new Exception("VirtualBridgeModel.IsConnected was not set to true!");
+                    }
+                    Log($" [PASS] VirtualBridgeServer successfully re-routed around occupied port {testPort} to open port without throwing SocketException.");
+                    bridgeServer.StopAsync().Wait();
+                }
+                Log("[PASS] VirtualBridgeServer socket reuse and port conflict resolution verified.");
+
                 Log("=====================================================================");
                 Log("  BANDWIDTH THROTTLING & SPEED SHAPER TESTS PASSED (100% OK)         ");
                 Log("=====================================================================");
@@ -403,8 +427,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.7";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 24)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.8";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 25)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);

@@ -1,5 +1,23 @@
 # Release Notes
 
+## [2.1.8] - 2026-11-03 - Socket Address Reuse & Port Conflict Self-Healing Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🛠️ Resolved `SocketException` (Address Already In Use / WSAEADDRINUSE 10048)**:
+  - **Root Cause Resolution**: When toggling engine power (`TogglePowerAsync`) or the virtual bridge (`ToggleVirtualBridgeAsync`), `VirtualBridgeServer`'s `TcpListener` lacked `SO_REUSEADDR` and had `ExclusiveAddressUse = true` by default. Rapid engine stops/starts left ports in `TIME_WAIT` state or ran into existing port bindings on port 8443, throwing an unhandled `SocketException` on the WPF UI thread.
+  - **SO_REUSEADDR & Non-Exclusive Address Binding**: Explicitly configured `ExclusiveAddressUse = false` and `SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true)` across all listeners (`VirtualBridgeServer`, `ProxyEngine`, `RotatingProxyServer`, and cross-platform `LinuxProxyEngine` & `MacProxyEngine`), allowing instant socket address reuse across process lifecycles.
+  - **Intelligent Port Conflict Self-Healing**: Implemented automatic conflict resolution loops that probe and increment busy ports (up to 20 attempts) without throwing exceptions. If configured default ports (`8443`, `8080`, `1080`, `8081`) are held by external applications or background processes, CombiSpeed seamlessly shifts to the next open port and logs the shift transparently to the connection audit log.
+  - **Prior Instance Cleanup**: `VirtualBridgeManager.StartBridgeAsync` automatically halts and disposes any pre-existing bridge server instance before allocating new listeners.
+  - **Comprehensive UI Exception Shields**: Added top-level try/catch blocks to `TogglePowerAsync()` and `ToggleVirtualBridgeAsync()` in `MainViewModel.cs`, guaranteeing that no socket or network error will ever cause an unhandled crash dialog on the UI thread.
+- **🧪 Dedicated Automated Verification**:
+  - Added port conflict resolution & socket address reuse test inside `--verify-throttling`, verifying that `VirtualBridgeServer` gracefully re-routes around an actively blocked port without throwing any `SocketException` (**100% PASS**).
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.8-win-x64.zip` and `publish/CombiSpeed-v2.1.8-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.8-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.8-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.7] - 2026-11-03 - Persistent Healthy Proxy Caching & Dynamic Unavailable Eviction Release
 
 ### 🚀 Highlights & Engineering Advancements

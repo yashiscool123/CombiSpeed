@@ -35,13 +35,53 @@ public class LinuxProxyEngine
 
         try
         {
-            _httpListener = new TcpListener(IPAddress.Any, _config.HttpPort);
-            _httpListener.Start(100);
-            _ = AcceptHttpClientsAsync(_httpListener, _cts.Token);
+            int curHttpPort = _config.HttpPort;
+            int httpAttempts = 0;
+            while (httpAttempts < 20)
+            {
+                try
+                {
+                    var l = new TcpListener(IPAddress.Any, curHttpPort);
+                    l.ExclusiveAddressUse = false;
+                    l.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                    l.Start(100);
+                    _httpListener = l;
+                    _config.HttpPort = curHttpPort;
+                    break;
+                }
+                catch (SocketException)
+                {
+                    curHttpPort++;
+                    httpAttempts++;
+                }
+            }
 
-            _socksListener = new TcpListener(IPAddress.Any, _config.SocksPort);
-            _socksListener.Start(100);
-            _ = AcceptSocksClientsAsync(_socksListener, _cts.Token);
+            if (_httpListener != null)
+                _ = AcceptHttpClientsAsync(_httpListener, _cts.Token);
+
+            int curSocksPort = _config.SocksPort;
+            int socksAttempts = 0;
+            while (socksAttempts < 20)
+            {
+                try
+                {
+                    var l = new TcpListener(IPAddress.Any, curSocksPort);
+                    l.ExclusiveAddressUse = false;
+                    l.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                    l.Start(100);
+                    _socksListener = l;
+                    _config.SocksPort = curSocksPort;
+                    break;
+                }
+                catch (SocketException)
+                {
+                    curSocksPort++;
+                    socksAttempts++;
+                }
+            }
+
+            if (_socksListener != null)
+                _ = AcceptSocksClientsAsync(_socksListener, _cts.Token);
         }
         catch (Exception ex)
         {

@@ -382,3 +382,15 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.1.7 Build 24).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.7.
+
+## Milestone 26: Socket Address Reuse & Intelligent Port Conflict Self-Healing [COMPLETED]
+- [x] Increment version to 2.1.8 and versionCode: 25 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Resolve `SocketException` ("Only one usage of each socket address is normally permitted", error 10048 / 10013) during Virtual Bridge and proxy engine startups.
+- [x] Configure `ExclusiveAddressUse = false` and `SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true)` (`SO_REUSEADDR`) across all socket listener services (`VirtualBridgeServer`, `ProxyEngine`, `RotatingProxyServer`, `LinuxProxyEngine`, `MacProxyEngine`, `LinuxRotatingProxyServer`, `MacRotatingProxyServer`) allowing immediate re-binding when ports are in `TIME_WAIT` state.
+- [x] Implement intelligent 20-attempt port conflict fallback scanning loops across all socket listeners, automatically binding to alternative open ports with clear audit log notifications if primary ports (8443, 8080, 1080, 8081) are occupied.
+- [x] Ensure previous listener instances in `VirtualBridgeManager.StartBridgeAsync` and proxy engines are cleanly stopped and disposed prior to initiating new bindings.
+- [x] Shield `MainViewModel.TogglePowerAsync()` and `ToggleVirtualBridgeAsync()` with top-level try-catch exception guards preventing unhandled UI crashes on connection startup.
+- [x] Add automated port collision fallback test to `--verify-throttling` (Windows) and verify across Linux and macOS (100% pass rate).
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.1.8 Build 25).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.8.

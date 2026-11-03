@@ -63,22 +63,98 @@ public class ProxyEngine : IDisposable
     {
         if (IsRunning) return;
 
-        _httpPort = httpPort;
-        _socksPort = socksPort;
         _cts = new CancellationTokenSource();
         StartedAt = DateTime.Now;
 
-        _httpListener = new TcpListener(IPAddress.Any, httpPort);
-        _httpListener.Start(100);
+        // 1. HTTP Listener with SO_REUSEADDR and conflict fallback
+        int curHttpPort = httpPort;
+        int httpAttempts = 0;
+        TcpListener? activeHttp = null;
+        while (httpAttempts < 20)
+        {
+            try
+            {
+                var l = new TcpListener(IPAddress.Any, curHttpPort);
+                l.ExclusiveAddressUse = false;
+                l.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                l.Start(100);
+                activeHttp = l;
+                break;
+            }
+            catch (SocketException)
+            {
+                curHttpPort++;
+                httpAttempts++;
+            }
+        }
 
-        _socksListener = new TcpListener(IPAddress.Any, socksPort);
-        _socksListener.Start(100);
+        // 2. SOCKS5 Listener with SO_REUSEADDR and conflict fallback
+        int curSocksPort = socksPort;
+        int socksAttempts = 0;
+        TcpListener? activeSocks = null;
+        while (socksAttempts < 20)
+        {
+            try
+            {
+                var l = new TcpListener(IPAddress.Any, curSocksPort);
+                l.ExclusiveAddressUse = false;
+                l.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                l.Start(100);
+                activeSocks = l;
+                break;
+            }
+            catch (SocketException)
+            {
+                curSocksPort++;
+                socksAttempts++;
+            }
+        }
 
+        if (activeHttp == null && activeSocks == null)
+        {
+            IsRunning = false;
+            OnAuditLog?.Invoke(new AuditLogModel
+            {
+                Protocol = "ENGINE",
+                TargetHost = "0.0.0.0",
+                Status = $"Listener bind failed: ports {httpPort} and {socksPort} unavailable.",
+                Timestamp = DateTime.Now
+            });
+            return;
+        }
+
+        _httpPort = curHttpPort;
+        _socksPort = curSocksPort;
+        _httpListener = activeHttp;
+        _socksListener = activeSocks;
         IsRunning = true;
 
+        if (curHttpPort != httpPort)
+        {
+            OnAuditLog?.Invoke(new AuditLogModel
+            {
+                Protocol = "HTTP",
+                TargetHost = $"127.0.0.1:{curHttpPort}",
+                Status = $"Port {httpPort} in use; shifted HTTP proxy to port {curHttpPort}",
+                Timestamp = DateTime.Now
+            });
+        }
+        if (curSocksPort != socksPort)
+        {
+            OnAuditLog?.Invoke(new AuditLogModel
+            {
+                Protocol = "SOCKS",
+                TargetHost = $"127.0.0.1:{curSocksPort}",
+                Status = $"Port {socksPort} in use; shifted SOCKS proxy to port {curSocksPort}",
+                Timestamp = DateTime.Now
+            });
+        }
+
         // Start accepting clients
-        _ = AcceptClientsAsync(_httpListener, HandleHttpClientAsync, _cts.Token);
-        _ = AcceptClientsAsync(_socksListener, HandleSocksClientAsync, _cts.Token);
+        if (_httpListener != null)
+            _ = AcceptClientsAsync(_httpListener, HandleHttpClientAsync, _cts.Token);
+        if (_socksListener != null)
+            _ = AcceptClientsAsync(_socksListener, HandleSocksClientAsync, _cts.Token);
 
         // Start 1-second telemetry speed calculator
         _telemetryTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));

@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 title CombiSpeed - One-Click Installer
 
 echo =====================================================================
-echo           CombiSpeed - One-Click Installer (v2.1.7)
+echo           CombiSpeed - One-Click Installer (v2.1.8)
 echo       Network Adapter Bonding ^& Bandwidth Aggregation Engine
 echo =====================================================================
 echo.
