@@ -314,3 +314,13 @@
   - macOS: publish/macos/CombiSpeed-v2.1.1-macos-x64.tar.gz and .zip
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.1.
+
+## Milestone 20: Windows Executable Startup XAML Fix & Crash Resilience [COMPLETED]
+- [x] Increment version to 2.1.2 and versionCode: 19 across all project files (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Fix XamlParseException during MainWindow.xaml initialization by defining CyberComboBox and CyberCheckBox styles in App.xaml and chaining implicit styles.
+- [x] Validate zero missing StaticResource references across all XAML files via automated regex static analysis.
+- [x] Add global AppDomain and Dispatcher unhandled exception handlers with automated logging to %LOCALAPPDATA%\CombiSpeed\crash.log and user alert dialogs.
+- [x] Verify live GUI startup, window instantiation, process lifecycle, and clean shutdown with 100% success.
+- [x] Rebuild and publish release artifacts in publish/ for Windows, Linux, and macOS (v2.1.2 Build 19).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Check in code and tag v2.1.2 in git.

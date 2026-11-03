@@ -302,6 +302,30 @@
                     "progress": "All tasks completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-020",
+            "userQuery": "unable to execute CombiSpeed.exe file",
+            "status": "completed",
+            "createdAt": "2026-11-03T16:29:45+05:30",
+            "updatedAt": "2026-11-03T16:41:00+05:30",
+            "progress": "Diagnosed root cause: XamlParseException during MainWindow.xaml initialization due to undefined 'CyberComboBox' and 'CyberCheckBox' StaticResources in App.xaml. Defined named CyberComboBox and CyberCheckBox styles in App.xaml and chained implicit ComboBox and CheckBox styles. Verified 0 missing StaticResources across all XAML files. Added global AppDomain and Dispatcher unhandled exception handlers with automated logging to %LOCALAPPDATA%\\CombiSpeed\\crash.log. Verified live GUI window creation, execution, and graceful termination. Rebuilt and republished Windows, Linux, and macOS standalone archives at v2.1.2 (Build 19).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2001",
+                    "timestamp": "2026-11-03T16:30:00+05:30",
+                    "inputs": "User reported: unable to execute CombiSpeed.exe file",
+                    "outputs": "Inspected Windows Event Viewer Application Error logs. Discovered System.Windows.Markup.XamlParseException: Cannot find resource named 'CyberComboBox' at 16:29:45. Automated XAML regex static analysis also detected missing 'CyberCheckBox' resource.",
+                    "progress": "Root cause isolated."
+                },
+                {
+                    "checkpointId": "CP-2002",
+                    "timestamp": "2026-11-03T16:41:00+05:30",
+                    "inputs": "XAML resource definition, crash logging implementation, verification, and multi-OS release packaging.",
+                    "outputs": "Added CyberComboBox and CyberCheckBox to App.xaml, added crash.log handler to App.xaml.cs, verified 0 missing resources, tested live GUI execution of CombiSpeed.exe in both published directory and %LOCALAPPDATA%\\Programs\\CombiSpeed. Bumped version to v2.1.2 (Build 19). Packaged standalone archives in publish/.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
         }
     ]
 }

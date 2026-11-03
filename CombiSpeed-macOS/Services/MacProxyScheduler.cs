@@ -119,3 +119,4 @@ public class MacProxyScheduler : IDisposable
         _validationTimer?.Dispose();
     }
 }
+

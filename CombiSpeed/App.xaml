@@ -287,7 +287,8 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
-        <Style TargetType="{x:Type ComboBox}">
+        <!-- High-Contrast Accessible CyberComboBox Style -->
+        <Style x:Key="CyberComboBox" TargetType="{x:Type ComboBox}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
             <Setter Property="Background" Value="#131D33"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
@@ -338,6 +339,9 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Implicit ComboBox Style (inherits CyberComboBox) -->
+        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource CyberComboBox}"/>
 
         <!-- Accessible Dark ComboBoxItem Style -->
         <Style TargetType="{x:Type ComboBoxItem}">
@@ -436,8 +440,8 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Global CheckBox Style with High Contrast Indicator -->
-        <Style TargetType="{x:Type CheckBox}">
+        <!-- High-Contrast Accessible CyberCheckBox Style -->
+        <Style x:Key="CyberCheckBox" TargetType="{x:Type CheckBox}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontSize" Value="12"/>
@@ -445,6 +449,9 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+
+        <!-- Implicit CheckBox Style (inherits CyberCheckBox) -->
+        <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource CyberCheckBox}"/>
 
         <!-- Global TextBox Style -->
         <Style TargetType="{x:Type TextBox}">

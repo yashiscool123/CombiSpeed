@@ -23,6 +23,42 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Global Unhandled Exception & Crash Logging Handlers
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+        {
+            var ex = args.ExceptionObject as Exception;
+            string msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Fatal Unhandled Exception: {ex?.GetType().Name} - {ex?.Message}\n{ex?.StackTrace}\n";
+            try
+            {
+                string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CombiSpeed");
+                if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "crash.log"), msg);
+            }
+            catch { }
+        };
+
+        DispatcherUnhandledException += (s, args) =>
+        {
+            string msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UI Thread Exception: {args.Exception.GetType().Name} - {args.Exception.Message}\n{args.Exception.StackTrace}\n";
+            try
+            {
+                string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CombiSpeed");
+                if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "crash.log"), msg);
+            }
+            catch { }
+
+            // If we are in an interactive session, present error dialog
+            MessageBox.Show(
+                $"CombiSpeed encountered an unhandled error:\n\n{args.Exception.Message}\n\nDetails have been logged to %LOCALAPPDATA%\\CombiSpeed\\crash.log",
+                "CombiSpeed Critical Alert",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+
+            args.Handled = true;
+            Shutdown(1);
+        };
+
         bool isStopCommand = e.Args.Any(a => a.Equals("--stop", StringComparison.OrdinalIgnoreCase) ||
                                              a.Equals("-stop", StringComparison.OrdinalIgnoreCase) ||
                                              a.Equals("/stop", StringComparison.OrdinalIgnoreCase));
@@ -335,8 +371,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.1";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 18)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.2";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 19)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);

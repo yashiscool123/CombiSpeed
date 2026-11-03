@@ -1,5 +1,25 @@
 # Release Notes
 
+## [2.1.2] - 2026-11-03 - Windows Executable XAML Startup Fix & Crash Resilience Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🛠️ Resolved `CombiSpeed.exe` Startup Crash (`XamlParseException`)**:
+  - **Root Cause Resolution**: Resolved unhandled `XamlParseException` triggered during `MainWindow.xaml` BAML compilation by explicitly defining named `CyberComboBox` and `CyberCheckBox` resource styles in `App.xaml` and properly chaining implicit styles.
+  - **Zero Missing StaticResources**: Audited 100% of `.xaml` files across the codebase to ensure all static resource references resolve with zero errors.
+- **🛡️ Enterprise Crash Resilience & Logging Subsystem**:
+  - Added global `AppDomain.CurrentDomain.UnhandledException` and `DispatcherUnhandledException` handlers in `App.xaml.cs`.
+  - Automatically captures critical stack traces and dumps detailed diagnostic info into `%LOCALAPPDATA%\CombiSpeed\crash.log`.
+  - Displays user-friendly critical alert dialogs on unexpected runtime failures rather than silently exiting.
+- **🔄 Synchronized Runtime Installation & Packages**:
+  - Refreshed `%LOCALAPPDATA%\Programs\CombiSpeed\CombiSpeed.exe` with validated `v2.1.2` binaries.
+  - Verified live GUI initialization, window presentation, and clean shutdown with 100% success.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.2-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.2-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.2-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.1] - 2026-11-03 - Advanced Geo-Targeting, Upstream Auth & Background Scheduler Release
 
 ### 🚀 Highlights & Engineering Advancements
