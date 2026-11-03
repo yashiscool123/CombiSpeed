@@ -22,12 +22,139 @@ public class MacProxyValidator : IDisposable
         "CombiSpeed",
         "healthy_proxies.json");
 
+    public string StateStorageFilePath { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        "Library",
+        "Application Support",
+        "CombiSpeed",
+        "proxy_state.json");
+
     public event Action<string>? OnLog;
 
     public int TotalCount => _pool.Count;
     public int HealthyCount => _pool.Values.Count(p => p.IsHealthy);
 
     public IEnumerable<HarvestedProxyModel> AllProxies => _pool.Values;
+
+    /// <summary>
+    /// Loads complete persisted proxy state (proxies, selections, filters, and sorting) from disk.
+    /// Falls back to healthy_proxies.json if proxy_state.json does not exist.
+    /// </summary>
+    public PersistedProxyStateModel? LoadPersistedState(string? customStatePath = null)
+    {
+        lock (_saveLock)
+        {
+            try
+            {
+                string targetPath = customStatePath ?? StateStorageFilePath;
+                if (File.Exists(targetPath))
+                {
+                    string json = File.ReadAllText(targetPath);
+                    var loaded = JsonSerializer.Deserialize<PersistedProxyStateModel>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (loaded != null)
+                    {
+                        if (loaded.Proxies != null && loaded.Proxies.Count > 0)
+                        {
+                            foreach (var proxy in loaded.Proxies)
+                            {
+                                IdempotentAddOrUpdate(proxy);
+                            }
+                        }
+                        OnLog?.Invoke($"[Validator] Loaded {loaded.Proxies?.Count ?? 0} proxies and saved filters/sorting from persistent state ({Path.GetFileName(targetPath)}).");
+                        return loaded;
+                    }
+                }
+
+                // Fallback: If proxy_state.json doesn't exist yet, load healthy_proxies.json
+                int loadedHealthy = LoadHealthyProxies();
+                if (loadedHealthy > 0)
+                {
+                    return new PersistedProxyStateModel
+                    {
+                        Proxies = _pool.Values.ToList()
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[Validator] Error loading persisted proxy state: {ex.Message}");
+                return null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Debounced save that commits complete proxy state (proxies, selections, filters, and sorting) to disk.
+    /// </summary>
+    public void RequestSavePersistedState(Func<PersistedProxyStateModel> stateFactory, string? customPath = null)
+    {
+        lock (_saveLock)
+        {
+            _saveDebounceTimer?.Dispose();
+            _saveDebounceTimer = new Timer(_ =>
+            {
+                try
+                {
+                    var state = stateFactory();
+                    SavePersistedState(state, customPath);
+                }
+                catch { }
+            }, null, 400, Timeout.Infinite);
+        }
+    }
+
+    /// <summary>
+    /// Saves all harvested proxies with their user modifications (IsSelected), along with
+    /// active filters and sorting configurations, in Idempotence mode to disk.
+    /// </summary>
+    public int SavePersistedState(PersistedProxyStateModel state, string? customStatePath = null)
+    {
+        lock (_saveLock)
+        {
+            try
+            {
+                string targetPath = customStatePath ?? StateStorageFilePath;
+                string? dir = Path.GetDirectoryName(targetPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                state.Proxies = _pool.Values
+                    .OrderByDescending(p => p.IsSelected)
+                    .ThenByDescending(p => p.IsHealthy)
+                    .ThenBy(p => p.LatencyMs)
+                    .ToList();
+                state.LastSaved = DateTime.UtcNow;
+
+                string json = JsonSerializer.Serialize(state, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                string tempPath = targetPath + ".tmp";
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, targetPath, overwrite: true);
+
+                // Synchronize healthy_proxies.json for backward compatibility
+                SaveHealthyProxies();
+
+                OnLog?.Invoke($"[Validator] Idempotently saved persistent proxy state ({state.Proxies.Count} proxies, filters, and sorting) to {Path.GetFileName(targetPath)}.");
+                return state.Proxies.Count;
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[Validator] Error persisting proxy state: {ex.Message}");
+                return 0;
+            }
+        }
+    }
 
     /// <summary>
     /// Loads persisted healthy proxies from disk storage into the active pool.
@@ -146,17 +273,85 @@ public class MacProxyValidator : IDisposable
         return false;
     }
 
-    public void AddCandidates(IEnumerable<HarvestedProxyModel> proxies)
+    /// <summary>
+    /// Idempotently adds or updates a candidate proxy into the pool.
+    /// In Idempotence Mode:
+    /// - Preserves user modifications: IsSelected (never unchecks user selections)
+    /// - Preserves verified benchmark metrics: LatencyMs, IsHealthy, Failures, Successes, LastChecked
+    /// - Non-destructively enriches metadata: CountryCode/FlagEmoji if previously unknown, upgraded Protocol
+    /// - Deduplicates by Endpoint (Host:Port) with zero duplicate insertions
+    /// Guaranteed strictly idempotent: f(f(x)) == f(x).
+    /// </summary>
+    public bool IdempotentAddOrUpdate(HarvestedProxyModel candidate)
     {
-        foreach (var p in proxies)
-        {
-            _pool.AddOrUpdate(p.Endpoint, p, (_, existing) =>
+        if (string.IsNullOrWhiteSpace(candidate.Host) || candidate.Port <= 0) return false;
+        string key = candidate.Endpoint;
+
+        bool isNew = false;
+        _pool.AddOrUpdate(key,
+            _ =>
             {
-                existing.SourceUrl = p.SourceUrl;
-                existing.Protocol = p.Protocol;
+                isNew = true;
+                return candidate;
+            },
+            (_, existing) =>
+            {
+                // IDEMPOTENCE MODE: strictly preserve user modifications and verified metrics!
+                if (existing.LastChecked != DateTime.MinValue && candidate.LastChecked == DateTime.MinValue)
+                {
+                    // Existing is verified; keep existing metrics
+                }
+                else if (candidate.LastChecked != DateTime.MinValue && existing.LastChecked == DateTime.MinValue)
+                {
+                    existing.IsHealthy = candidate.IsHealthy;
+                    existing.LatencyMs = candidate.LatencyMs;
+                    existing.Failures = candidate.Failures;
+                    existing.Successes = candidate.Successes;
+                    existing.LastChecked = candidate.LastChecked;
+                    existing.Anonymity = candidate.Anonymity;
+                }
+
+                if ((string.IsNullOrEmpty(existing.CountryCode) || existing.CountryCode.Equals("UN", StringComparison.OrdinalIgnoreCase)) &&
+                    !string.IsNullOrEmpty(candidate.CountryCode) && !candidate.CountryCode.Equals("UN", StringComparison.OrdinalIgnoreCase))
+                {
+                    existing.CountryCode = candidate.CountryCode;
+                }
+
+                if (existing.Protocol == ProxyProtocol.Http && candidate.Protocol != ProxyProtocol.Http)
+                {
+                    existing.Protocol = candidate.Protocol;
+                }
+
+                if (string.IsNullOrEmpty(existing.SourceUrl) && !string.IsNullOrEmpty(candidate.SourceUrl))
+                {
+                    existing.SourceUrl = candidate.SourceUrl;
+                }
+
                 return existing;
             });
+
+        return isNew;
+    }
+
+    /// <summary>
+    /// Idempotently populates a batch of harvested proxies. Returns the count of newly discovered proxies.
+    /// </summary>
+    public int IdempotentAddCandidates(IEnumerable<HarvestedProxyModel> candidates)
+    {
+        int newCount = 0;
+        foreach (var p in candidates)
+        {
+            if (IdempotentAddOrUpdate(p))
+            {
+                newCount++;
+            }
         }
+        return newCount;
+    }
+
+    public void AddCandidates(IEnumerable<HarvestedProxyModel> proxies)
+    {
+        IdempotentAddCandidates(proxies);
     }
 
     public async Task<int> ValidateAllAsync(

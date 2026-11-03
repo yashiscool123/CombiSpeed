@@ -1,5 +1,30 @@
 # Release Notes
 
+## [2.2.1] - 2026-11-04 - Idempotent Proxy Harvesting & Complete State Persistence Release
+
+### 🚀 Highlights & Engineering Advancements
+- **⚡ Strict Idempotence Mode for Proxy Harvesting ($f(f(x)) = f(x)$)**:
+  - **Zero Duplicate Ingestion**: Ingests thousands of proxy candidates across 255+ global feeds without creating duplicate entries for identical endpoints (`Host:Port`).
+  - **User Modification Preservation**: Re-harvesting strictly preserves all user-selected checkbox states (`IsSelected`), ensuring user choices are never clobbered or unchecked by automated scraping cycles.
+  - **Benchmark Metric Retention**: Preserves verified latency pings, healthy flags, failure counts, and last-checked timestamps if an endpoint was previously validated, preventing raw scraper feeds from degrading benchmarked data.
+  - **Non-Destructive Metadata Enrichment**: Intelligently upgrades Country Code and Flag Emoji if previously unknown, and upgrades protocols (e.g. HTTP -> HTTPS / SOCKS5) when richer metadata is discovered.
+- **💾 Complete Proxy State & UI Filter/Sort Persistence across Restarts**:
+  - **Immediate Post-Harvest Persistence**: Automatically commits all harvested proxies to persistent storage (`proxy_state.json`) immediately upon harvesting, so proxy pools are fully reusable even without manual validation.
+  - **Active Filter Restoration**: Persists and restores all active UI filter criteria:
+    - Max Latency Threshold (`SelectedLatencyFilter`, e.g. `< 150 ms`, `< 300 ms`, `< 500 ms`, `< 1000 ms`, or `ALL Latencies`).
+    - Source Origin (`SelectedSourceFilter`, e.g. specific repo feed or `ALL Sources`).
+    - Protocol (`SelectedProtocolFilter`, e.g. `HTTP`, `HTTPS`, `SOCKS4`, `SOCKS5`, or `ALL Protocols`).
+    - Country Filter (`SelectedCountryFilter`, e.g. `US`, `DE`, `ALL`).
+    - Search Query (`ProxySearchText`).
+  - **Active Sorting Restoration**: Persists and restores multi-criteria table sorting order (`SelectedSortOption`, e.g. `Lowest Latency (Fastest)`, `Highest Latency`, `Status / Health First`, `Source (A-Z)`, `Country Code (A-Z)`, `Lowest Failures`).
+  - **Atomic `.tmp` Disk Write**: Guaranteed safe atomic state writes preventing file corruption or race conditions.
+  - **Instant Startup Pre-Warming**: On application launch, pre-warms the proxy pool and immediately reapplies the saved filter and sort views without user intervention.
+- **🌐 100% Cross-Platform Native Parity**:
+  - Implemented `IdempotentAddOrUpdate`, `IdempotentAddCandidates`, `SavePersistedState`, and `LoadPersistedState` identically across Windows (`ProxyValidatorEngine.cs`), Linux (`LinuxProxyValidator.cs`), and macOS (`MacProxyValidator.cs`).
+  - Enhanced Linux and macOS Web SPAs in `CyberpunkSpa.cs` to persist table filters, search queries, and sorting in client storage, while `EmbeddedDashboardServer.cs` saves state immediately on selection changes and harvests.
+- **🧪 Automated Verification (Phase 10)**:
+  - Added dedicated Test Phase 10 to `--verify-rotator` testing idempotent proxy deduplication, modification preservation across multiple harvesting passes, atomic disk persistence, and complete state restoration after simulated restart (**100% PASS**).
+
 ## [2.2.0] - 2026-11-04 - Two-Stage Multi-Adapter Bonding with Selective Timely Proxy Rotation & Live GeoIP Resolution Release
 
 ### 🚀 Highlights & Engineering Advancements

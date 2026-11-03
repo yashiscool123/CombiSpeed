@@ -62,8 +62,16 @@ public class MacProxyScheduler : IDisposable
             var sources = _config.GetEffectiveSources();
 
             var candidates = await _harvester.HarvestAllAsync(sources, _config.MaxPoolSize);
-            _validator.AddCandidates(candidates);
-            OnLog?.Invoke($"[Scheduler] Harvest complete. Total candidate pool: {_validator.TotalCount} proxies.");
+            int newCount = _validator.IdempotentAddCandidates(candidates);
+            OnLog?.Invoke($"[Scheduler] Harvest complete in Idempotence mode: {newCount} new candidates, {candidates.Count - newCount} existing preserved. Candidate pool: {_validator.TotalCount} proxies.");
+
+            // Persist immediately upon harvest in Idempotence mode
+            _validator.SavePersistedState(new PersistedProxyStateModel
+            {
+                SelectedCountryFilter = _config.CountryFilter,
+                RouteBondedTrafficThroughRotator = _config.RouteBondedTrafficThroughRotator,
+                RotationIntervalSeconds = _config.RotationIntervalSeconds
+            });
 
             await ScheduledValidationAsync();
         }

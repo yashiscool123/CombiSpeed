@@ -234,6 +234,12 @@ public class EmbeddedDashboardServer
                 if (_validator != null)
                 {
                     foreach (var p in _validator.AllProxies) p.IsSelected = true;
+                    _validator.SavePersistedState(new PersistedProxyStateModel
+                    {
+                        SelectedCountryFilter = _config.RotatingProxy.CountryFilter,
+                        RouteBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                        RotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds
+                    });
                 }
                 string json = JsonSerializer.Serialize(new { status = "All selected", count = _validator?.AllProxies.Count(p => p.IsSelected) ?? 0 });
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
@@ -246,6 +252,12 @@ public class EmbeddedDashboardServer
                 if (_validator != null)
                 {
                     foreach (var p in _validator.AllProxies) p.IsSelected = false;
+                    _validator.SavePersistedState(new PersistedProxyStateModel
+                    {
+                        SelectedCountryFilter = _config.RotatingProxy.CountryFilter,
+                        RouteBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                        RotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds
+                    });
                 }
                 string json = JsonSerializer.Serialize(new { status = "All deselected", count = 0 });
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
@@ -258,6 +270,12 @@ public class EmbeddedDashboardServer
                 if (_validator != null)
                 {
                     foreach (var p in _validator.AllProxies) p.IsSelected = p.IsHealthy && p.LatencyMs <= 300;
+                    _validator.SavePersistedState(new PersistedProxyStateModel
+                    {
+                        SelectedCountryFilter = _config.RotatingProxy.CountryFilter,
+                        RouteBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                        RotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds
+                    });
                 }
                 string json = JsonSerializer.Serialize(new { status = "Fast selected", count = _validator?.AllProxies.Count(p => p.IsSelected) ?? 0 });
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
@@ -275,6 +293,12 @@ public class EmbeddedDashboardServer
                     string ep = epProp.GetString() ?? "";
                     var match = _validator?.AllProxies.FirstOrDefault(p => p.Endpoint.Equals(ep, StringComparison.OrdinalIgnoreCase));
                     if (match != null) match.IsSelected = !match.IsSelected;
+                    _validator?.SavePersistedState(new PersistedProxyStateModel
+                    {
+                        SelectedCountryFilter = _config.RotatingProxy.CountryFilter,
+                        RouteBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                        RotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds
+                    });
                 }
                 string json = JsonSerializer.Serialize(new { status = "Toggled", count = _validator?.AllProxies.Count(p => p.IsSelected) ?? 0 });
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
@@ -364,12 +388,24 @@ public class EmbeddedDashboardServer
                     if (_harvester != null && _validator != null)
                     {
                         var sources = _config.RotatingProxy.GetEffectiveSources();
-                        var harvested = await _harvester.HarvestAllAsync(sources, 500);
-                        _validator.AddCandidates(harvested);
-                        await _validator.ValidateAllAsync(harvested.Take(50), 30, 2000);
+                        var harvested = await _harvester.HarvestAllAsync(sources, _config.RotatingProxy.MaxPoolSize);
+                        int newCount = _validator.IdempotentAddCandidates(harvested);
+                        _validator.SavePersistedState(new PersistedProxyStateModel
+                        {
+                            SelectedCountryFilter = _config.RotatingProxy.CountryFilter,
+                            RouteBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                            RotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds
+                        });
+                        await _validator.ValidateAllAsync(harvested.Take(80), 30, 2000);
+                        _validator.SavePersistedState(new PersistedProxyStateModel
+                        {
+                            SelectedCountryFilter = _config.RotatingProxy.CountryFilter,
+                            RouteBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                            RotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds
+                        });
                     }
                 });
-                string json = JsonSerializer.Serialize(new { status = "Harvest started" });
+                string json = JsonSerializer.Serialize(new { status = "Harvest started in Idempotence mode" });
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
                 res.ContentType = "application/json";
                 await res.OutputStream.WriteAsync(bytes);

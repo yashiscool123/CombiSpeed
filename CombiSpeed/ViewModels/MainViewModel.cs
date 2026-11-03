@@ -586,12 +586,30 @@ public class MainViewModel : INotifyPropertyChanged
         // Check if Windows Proxy is currently active in registry
         IsWindowsProxyActive = _proxyManager.GetSystemProxyStatus(out _);
 
-        // Pre-warm proxy pool from persistent healthy proxy storage
-        int prewarmed = _proxyValidator.LoadHealthyProxies();
-        if (prewarmed > 0)
+        // Restore persistent proxy state (harvested proxies, selections, filters, and sorting) in Idempotence mode
+        var savedProxyState = _proxyValidator.LoadPersistedState();
+        if (savedProxyState != null)
         {
-            HarvestStatusText = $"Loaded {prewarmed} verified healthy proxies from persistent disk storage.";
+            if (!string.IsNullOrEmpty(savedProxyState.SelectedLatencyFilter)) _selectedLatencyFilter = savedProxyState.SelectedLatencyFilter;
+            if (!string.IsNullOrEmpty(savedProxyState.SelectedSourceFilter)) _selectedSourceFilter = savedProxyState.SelectedSourceFilter;
+            if (!string.IsNullOrEmpty(savedProxyState.SelectedProtocolFilter)) _selectedProtocolFilter = savedProxyState.SelectedProtocolFilter;
+            if (!string.IsNullOrEmpty(savedProxyState.SelectedCountryFilter)) Config.RotatingProxy.CountryFilter = savedProxyState.SelectedCountryFilter;
+            if (!string.IsNullOrEmpty(savedProxyState.SelectedSortOption)) _selectedSortOption = savedProxyState.SelectedSortOption;
+            if (!string.IsNullOrEmpty(savedProxyState.ProxySearchText)) _proxySearchText = savedProxyState.ProxySearchText;
+            if (savedProxyState.RotationIntervalSeconds > 0) Config.RotatingProxy.RotationIntervalSeconds = savedProxyState.RotationIntervalSeconds;
+            Config.RotatingProxy.RouteBondedTrafficThroughRotator = savedProxyState.RouteBondedTrafficThroughRotator;
+
+            HarvestStatusText = $"Loaded {savedProxyState.Proxies?.Count ?? _proxyValidator.TotalCount} proxies and active filter/sort state from persistent disk storage.";
             RefreshProxyCollection();
+        }
+        else
+        {
+            int prewarmed = _proxyValidator.LoadHealthyProxies();
+            if (prewarmed > 0)
+            {
+                HarvestStatusText = $"Loaded {prewarmed} verified healthy proxies from persistent disk storage.";
+                RefreshProxyCollection();
+            }
         }
     }
 
@@ -1210,23 +1228,32 @@ public class MainViewModel : INotifyPropertyChanged
         if (IsHarvestingOrValidating) return;
         IsHarvestingOrValidating = true;
         HarvestProgress = 10;
-        HarvestStatusText = "Harvesting from open-source repositories & feeds...";
+        HarvestStatusText = "Harvesting from open-source repositories & feeds (Idempotence Mode)...";
 
         try
         {
             var sources = Config.RotatingProxy.GetEffectiveSources();
             var harvested = await _proxyHarvester.HarvestAllAsync(sources, Config.RotatingProxy.MaxPoolSize);
-            _proxyValidator.AddCandidates(harvested);
 
-            HarvestProgress = 60;
-            HarvestStatusText = $"Harvested {harvested.Count} candidates. Validating top candidates...";
+            // IDEMPOTENCE MODE: deduplicate candidates, strictly preserving existing user selections and benchmarks
+            int newCandidates = _proxyValidator.IdempotentAddCandidates(harvested);
+            HarvestProgress = 50;
+            HarvestStatusText = $"Harvested in Idempotence mode: {newCandidates} new, {harvested.Count - newCandidates} existing preserved. Saving persistent state...";
+
+            // Persist immediately upon harvesting so proxies and settings survive restarts
+            SaveCurrentProxyState();
+
+            HarvestProgress = 65;
+            HarvestStatusText = $"Harvested {newCandidates} new ({harvested.Count - newCandidates} existing preserved). Validating top candidates...";
 
             var toValidate = harvested.Take(80).ToList();
-            var prog = new Progress<int>(pct => HarvestProgress = 60 + (pct * 40 / 100));
+            var prog = new Progress<int>(pct => HarvestProgress = 65 + (pct * 35 / 100));
             await _proxyValidator.ValidateAllAsync(toValidate, Config.RotatingProxy.ConcurrencyLimit, Config.RotatingProxy.MaxTimeoutMs, prog);
 
+            // Persist state again after validation to record newly verified metrics
+            SaveCurrentProxyState();
             RefreshProxyCollection();
-            HarvestStatusText = $"Harvest complete! {VerifiedHealthyCount} verified working proxies in pool.";
+            HarvestStatusText = $"Harvest complete (Idempotent)! {VerifiedHealthyCount} working proxies in pool.";
         }
         catch (Exception ex)
         {
@@ -1334,6 +1361,7 @@ public class MainViewModel : INotifyPropertyChanged
                 OnPropertyChanged();
                 RefreshProxyCollection();
                 _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+                RequestSaveProxyState();
             }
         }
     }
@@ -1348,6 +1376,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _proxySearchText, value))
             {
                 RefreshProxyCollection();
+                RequestSaveProxyState();
             }
         }
     }
@@ -1370,6 +1399,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _selectedLatencyFilter, value))
             {
                 RefreshProxyCollection();
+                RequestSaveProxyState();
             }
         }
     }
@@ -1385,6 +1415,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _selectedSourceFilter, value))
             {
                 RefreshProxyCollection();
+                RequestSaveProxyState();
             }
         }
     }
@@ -1407,6 +1438,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _selectedProtocolFilter, value))
             {
                 RefreshProxyCollection();
+                RequestSaveProxyState();
             }
         }
     }
@@ -1431,6 +1463,7 @@ public class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _selectedSortOption, value))
             {
                 RefreshProxyCollection();
+                RequestSaveProxyState();
             }
         }
     }
@@ -1587,6 +1620,7 @@ public class MainViewModel : INotifyPropertyChanged
     private void OnProxySelectionChanged()
     {
         UpdateSelectedProxiesCount();
+        RequestSaveProxyState();
     }
 
     private string _activeProxyDisplay = "Idle (Traffic combined & ready)";
@@ -1609,6 +1643,7 @@ public class MainViewModel : INotifyPropertyChanged
             p.IsSelected = true;
         }
         UpdateSelectedProxiesCount();
+        SaveCurrentProxyState();
     }
 
     public void DeselectAllProxies()
@@ -1618,6 +1653,7 @@ public class MainViewModel : INotifyPropertyChanged
             p.IsSelected = false;
         }
         UpdateSelectedProxiesCount();
+        SaveCurrentProxyState();
     }
 
     public void SelectFastProxies()
@@ -1627,6 +1663,47 @@ public class MainViewModel : INotifyPropertyChanged
             p.IsSelected = p.IsHealthy && p.LatencyMs <= 300;
         }
         UpdateSelectedProxiesCount();
+        SaveCurrentProxyState();
+    }
+
+    /// <summary>
+    /// Immediately saves all harvested proxies along with active UI filters, sorting choices,
+    /// and user modifications to persistent disk storage in Idempotence mode.
+    /// </summary>
+    public void SaveCurrentProxyState()
+    {
+        var state = new PersistedProxyStateModel
+        {
+            SelectedLatencyFilter = SelectedLatencyFilter,
+            SelectedSourceFilter = SelectedSourceFilter,
+            SelectedProtocolFilter = SelectedProtocolFilter,
+            SelectedCountryFilter = Config.RotatingProxy.CountryFilter,
+            ProxySearchText = ProxySearchText,
+            SelectedSortOption = SelectedSortOption,
+            RouteBondedTrafficThroughRotator = RouteBondedTrafficThroughRotator,
+            RotationIntervalSeconds = RotationIntervalSeconds,
+            SelectedRotationStrategy = SelectedRotationStrategy
+        };
+        _proxyValidator.SavePersistedState(state);
+    }
+
+    /// <summary>
+    /// Debounced asynchronous persistence of proxy state (filters, sorting, selections) after 400ms.
+    /// </summary>
+    public void RequestSaveProxyState()
+    {
+        _proxyValidator.RequestSavePersistedState(() => new PersistedProxyStateModel
+        {
+            SelectedLatencyFilter = SelectedLatencyFilter,
+            SelectedSourceFilter = SelectedSourceFilter,
+            SelectedProtocolFilter = SelectedProtocolFilter,
+            SelectedCountryFilter = Config.RotatingProxy.CountryFilter,
+            ProxySearchText = ProxySearchText,
+            SelectedSortOption = SelectedSortOption,
+            RouteBondedTrafficThroughRotator = RouteBondedTrafficThroughRotator,
+            RotationIntervalSeconds = RotationIntervalSeconds,
+            SelectedRotationStrategy = SelectedRotationStrategy
+        });
     }
 
     public void ForceRotateProxy()
@@ -1678,6 +1755,7 @@ public class MainViewModel : INotifyPropertyChanged
                 OnPropertyChanged();
                 _proxyEngine.CurrentConfig = Config;
                 SaveCurrentCombinationImmediate();
+                RequestSaveProxyState();
             }
         }
     }
@@ -1694,6 +1772,7 @@ public class MainViewModel : INotifyPropertyChanged
                 Config.RotatingProxy.RotationIntervalSeconds = value;
                 OnPropertyChanged();
                 SaveCurrentCombinationImmediate();
+                RequestSaveProxyState();
             }
         }
     }

@@ -423,3 +423,16 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.0 Build 27).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.2.0.
+
+## Milestone 29: Idempotent Proxy Harvesting & Complete State Persistence [COMPLETED]
+- [x] Increment version to 2.2.1 and versionCode: 28 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat).
+- [x] Implement strict Idempotence Mode in `ProxyValidatorEngine.cs`, `LinuxProxyValidator.cs`, and `MacProxyValidator.cs` via `IdempotentAddOrUpdate` and `IdempotentAddCandidates`, eliminating duplicate proxy entries ($f(f(x)) = f(x)$).
+- [x] Ensure proxy harvesting strictly preserves user modifications (`IsSelected` checkbox state) and verified benchmark latencies without clobbering or resetting when re-harvesting.
+- [x] Implement complete proxy state persistence in `proxy_state.json` via `PersistedProxyStateModel`, automatically saving all harvested candidates immediately upon harvest.
+- [x] Persist and restore all active UI filters across restarts: Max Latency, Source Feed Origin, Protocol, Country Code, and Text Search query.
+- [x] Persist and restore active multi-criteria sorting order across restarts: Latency (Asc/Desc), Health/Status first, Source (A-Z), Country Code (A-Z), Lowest Failures.
+- [x] Wire debounced state auto-saving to filter and sorting setters in `MainViewModel.cs` and web REST APIs in `EmbeddedDashboardServer.cs` and `CyberpunkSpa.cs`.
+- [x] Add automated test step `[TEST 10/10]` to `--verify-rotator` testing idempotent deduplication, modification preservation, disk writing, and restart state restoration (100% pass rate).
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.1 Build 28).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.2.1.

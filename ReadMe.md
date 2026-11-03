@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.2.0%20(Build%2027)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.2.1%20(Build%2028)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -43,8 +43,8 @@ CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-s
 4. **Live Intranet & Internet Geo-Location Identity Resolution (NEW in v2.2.0)**:
    Continuously monitors and resolves real-time network identity with dual-provider fast fallback (`http://ip-api.com/json/`, `https://ipwho.is/`, `https://api.ipify.org?format=text`), displaying local intranet IP aggregation, public Internet WAN IP, city, region, country, ISP/ASN, and dynamic Unicode country flag emojis (e.g. 🇮🇳, 🇺🇸, 🇩🇪, 🇬🇧, 🇯🇵).
 
-5. **Automated Rotating Proxy Harvester with 255+ Global Feeds**:
-   Scrapes, parses, and validates thousands of proxy candidate nodes from 255+ curated open-source feeds across HTTP, HTTPS, SOCKS4, and SOCKS5. Features bulk URL feed management, multi-faceted filtering & sorting, and persistent disk caching of healthy proxies with immediate eviction of unavailable nodes.
+5. **Automated Idempotent Rotating Proxy Harvester & State Persistence (NEW in v2.2.1)**:
+   Scrapes, parses, and validates thousands of proxy candidate nodes from 255+ curated open-source feeds across HTTP, HTTPS, SOCKS4, and SOCKS5 in **strict Idempotence mode** ($f(f(x)) = f(x)$). Eliminates duplicate insertions, preserves user checkbox selections (`IsSelected`) and verified benchmarks across repeated harvests. Automatically persists all harvested candidates, user selections, and active UI filters & sorting configurations (`proxy_state.json`), restoring the exact interface state seamlessly upon application restart.
 
 6. **Dynamic QoS Traffic Shaping**:
    Three specialized adaptive shaping modes:

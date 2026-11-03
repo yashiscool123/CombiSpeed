@@ -1400,6 +1400,13 @@ public static class CyberpunkSpa
             else if (sortSel === 'source_asc') { currentSortField = 'source'; currentSortDirection = 'asc'; }
             else if (sortSel === 'geo_asc') { currentSortField = 'geo'; currentSortDirection = 'asc'; }
 
+            try {
+                if (document.getElementById('filterLatency')) localStorage.setItem('combispeed_filter_latency', document.getElementById('filterLatency').value);
+                if (document.getElementById('filterProtocol')) localStorage.setItem('combispeed_filter_proto', document.getElementById('filterProtocol').value);
+                if (document.getElementById('filterSort')) localStorage.setItem('combispeed_filter_sort', document.getElementById('filterSort').value);
+                if (document.getElementById('filterSearch')) localStorage.setItem('combispeed_filter_search', document.getElementById('filterSearch').value);
+            } catch(e) {}
+
             let filtered = rawPoolData.filter(p => {
                 if (searchQ) {
                     const matchEndpoint = (p.Endpoint || '').toLowerCase().includes(searchQ);
@@ -1601,6 +1608,16 @@ public static class CyberpunkSpa
         }
 
         window.onload = () => {
+            try {
+                const savedLat = localStorage.getItem('combispeed_filter_latency');
+                if (savedLat && document.getElementById('filterLatency')) document.getElementById('filterLatency').value = savedLat;
+                const savedProto = localStorage.getItem('combispeed_filter_proto');
+                if (savedProto && document.getElementById('filterProtocol')) document.getElementById('filterProtocol').value = savedProto;
+                const savedSort = localStorage.getItem('combispeed_filter_sort');
+                if (savedSort && document.getElementById('filterSort')) document.getElementById('filterSort').value = savedSort;
+                const savedSearch = localStorage.getItem('combispeed_filter_search');
+                if (savedSearch && document.getElementById('filterSearch')) document.getElementById('filterSearch').value = savedSearch;
+            } catch(e) {}
             pollTelemetry();
             fetchRotator();
             fetchGeoIp();

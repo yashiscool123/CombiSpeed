@@ -455,8 +455,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.0";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 27)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.1";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 28)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);
@@ -959,6 +959,120 @@ public partial class App : Application
                         Log(" [WARN] Live GeoIP lookup timed out (offline environment), fallback model verified.");
                     }
                     Log(" [PASS] Live GeoIP and Intranet resolution engine verified.");
+                }
+
+                // 10. Test Idempotent Proxy Harvesting, Modification Preservation & Filter/Sort State Persistence
+                Log("[TEST 10/10] Testing Idempotent Proxy Harvesting, User Modification Preservation & Filter/Sort State Persistence...");
+                string tempStateFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "combispeed_test_idempotence_state.json");
+                try
+                {
+                    using (var idempVal = new ProxyValidatorEngine())
+                    {
+                        idempVal.StateStorageFilePath = tempStateFile;
+
+                        // Phase A: Seed initial proxies with user modifications (IsSelected = true, verified latency)
+                        var pxA = new HarvestedProxyModel { Host = "104.21.5.31", Port = 8080, IsHealthy = true, IsSelected = true, LatencyMs = 42, LastChecked = DateTime.UtcNow, CountryCode = "US" };
+                        var pxB = new HarvestedProxyModel { Host = "104.21.5.32", Port = 8080, IsHealthy = true, IsSelected = false, LatencyMs = 88, LastChecked = DateTime.UtcNow, CountryCode = "DE" };
+                        int added1 = idempVal.IdempotentAddCandidates(new[] { pxA, pxB });
+                        if (added1 != 2 || idempVal.TotalCount != 2)
+                        {
+                            throw new Exception($"Initial idempotent add expected 2, got {added1} (total: {idempVal.TotalCount})");
+                        }
+
+                        // Phase B: Re-harvest the exact same proxy (with unverified raw data) + 1 new proxy
+                        var pxA_raw = new HarvestedProxyModel { Host = "104.21.5.31", Port = 8080, IsHealthy = false, IsSelected = false, LatencyMs = 999, LastChecked = DateTime.MinValue, CountryCode = "UN" };
+                        var pxC = new HarvestedProxyModel { Host = "104.21.5.33", Port = 8080, IsHealthy = false, IsSelected = false, LatencyMs = 999, CountryCode = "SG" };
+                        int added2 = idempVal.IdempotentAddCandidates(new[] { pxA_raw, pxC });
+
+                        if (added2 != 1 || idempVal.TotalCount != 3)
+                        {
+                            throw new Exception($"Second harvest expected 1 new candidate, got {added2} (total: {idempVal.TotalCount})");
+                        }
+
+                        // Verify pxA modifications and benchmarks were strictly preserved
+                        var pxA_check = idempVal.AllProxies.First(p => p.Host == "104.21.5.31");
+                        if (!pxA_check.IsSelected)
+                        {
+                            throw new Exception("Idempotent harvesting clobbered user selection (IsSelected became false)!");
+                        }
+                        if (!pxA_check.IsHealthy || pxA_check.LatencyMs != 42)
+                        {
+                            throw new Exception("Idempotent harvesting clobbered verified benchmark metrics!");
+                        }
+                        if (pxA_check.CountryCode != "US")
+                        {
+                            throw new Exception("Idempotent harvesting downgraded CountryCode to unverified value!");
+                        }
+                        Log(" [PASS] Idempotent harvester strictly preserved user selection (IsSelected) and verified benchmark metrics.");
+
+                        // Phase C: 3rd harvest run with same 3 proxies produces 0 duplicates ($f(f(x)) == f(x)$)
+                        int added3 = idempVal.IdempotentAddCandidates(new[] { pxA_raw, pxB, pxC });
+                        if (added3 != 0 || idempVal.TotalCount != 3)
+                        {
+                            throw new Exception($"Idempotence check failed: third harvest added {added3} duplicates!");
+                        }
+                        Log(" [PASS] Mathematical idempotence verified: zero duplicates added upon repeated harvesting.");
+
+                        // Phase D: Persist complete state with custom filters and sorting
+                        var testState = new PersistedProxyStateModel
+                        {
+                            SelectedLatencyFilter = "< 300 ms (Fast)",
+                            SelectedSourceFilter = "https://proxyscrape.com/v2/",
+                            SelectedProtocolFilter = "HTTPS",
+                            SelectedCountryFilter = "DE",
+                            SelectedSortOption = "Highest Latency",
+                            ProxySearchText = "8080",
+                            RouteBondedTrafficThroughRotator = true,
+                            RotationIntervalSeconds = 45,
+                            SelectedRotationStrategy = "Time-Based Interval"
+                        };
+
+                        idempVal.SavePersistedState(testState, tempStateFile);
+                        if (!System.IO.File.Exists(tempStateFile))
+                        {
+                            throw new Exception("SavePersistedState failed to write state file!");
+                        }
+                        Log(" [PASS] Persisted proxy state file written with active filters, sorting and selections.");
+                    }
+
+                    // Phase E: Simulate application restart - load state into fresh validator engine
+                    using (var restartVal = new ProxyValidatorEngine())
+                    {
+                        restartVal.StateStorageFilePath = tempStateFile;
+                        var restored = restartVal.LoadPersistedState(tempStateFile);
+
+                        if (restored == null)
+                        {
+                            throw new Exception("LoadPersistedState returned null on valid state file!");
+                        }
+                        if (restartVal.TotalCount != 3)
+                        {
+                            throw new Exception($"Loaded proxy count mismatch! Expected 3, got {restartVal.TotalCount}");
+                        }
+                        var restoredP1 = restartVal.AllProxies.First(p => p.Host == "104.21.5.31");
+                        if (!restoredP1.IsSelected || !restoredP1.IsHealthy || restoredP1.LatencyMs != 42)
+                        {
+                            throw new Exception("Restored proxy lost IsSelected modification or verified latency!");
+                        }
+
+                        // Verify restored filter and sorting settings
+                        if (restored.SelectedLatencyFilter != "< 300 ms (Fast)" ||
+                            restored.SelectedSortOption != "Highest Latency" ||
+                            restored.SelectedCountryFilter != "DE" ||
+                            restored.SelectedProtocolFilter != "HTTPS" ||
+                            restored.ProxySearchText != "8080" ||
+                            !restored.RouteBondedTrafficThroughRotator ||
+                            restored.RotationIntervalSeconds != 45)
+                        {
+                            throw new Exception("Restored UI filter / sort settings do not match saved state!");
+                        }
+                        Log(" [PASS] Application restart simulation: 100% restored proxies, user selections, and active filters/sorting.");
+                    }
+                }
+                finally
+                {
+                    try { if (System.IO.File.Exists(tempStateFile)) System.IO.File.Delete(tempStateFile); } catch { }
+                    try { if (System.IO.File.Exists(tempStateFile + ".tmp")) System.IO.File.Delete(tempStateFile + ".tmp"); } catch { }
                 }
 
                 Log("\n[ALL PASS] Rotating Proxy & Harvester Engine self-test PASSED with 100% SUCCESS!");

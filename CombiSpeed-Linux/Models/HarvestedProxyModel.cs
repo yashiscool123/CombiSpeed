@@ -443,3 +443,31 @@ public class RotatingProxyConfigModel
     }
 }
 
+/// <summary>
+/// Durable state container that stores all harvested proxies along with user modifications,
+/// per-proxy selections, and active UI filters and sorting configurations.
+/// </summary>
+public class PersistedProxyStateModel
+{
+    public string Version { get; set; } = "2.2.1";
+    public DateTime LastSaved { get; set; } = DateTime.UtcNow;
+
+    // Active UI Filters
+    public string SelectedLatencyFilter { get; set; } = "ALL Latencies";
+    public string SelectedSourceFilter { get; set; } = "ALL Sources";
+    public string SelectedProtocolFilter { get; set; } = "ALL Protocols";
+    public string SelectedCountryFilter { get; set; } = "ALL";
+    public string ProxySearchText { get; set; } = "";
+
+    // Active UI Sorting
+    public string SelectedSortOption { get; set; } = "Lowest Latency (Fastest)";
+
+    // Rotator Pipeline Settings
+    public bool RouteBondedTrafficThroughRotator { get; set; } = false;
+    public int RotationIntervalSeconds { get; set; } = 30;
+    public string SelectedRotationStrategy { get; set; } = "Round Robin (Per-Request)";
+
+    // Harvested proxies list including user modifications (IsSelected, LatencyMs, IsHealthy, Failures, etc.)
+    public List<HarvestedProxyModel> Proxies { get; set; } = new();
+}
+

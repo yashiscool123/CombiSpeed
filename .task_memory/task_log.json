@@ -518,6 +518,30 @@
                     "progress": "Milestone 28 completed successfully with 100% verification and clean packaging."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-029",
+            "userQuery": "upon harvesting proxies, save it persistently along with the modifications / filters / sorting made so that the application can reuse it upon next restart or even populate the new harvested proxies in Idempotence mode. The application should always harvest proxies in Idempotence mode.",
+            "status": "completed",
+            "createdAt": "2026-11-04T01:14:00+05:30",
+            "updatedAt": "2026-11-04T01:35:00+05:30",
+            "progress": "Delivered Milestone 29: Idempotent proxy harvesting and complete persistence of harvested proxies, user modifications (IsSelected), and active filtering and sorting states across restarts. Implemented IdempotentAddOrUpdate and IdempotentAddCandidates across Windows (ProxyValidatorEngine), Linux (LinuxProxyValidator), and macOS (MacProxyValidator), eliminating duplicate entries and preventing re-harvests from clobbering user checkbox selections or benchmarked latencies. Implemented PersistedProxyStateModel saving all proxies, selections, filters (latency, source, protocol, country, search), and sorting to proxy_state.json immediately upon harvest and on filter/sort changes. Verified restart simulation and idempotence with automated test phase [TEST 10/10] in --verify-rotator (100% PASS). Rebuilt and packaged v2.2.1 (Build 28).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2901",
+                    "timestamp": "2026-11-04T01:14:30+05:30",
+                    "inputs": "User requested persistent saving of harvested proxies with modifications, filters, and sorting, and strict Idempotence mode during proxy harvesting so repeated harvests or restarts never duplicate entries or clobber user modifications/selections.",
+                    "outputs": "Planning idempotent harvester merge logic, extending persistent schema to include filter/sort preferences and user modifications, and updating Windows, Linux, and macOS engines.",
+                    "progress": "Architecture and design planning in progress."
+                },
+                {
+                    "checkpointId": "CP-2902",
+                    "timestamp": "2026-11-04T01:35:00+05:30",
+                    "inputs": "Implementation, test verification, release packaging, and documentation synchronization.",
+                    "outputs": "Implemented IdempotentAddOrUpdate and IdempotentAddCandidates, PersistedProxyStateModel, SavePersistedState and LoadPersistedState, updated MainViewModel, LinuxProxyValidator, MacProxyValidator, CyberpunkSpa, and EmbeddedDashboardServer. Verified all 10 phases of --verify-rotator, --verify-persistence, and --verify-throttling (100% PASS). Published v2.2.1 packages.",
+                    "progress": "Milestone 29 completed successfully with 100% verification and clean packaging."
+                }
+            ]
         }
     ]
 }
