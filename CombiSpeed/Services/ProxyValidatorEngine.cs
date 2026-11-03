@@ -305,7 +305,10 @@ public class ProxyValidatorEngine
     public List<HarvestedProxyModel> GetHealthyProxies(
         bool strictAnonymity = false,
         RotationStrategy strategy = RotationStrategy.RoundRobin,
-        string? countryFilter = null)
+        string? countryFilter = null,
+        int? maxLatencyMs = null,
+        string? sourceFilter = null,
+        ProxyProtocol? protocolFilter = null)
     {
         var query = _pool.Values.Where(p => p.IsHealthy);
 
@@ -317,6 +320,21 @@ public class ProxyValidatorEngine
         if (!string.IsNullOrWhiteSpace(countryFilter) && !countryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(p => p.CountryCode.Equals(countryFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (maxLatencyMs.HasValue && maxLatencyMs.Value > 0)
+        {
+            query = query.Where(p => p.LatencyMs <= maxLatencyMs.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(sourceFilter) && !sourceFilter.StartsWith("ALL", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(p => p.SourceUrl.Contains(sourceFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (protocolFilter.HasValue)
+        {
+            query = query.Where(p => p.Protocol == protocolFilter.Value);
         }
 
         if (strategy == RotationStrategy.LowestLatency)

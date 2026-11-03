@@ -118,3 +118,4 @@ public partial class ProxySourcesDialog : Window
         Close();
     }
 }
+

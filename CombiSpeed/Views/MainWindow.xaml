@@ -780,25 +780,72 @@
                                         <TextBlock Text="Connect applications or scrapers to: http://127.0.0.1:8081" FontSize="11" Foreground="#CBD5E1" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
                                     </Grid>
 
-                                    <DataGrid ItemsSource="{Binding HarvestedProxies}" AutoGenerateColumns="False" IsReadOnly="True" Height="360" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" AutomationProperties.Name="Harvested Proxies Table">
+                                    <!-- Interactive Sorting & Multi-Faceted Filtering Bar -->
+                                    <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Keyword Search -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <TextBlock Text="🔍" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <TextBox Text="{Binding ProxySearchText, UpdateSourceTrigger=PropertyChanged}" Width="145" Height="26" Padding="6,2" FontSize="11" ToolTip="Search IP, port, country, or source" AutomationProperties.Name="Filter Proxies Search Box"/>
+                                            </StackPanel>
+
+                                            <!-- Latency Filter -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <TextBlock Text="⚡ Ping:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <ComboBox ItemsSource="{Binding LatencyFilters}" SelectedItem="{Binding SelectedLatencyFilter}" Width="140" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter by maximum latency threshold"/>
+                                            </StackPanel>
+
+                                            <!-- Source Filter -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <TextBlock Text="📁 Source:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <ComboBox ItemsSource="{Binding SourceFilters}" SelectedItem="{Binding SelectedSourceFilter}" Width="125" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter by repository source"/>
+                                            </StackPanel>
+
+                                            <!-- Protocol Filter -->
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <TextBlock Text="🔒 Proto:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <ComboBox ItemsSource="{Binding ProtocolFilters}" SelectedItem="{Binding SelectedProtocolFilter}" Width="105" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter by protocol"/>
+                                            </StackPanel>
+
+                                            <!-- Sort Option -->
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <TextBlock Text="⇅ Sort:" FontSize="11" FontWeight="SemiBold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Width="160" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Sort proxies"/>
+                                            </StackPanel>
+
+                                            <!-- Filtered Count Badge -->
+                                            <TextBlock Grid.Column="5" Text="{Binding FilteredCountText}" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <DataGrid ItemsSource="{Binding HarvestedProxies}" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="True" Height="360" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" AutomationProperties.Name="Harvested Proxies Table">
                                         <DataGrid.Columns>
-                                            <DataGridTemplateColumn Header="STATUS" Width="90">
+                                            <DataGridTemplateColumn Header="STATUS" Width="90" SortMemberPath="IsHealthy">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
-                                                            <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold" Foreground="#040810"/>
+                                                             <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold" Foreground="#040810"/>
                                                         </Border>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
-                                            <DataGridTextColumn Header="GEO" Binding="{Binding CountryCode}" Width="60" FontWeight="Bold"/>
-                                            <DataGridTextColumn Header="ENDPOINT (HOST:PORT)" Binding="{Binding Endpoint}" Width="170" FontFamily="Consolas"/>
-                                            <DataGridTextColumn Header="PROTOCOL" Binding="{Binding FormattedProtocol}" Width="90"/>
-                                            <DataGridTextColumn Header="ANONYMITY" Binding="{Binding FormattedAnonymity}" Width="105"/>
-                                            <DataGridTextColumn Header="LATENCY" Binding="{Binding LatencyMs, StringFormat='{}{0}ms'}" Width="80"/>
-                                            <DataGridTextColumn Header="FAILURES" Binding="{Binding Failures}" Width="70"/>
-                                            <DataGridTextColumn Header="SUCCESSES" Binding="{Binding Successes}" Width="80"/>
-                                            <DataGridTextColumn Header="SOURCE REPOSITORY / URL" Binding="{Binding SourceUrl}" Width="*"/>
+                                            <DataGridTextColumn Header="GEO" Binding="{Binding CountryCode}" Width="60" FontWeight="Bold" SortMemberPath="CountryCode"/>
+                                            <DataGridTextColumn Header="ENDPOINT (HOST:PORT)" Binding="{Binding Endpoint}" Width="170" FontFamily="Consolas" SortMemberPath="Endpoint"/>
+                                            <DataGridTextColumn Header="PROTOCOL" Binding="{Binding FormattedProtocol}" Width="90" SortMemberPath="Protocol"/>
+                                            <DataGridTextColumn Header="ANONYMITY" Binding="{Binding FormattedAnonymity}" Width="105" SortMemberPath="Anonymity"/>
+                                            <DataGridTextColumn Header="LATENCY" Binding="{Binding LatencyMs, StringFormat='{}{0}ms'}" Width="80" SortMemberPath="LatencyMs"/>
+                                            <DataGridTextColumn Header="FAILURES" Binding="{Binding Failures}" Width="70" SortMemberPath="Failures"/>
+                                            <DataGridTextColumn Header="SUCCESSES" Binding="{Binding Successes}" Width="80" SortMemberPath="Successes"/>
+                                            <DataGridTextColumn Header="SOURCE REPOSITORY / URL" Binding="{Binding SourceUrl}" Width="*" SortMemberPath="SourceUrl"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </StackPanel>

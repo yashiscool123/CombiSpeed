@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.1.3%20(Build%2020)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.1.4%20(Build%2021)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -29,11 +29,17 @@ This bypasses default routing limitations and forces traffic simultaneously acro
 
 ## 🚀 Key Features
 
-1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1 & v2.1.3)**:
+1. **Automated Rotating Proxy Harvester & Multi-NIC Egress Dispatcher (NEW in v2.1.0, Enhanced in v2.1.1, v2.1.3 & v2.1.4)**:
    - **Multi-Source Open-Source Proxy Harvester**:
      Automatically scrapes fresh proxy candidate pools from top-tier maintained open-source repositories and APIs out of the box (*TheSpeedX/PROXY-List*, *monosans/proxy-list*, *clarketm/proxy-list*, *proxyscrape API*), custom user URLs/APIs, pastebins, or local `.txt` lists.
    - **Bulk Proxy Repository Sources & Feed URLs Management (NEW in v2.1.3)**:
      Allows users to bulk add, view, edit, or customize any number of proxy feed URLs and repository endpoints. Features multi-line text editing (`ProxySourcesDialog.xaml` in Windows, Web modal in Linux/macOS SPAs), live URL counting, automatic comment ignoring (`#` or `//`), HTTP/HTTPS URL validation, de-duplication, clipboard pasting, and 1-click restore to verified default repositories.
+   - **Multi-Faceted Proxy Sorting & Filtering (NEW in v2.1.4)**:
+     - **Latency Threshold Filter**: Filter the pool instantaneously by response speed tiers (`All Latencies`, `< 150 ms (Ultra-Fast)`, `< 300 ms (Fast)`, `< 500 ms (Normal)`, and `< 1000 ms`).
+     - **Dynamic Source Origin Filter**: Auto-discovers and categorizes proxies by their scraping feed origin (*TheSpeedX*, *monosans*, *hookzof*, *proxyscrape*, or custom URL hostname), isolating proxies from specific repositories.
+     - **Protocol Filter**: Filter candidate pools by protocol (`HTTP`, `HTTPS`, `SOCKS4`, `SOCKS5`).
+     - **Universal Live Search**: Instant search box matching host IP, port, country code, protocol, or source URL across the pool in real time.
+     - **Multi-Criteria & Interactive Column Sorting**: Presets for `Lowest Latency (Fastest)`, `Highest Latency`, `Status / Working First`, `Source (A-Z)`, and `Country Code (A-Z)`. Full interactive column header click-to-sort across both Windows WPF `DataGrid` and Linux/macOS Web SPAs.
    - **Universal Heuristic Regex & JSON API Scraper**:
      Intelligently extracts proxies from unstructured plain text, CSV, JSON arrays/objects (`{"ip":"...", "port":8080, "country":"US"}`), and HTML tables (`<td>IP</td><td>PORT</td><td>Country</td>`) supporting `IP:PORT`, `PROTOCOL://IP:PORT`, and authenticated `IP:PORT:USER:PASS` lines. Automatically isolates and purges RFC 1918 private subnets and loopback addresses.
    - **High-Concurrency Multi-Protocol Validator**:
@@ -291,9 +297,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.0.2-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.0.2-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.0.2-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.0.2-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.0.2-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.1.4-win-x64.zip` and `publish/CombiSpeed-v2.1.4-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.1.4-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.1.4-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.1.4-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.1.4-macos-x64.zip`
 
 ---
 
@@ -331,6 +337,7 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 | `--verify-benchmark` | *(none)* | Runs automated self-test suite verifying pre-flight routability probing, multi-adapter socket throughput, and bonded aggregation. |
 | `--verify-persistence` | *(none)* | Runs automated self-test suite verifying adapter settings, profiles, accessibility, and PAC export. |
 | `--verify-throttling` | *(none)* | Runs automated self-test suite verifying Token Bucket rate limiting, 500 Mbps cap, and dynamic speed shaping. |
+| `--verify-rotator` | *(none)* | Runs automated self-test suite verifying universal scraping, regex/JSON parsing, latency/source/protocol filtering, and LowestLatency sorting. |
 
 ---
 

@@ -350,6 +350,30 @@
                     "progress": "All tasks completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-022",
+            "userQuery": "Allow sorting & filtering of the proxy URLs by latency, sources, etc.",
+            "status": "completed",
+            "createdAt": "2026-11-03T17:15:00+05:30",
+            "updatedAt": "2026-11-03T17:33:00+05:30",
+            "progress": "Delivered Milestone 22: Advanced Multi-Faceted Sorting & Filtering for Harvested Proxy Pools across Windows WPF, Linux, and macOS. Overhauled ProxyValidatorEngine, LinuxProxyValidator, and MacProxyValidator GetHealthyProxies() with maxLatencyMs, sourceFilter, and protocolFilter parameters. Implemented interactive filter toolbar in Windows WPF MainWindow.xaml with real-time search, latency presets (<150ms to <1000ms), dynamic source origin detection, protocol dropdown, multi-criteria sorting presets, and column header click-to-sort with CanUserSortColumns and SortMemberPath. Implemented identical interactive Cyberpunk Web filter toolbar and clickable table headers with bidirectional JavaScript sorting and dynamic source extraction in CyberpunkSpa.cs for Linux and macOS. Added [TEST 7/7] to --verify-rotator test suite (100% pass rate across all diagnostics). Built and published standalone release archives for Windows, Linux, and macOS under v2.1.4 (Build 21).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2201",
+                    "timestamp": "2026-11-03T17:16:00+05:30",
+                    "inputs": "User requested: Allow sorting & filtering of the proxy URLs by latency, sources, etc.",
+                    "outputs": "Architected Sorting & Filtering Engine: (1) ProxySortBy and SortDirection enums; (2) LatencyFilter (<150ms, <300ms, <500ms, <1000ms, All), SourceFilter (dynamic source list), ProtocolFilter (All, HTTP, HTTPS, SOCKS4, SOCKS5), StatusFilter (All, Working, Failed), and Keyword search query; (3) Windows WPF Tab 4 DataGrid sorting & filter toolbar in MainWindow.xaml & MainViewModel.cs; (4) Linux & macOS REST API query filtering and interactive Cyberpunk Web SPA table sorting & filter controls; (5) Automated tests & verification.",
+                    "progress": "Task registered and architecture established."
+                },
+                {
+                    "checkpointId": "CP-2202",
+                    "timestamp": "2026-11-03T17:33:00+05:30",
+                    "inputs": "Implementation, cross-platform compilation, automated test verification, documentation, and release packaging.",
+                    "outputs": "Implemented Windows WPF MainViewModel.cs with ProxySearchText, LatencyFilters, SourceFilters, ProtocolFilters, SortOptions, and FilteredCountText. Enabled DataGrid CanUserSortColumns with SortMemberPath. Overhauled CyberpunkSpa.cs for Linux and macOS with interactive filter controls, clickable sorting headers, dynamic source dropdown, and client-side filter engine. Added [TEST 7/7] to --verify-rotator (100% PASS). Bumped to v2.1.4 (Build 21). Published packages for Windows, Linux, and macOS in publish/.",
+                    "progress": "Milestone 22 completed successfully with 100% test pass rate and standalone release artifacts generated."
+                }
+            ]
         }
     ]
 }

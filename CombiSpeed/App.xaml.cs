@@ -371,8 +371,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.3";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 20)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.4";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 21)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);
@@ -660,7 +660,7 @@ public partial class App : Application
                 Log(" [PASS] Country filtering, JSON feed extraction, and scheduler verified successfully.");
 
                 // 6. Test Bulk Proxy Repository Sources Management
-                Log("[TEST 6/6] Testing Bulk Proxy Sources Ingestion & Parsing...");
+                Log("[TEST 6/7] Testing Bulk Proxy Sources Ingestion & Parsing...");
                 string testBulkSources = @"
                     # Primary open-source feeds
                     https://raw.githubusercontent.com/test/repo1/http.txt
@@ -688,6 +688,54 @@ public partial class App : Application
                     throw new Exception("ResetSourcesToDefault failed to restore default open-source list!");
                 }
                 Log(" [PASS] Bulk proxy repository sources parsing, de-duplication, and reset verified successfully.");
+
+                // 7. Test Multi-Faceted Sorting & Filtering
+                Log("[TEST 7/7] Testing Multi-Faceted Sorting & Filtering (Latency, Source, Protocol, Status)...");
+                var testFilterPool = new ProxyValidatorEngine();
+                testFilterPool.AddOrUpdateCandidate(new HarvestedProxyModel { Host = "10.0.0.1", Port = 8080, Protocol = ProxyProtocol.Http, LatencyMs = 85, CountryCode = "US", SourceUrl = "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt", IsHealthy = true });
+                testFilterPool.AddOrUpdateCandidate(new HarvestedProxyModel { Host = "10.0.0.2", Port = 1080, Protocol = ProxyProtocol.Socks5, LatencyMs = 240, CountryCode = "DE", SourceUrl = "https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt", IsHealthy = true });
+                testFilterPool.AddOrUpdateCandidate(new HarvestedProxyModel { Host = "10.0.0.3", Port = 443, Protocol = ProxyProtocol.Https, LatencyMs = 650, CountryCode = "US", SourceUrl = "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt", IsHealthy = true });
+                testFilterPool.AddOrUpdateCandidate(new HarvestedProxyModel { Host = "10.0.0.4", Port = 1081, Protocol = ProxyProtocol.Socks4, LatencyMs = 120, CountryCode = "JP", SourceUrl = "https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks4.txt", IsHealthy = false });
+
+                // Latency filter test (< 150ms)
+                var under150 = testFilterPool.GetHealthyProxies(maxLatencyMs: 150);
+                if (under150.Count != 1 || under150[0].Host != "10.0.0.1")
+                {
+                    throw new Exception($"Latency filter (< 150ms) failed! Expected 1 proxy (10.0.0.1), got {under150.Count}");
+                }
+                Log($" [PASS] Latency filtering (< 150ms): returned {under150.Count} proxy ({under150[0].Host}, {under150[0].LatencyMs}ms).");
+
+                // Latency filter test (< 300ms)
+                var under300 = testFilterPool.GetHealthyProxies(maxLatencyMs: 300);
+                if (under300.Count != 2)
+                {
+                    throw new Exception($"Latency filter (< 300ms) failed! Expected 2 proxies, got {under300.Count}");
+                }
+                Log($" [PASS] Latency filtering (< 300ms): returned {under300.Count} proxies.");
+
+                // Source filter test
+                var speedXProxies = testFilterPool.GetHealthyProxies(sourceFilter: "TheSpeedX");
+                if (speedXProxies.Count != 2 || speedXProxies.Any(p => !p.SourceUrl.Contains("TheSpeedX")))
+                {
+                    throw new Exception($"Source filtering failed! Expected 2 proxies from TheSpeedX, got {speedXProxies.Count}");
+                }
+                Log($" [PASS] Source filtering ('TheSpeedX'): returned {speedXProxies.Count} proxies.");
+
+                // Protocol filter test
+                var socks5Proxies = testFilterPool.GetHealthyProxies(protocolFilter: ProxyProtocol.Socks5);
+                if (socks5Proxies.Count != 1 || socks5Proxies[0].Protocol != ProxyProtocol.Socks5)
+                {
+                    throw new Exception($"Protocol filtering failed! Expected 1 SOCKS5 proxy, got {socks5Proxies.Count}");
+                }
+                Log($" [PASS] Protocol filtering (SOCKS5): returned {socks5Proxies.Count} proxy ({socks5Proxies[0].Endpoint}).");
+
+                // Lowest Latency Sorting test
+                var sortedLatency = testFilterPool.GetHealthyProxies(strategy: RotationStrategy.LowestLatency);
+                if (sortedLatency.Count != 3 || sortedLatency[0].LatencyMs > sortedLatency[1].LatencyMs || sortedLatency[1].LatencyMs > sortedLatency[2].LatencyMs)
+                {
+                    throw new Exception("LowestLatency sorting failed to order proxies by ascending latency!");
+                }
+                Log($" [PASS] LowestLatency sorting verified: {string.Join(" < ", sortedLatency.Select(p => $"{p.LatencyMs}ms"))}");
 
                 Log("\n[ALL PASS] Rotating Proxy & Harvester Engine self-test PASSED with 100% SUCCESS!");
                 System.IO.File.WriteAllText("rotator_test.log", logSb.ToString());

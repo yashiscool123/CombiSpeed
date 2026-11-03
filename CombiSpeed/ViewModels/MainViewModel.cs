@@ -1254,6 +1254,110 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    // --- Proxy Pool Sorting & Filtering Properties ---
+    private string _proxySearchText = "";
+    public string ProxySearchText
+    {
+        get => _proxySearchText;
+        set
+        {
+            if (SetField(ref _proxySearchText, value))
+            {
+                RefreshProxyCollection();
+            }
+        }
+    }
+
+    public List<string> LatencyFilters { get; } = new()
+    {
+        "ALL Latencies",
+        "< 150 ms (Ultra-Fast)",
+        "< 300 ms (Fast)",
+        "< 500 ms (Normal)",
+        "< 1000 ms (Acceptable)"
+    };
+
+    private string _selectedLatencyFilter = "ALL Latencies";
+    public string SelectedLatencyFilter
+    {
+        get => _selectedLatencyFilter;
+        set
+        {
+            if (SetField(ref _selectedLatencyFilter, value))
+            {
+                RefreshProxyCollection();
+            }
+        }
+    }
+
+    public ObservableCollection<string> SourceFilters { get; } = new() { "ALL Sources" };
+
+    private string _selectedSourceFilter = "ALL Sources";
+    public string SelectedSourceFilter
+    {
+        get => _selectedSourceFilter;
+        set
+        {
+            if (SetField(ref _selectedSourceFilter, value))
+            {
+                RefreshProxyCollection();
+            }
+        }
+    }
+
+    public List<string> ProtocolFilters { get; } = new()
+    {
+        "ALL Protocols",
+        "HTTP",
+        "HTTPS",
+        "SOCKS4",
+        "SOCKS5"
+    };
+
+    private string _selectedProtocolFilter = "ALL Protocols";
+    public string SelectedProtocolFilter
+    {
+        get => _selectedProtocolFilter;
+        set
+        {
+            if (SetField(ref _selectedProtocolFilter, value))
+            {
+                RefreshProxyCollection();
+            }
+        }
+    }
+
+    public List<string> SortOptions { get; } = new()
+    {
+        "Lowest Latency (Fastest)",
+        "Highest Latency",
+        "Status / Health First",
+        "Source (A-Z)",
+        "Country Code (A-Z)",
+        "Protocol (A-Z)",
+        "Lowest Failures"
+    };
+
+    private string _selectedSortOption = "Lowest Latency (Fastest)";
+    public string SelectedSortOption
+    {
+        get => _selectedSortOption;
+        set
+        {
+            if (SetField(ref _selectedSortOption, value))
+            {
+                RefreshProxyCollection();
+            }
+        }
+    }
+
+    private string _filteredCountText = "Showing 0 proxies";
+    public string FilteredCountText
+    {
+        get => _filteredCountText;
+        set => SetField(ref _filteredCountText, value);
+    }
+
     public bool AutoHarvestEnabled
     {
         get => Config.RotatingProxy.AutoHarvestEnabled;
@@ -1313,12 +1417,72 @@ public class MainViewModel : INotifyPropertyChanged
         {
             HarvestedProxies.Clear();
             var all = _proxyValidator.AllProxies.AsEnumerable();
+
+            // 1. Dynamic Source Filters list discovery
+            var discoveredSources = all.Select(p => ExtractSourceLabel(p.SourceUrl)).Distinct().OrderBy(s => s).ToList();
+            foreach (var src in discoveredSources)
+            {
+                if (!string.IsNullOrWhiteSpace(src) && !SourceFilters.Contains(src))
+                {
+                    SourceFilters.Add(src);
+                }
+            }
+
+            // 2. Country Filter
             if (!string.IsNullOrWhiteSpace(Config.RotatingProxy.CountryFilter) && !Config.RotatingProxy.CountryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))
             {
                 all = all.Where(p => p.CountryCode.Equals(Config.RotatingProxy.CountryFilter, StringComparison.OrdinalIgnoreCase));
             }
 
-            var displayList = all.OrderByDescending(p => p.IsHealthy).ThenBy(p => p.LatencyMs).Take(300);
+            // 3. Max Latency Threshold Filter
+            if (!string.IsNullOrWhiteSpace(SelectedLatencyFilter) && !SelectedLatencyFilter.StartsWith("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                if (SelectedLatencyFilter.Contains("150")) all = all.Where(p => p.LatencyMs <= 150);
+                else if (SelectedLatencyFilter.Contains("300")) all = all.Where(p => p.LatencyMs <= 300);
+                else if (SelectedLatencyFilter.Contains("500")) all = all.Where(p => p.LatencyMs <= 500);
+                else if (SelectedLatencyFilter.Contains("1000")) all = all.Where(p => p.LatencyMs <= 1000);
+            }
+
+            // 4. Source Origin Filter
+            if (!string.IsNullOrWhiteSpace(SelectedSourceFilter) && !SelectedSourceFilter.StartsWith("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                all = all.Where(p => p.SourceUrl.Contains(SelectedSourceFilter, StringComparison.OrdinalIgnoreCase) ||
+                                     ExtractSourceLabel(p.SourceUrl).Equals(SelectedSourceFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 5. Protocol Filter
+            if (!string.IsNullOrWhiteSpace(SelectedProtocolFilter) && !SelectedProtocolFilter.StartsWith("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                if (Enum.TryParse<ProxyProtocol>(SelectedProtocolFilter, true, out var proto))
+                {
+                    all = all.Where(p => p.Protocol == proto);
+                }
+            }
+
+            // 6. Text Search Filter (IP, Port, Country, Source, Protocol)
+            if (!string.IsNullOrWhiteSpace(ProxySearchText))
+            {
+                string q = ProxySearchText.Trim();
+                all = all.Where(p => p.Endpoint.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                                     p.CountryCode.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                                     p.SourceUrl.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                                     p.FormattedProtocol.Contains(q, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 7. Multi-Criteria Sorting
+            all = SelectedSortOption switch
+            {
+                "Lowest Latency (Fastest)" => all.OrderBy(p => !p.IsHealthy).ThenBy(p => p.LatencyMs),
+                "Highest Latency" => all.OrderBy(p => !p.IsHealthy).ThenByDescending(p => p.LatencyMs),
+                "Status / Health First" => all.OrderByDescending(p => p.IsHealthy).ThenBy(p => p.Failures).ThenBy(p => p.LatencyMs),
+                "Source (A-Z)" => all.OrderBy(p => p.SourceUrl).ThenBy(p => p.LatencyMs),
+                "Country Code (A-Z)" => all.OrderBy(p => p.CountryCode).ThenBy(p => p.LatencyMs),
+                "Protocol (A-Z)" => all.OrderBy(p => p.Protocol).ThenBy(p => p.LatencyMs),
+                "Lowest Failures" => all.OrderBy(p => p.Failures).ThenBy(p => p.LatencyMs),
+                _ => all.OrderBy(p => !p.IsHealthy).ThenBy(p => p.LatencyMs)
+            };
+
+            var displayList = all.Take(400).ToList();
             foreach (var p in displayList)
             {
                 HarvestedProxies.Add(p);
@@ -1329,7 +1493,19 @@ public class MainViewModel : INotifyPropertyChanged
 
             var healthy = _proxyValidator.GetHealthyProxies(Config.RotatingProxy.StrictAnonymity, Config.RotatingProxy.Strategy, Config.RotatingProxy.CountryFilter);
             AveragePingMs = healthy.Count > 0 ? (int)healthy.Average(p => p.LatencyMs) : 0;
+            FilteredCountText = $"Showing {displayList.Count} of {TotalHarvestedCount} proxies ({VerifiedHealthyCount} working)";
         });
+    }
+
+    private static string ExtractSourceLabel(string sourceUrl)
+    {
+        if (string.IsNullOrWhiteSpace(sourceUrl)) return "Manual/Local";
+        if (sourceUrl.Contains("TheSpeedX", StringComparison.OrdinalIgnoreCase)) return "TheSpeedX";
+        if (sourceUrl.Contains("monosans", StringComparison.OrdinalIgnoreCase)) return "monosans";
+        if (sourceUrl.Contains("clarketm", StringComparison.OrdinalIgnoreCase)) return "clarketm";
+        if (sourceUrl.Contains("proxyscrape", StringComparison.OrdinalIgnoreCase)) return "proxyscrape";
+        if (Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri)) return uri.Host;
+        return sourceUrl;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

@@ -713,17 +713,48 @@ public static class CyberpunkSpa
                         <input type="checkbox" id="chkChainNic" onchange="updateRotatorConfig()"> ⚡ Multi-NIC Chaining
                     </label>
                 </div>
+
+                <!-- Sorting & Multi-Faceted Filtering Bar -->
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
+                    <input type="text" id="filterSearch" placeholder="🔍 Search IP, port, source..." class="select-dark" style="width: 170px; padding: 4px 8px; font-size: 11px;" oninput="applyTableFilters()">
+                    <select id="filterLatency" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                        <option value="0">All Latencies</option>
+                        <option value="150">&lt; 150 ms (Ultra-Fast)</option>
+                        <option value="300">&lt; 300 ms (Fast)</option>
+                        <option value="500">&lt; 500 ms (Normal)</option>
+                        <option value="1000">&lt; 1000 ms</option>
+                    </select>
+                    <select id="filterSource" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                        <option value="ALL">All Sources</option>
+                    </select>
+                    <select id="filterProtocol" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                        <option value="ALL">All Protocols</option>
+                        <option value="HTTP">HTTP</option>
+                        <option value="HTTPS">HTTPS</option>
+                        <option value="SOCKS4">SOCKS4</option>
+                        <option value="SOCKS5">SOCKS5</option>
+                    </select>
+                    <select id="filterSort" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                        <option value="latency_asc">Lowest Latency (Fastest)</option>
+                        <option value="latency_desc">Highest Latency</option>
+                        <option value="health_first">Status / Working First</option>
+                        <option value="source_asc">Source (A-Z)</option>
+                        <option value="geo_asc">Country Code (A-Z)</option>
+                    </select>
+                    <span id="filterCountBadge" style="margin-left: auto; font-size: 11px; font-weight: bold; color: var(--cyan); font-family: Consolas;">Showing 0 proxies</span>
+                </div>
+
                 <table class="audit-table">
                     <thead>
                         <tr>
-                            <th>STATUS</th>
-                            <th>GEO</th>
-                            <th>ENDPOINT</th>
-                            <th>PROTOCOL</th>
+                            <th style="cursor: pointer;" onclick="toggleTableSort('status')" title="Click to sort by status">STATUS ⇅</th>
+                            <th style="cursor: pointer;" onclick="toggleTableSort('geo')" title="Click to sort by country">GEO ⇅</th>
+                            <th style="cursor: pointer;" onclick="toggleTableSort('endpoint')" title="Click to sort by endpoint">ENDPOINT ⇅</th>
+                            <th style="cursor: pointer;" onclick="toggleTableSort('protocol')" title="Click to sort by protocol">PROTOCOL ⇅</th>
                             <th>ANONYMITY</th>
-                            <th>LATENCY</th>
+                            <th style="cursor: pointer;" onclick="toggleTableSort('latency')" title="Click to sort by latency">LATENCY ⇅</th>
                             <th>FAILURES</th>
-                            <th>SOURCE</th>
+                            <th style="cursor: pointer;" onclick="toggleTableSort('source')" title="Click to sort by source">SOURCE ⇅</th>
                         </tr>
                     </thead>
                     <tbody id="rotatorRows">
@@ -1156,6 +1187,11 @@ public static class CyberpunkSpa
             ctx.stroke();
         }
 
+        let rawPoolData = [];
+        let currentSortField = 'latency';
+        let currentSortDirection = 'asc';
+        let knownSources = new Set();
+
         async function fetchRotator() {
             try {
                 const res = await fetch('/api/rotating-proxy/status');
@@ -1178,22 +1214,156 @@ public static class CyberpunkSpa
                 if (currentTab === 'tabRotator') {
                     const poolRes = await fetch('/api/rotating-proxy/pool');
                     const pool = await poolRes.json();
-                    if (pool && pool.length > 0) {
-                        document.getElementById('rotatorRows').innerHTML = pool.map(p => `
-                            <tr>
-                                <td><span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${p.IsHealthy ? 'var(--emerald)' : 'var(--red)'}; color: #000;">${p.IsHealthy ? p.LatencyMs + 'ms' : 'FAIL'}</span></td>
-                                <td style="font-weight: bold; color: var(--cyan);">${p.CountryCode || 'UN'}</td>
-                                <td style="font-family: Consolas;">${p.Endpoint}</td>
-                                <td>${p.FormattedProtocol}</td>
-                                <td>${p.FormattedAnonymity}</td>
-                                <td>${p.LatencyMs} ms</td>
-                                <td>${p.Failures}</td>
-                                <td style="font-size: 10px; color: var(--text-muted);">${p.SourceUrl || 'Open-Source'}</td>
-                            </tr>
-                        `).join('');
+                    if (pool) {
+                        rawPoolData = pool;
+                        updateSourceDropdownOptions(pool);
+                        applyTableFilters();
                     }
                 }
             } catch(e) {}
+        }
+
+        function updateSourceDropdownOptions(pool) {
+            const select = document.getElementById('filterSource');
+            if (!select) return;
+            let added = false;
+            for (const p of pool) {
+                const s = p.SourceUrl || 'Open-Source';
+                if (!knownSources.has(s)) {
+                    knownSources.add(s);
+                    added = true;
+                }
+            }
+            if (added) {
+                const curVal = select.value || 'ALL';
+                let html = '<option value="ALL">All Sources</option>';
+                Array.from(knownSources).sort().forEach(src => {
+                    let label = src;
+                    try {
+                        const u = new URL(src);
+                        const host = u.hostname.replace(/^www\./, '');
+                        const lastSeg = u.pathname.split('/').filter(Boolean).pop();
+                        label = lastSeg ? `${host} (${lastSeg})` : host;
+                    } catch(e) {
+                        if (src.length > 32) label = src.substring(0, 32) + '...';
+                    }
+                    html += `<option value="${src}">${label}</option>`;
+                });
+                select.innerHTML = html;
+                select.value = curVal;
+            }
+        }
+
+        function toggleTableSort(field) {
+            if (currentSortField === field) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortDirection = 'asc';
+            }
+            const sortSelect = document.getElementById('filterSort');
+            if (sortSelect) {
+                if (field === 'latency') sortSelect.value = currentSortDirection === 'asc' ? 'latency_asc' : 'latency_desc';
+                else if (field === 'status') sortSelect.value = 'health_first';
+                else if (field === 'source') sortSelect.value = 'source_asc';
+                else if (field === 'geo') sortSelect.value = 'geo_asc';
+            }
+            applyTableFilters();
+        }
+
+        function applyTableFilters() {
+            if (!rawPoolData || rawPoolData.length === 0) {
+                document.getElementById('rotatorRows').innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">No proxies harvested yet. Click "⚡ Harvest Proxies" to populate.</td></tr>';
+                const badge = document.getElementById('filterCountBadge');
+                if (badge) badge.innerText = 'Showing 0 proxies';
+                return;
+            }
+
+            const searchQ = (document.getElementById('filterSearch')?.value || '').toLowerCase().trim();
+            const latencyMax = parseInt(document.getElementById('filterLatency')?.value || '0', 10);
+            const sourceSel = document.getElementById('filterSource')?.value || 'ALL';
+            const protoSel = (document.getElementById('filterProtocol')?.value || 'ALL').toUpperCase();
+            const sortSel = document.getElementById('filterSort')?.value || 'latency_asc';
+
+            if (sortSel === 'latency_asc') { currentSortField = 'latency'; currentSortDirection = 'asc'; }
+            else if (sortSel === 'latency_desc') { currentSortField = 'latency'; currentSortDirection = 'desc'; }
+            else if (sortSel === 'health_first') { currentSortField = 'status'; currentSortDirection = 'asc'; }
+            else if (sortSel === 'source_asc') { currentSortField = 'source'; currentSortDirection = 'asc'; }
+            else if (sortSel === 'geo_asc') { currentSortField = 'geo'; currentSortDirection = 'asc'; }
+
+            let filtered = rawPoolData.filter(p => {
+                if (searchQ) {
+                    const matchEndpoint = (p.Endpoint || '').toLowerCase().includes(searchQ);
+                    const matchGeo = (p.CountryCode || '').toLowerCase().includes(searchQ);
+                    const matchSrc = (p.SourceUrl || '').toLowerCase().includes(searchQ);
+                    const matchProto = (p.FormattedProtocol || '').toLowerCase().includes(searchQ);
+                    if (!matchEndpoint && !matchGeo && !matchSrc && !matchProto) return false;
+                }
+                if (latencyMax > 0) {
+                    if (p.LatencyMs <= 0 || p.LatencyMs > latencyMax) return false;
+                }
+                if (sourceSel !== 'ALL') {
+                    if ((p.SourceUrl || 'Open-Source') !== sourceSel) return false;
+                }
+                if (protoSel !== 'ALL') {
+                    if (!(p.FormattedProtocol || '').toUpperCase().includes(protoSel)) return false;
+                }
+                return true;
+            });
+
+            filtered.sort((a, b) => {
+                let res = 0;
+                switch (currentSortField) {
+                    case 'latency':
+                        const latA = a.LatencyMs > 0 ? a.LatencyMs : 999999;
+                        const latB = b.LatencyMs > 0 ? b.LatencyMs : 999999;
+                        res = latA - latB;
+                        break;
+                    case 'status':
+                        res = (b.IsHealthy ? 1 : 0) - (a.IsHealthy ? 1 : 0);
+                        if (res === 0) res = (a.LatencyMs || 999999) - (b.LatencyMs || 999999);
+                        break;
+                    case 'geo':
+                        res = (a.CountryCode || '').localeCompare(b.CountryCode || '');
+                        break;
+                    case 'endpoint':
+                        res = (a.Endpoint || '').localeCompare(b.Endpoint || '');
+                        break;
+                    case 'protocol':
+                        res = (a.FormattedProtocol || '').localeCompare(b.FormattedProtocol || '');
+                        break;
+                    case 'source':
+                        res = (a.SourceUrl || '').localeCompare(b.SourceUrl || '');
+                        break;
+                    default:
+                        res = (a.LatencyMs || 999999) - (b.LatencyMs || 999999);
+                        break;
+                }
+                return currentSortDirection === 'desc' ? -res : res;
+            });
+
+            const badge = document.getElementById('filterCountBadge');
+            if (badge) {
+                badge.innerText = `Showing ${filtered.length} of ${rawPoolData.length} proxies`;
+            }
+
+            if (filtered.length === 0) {
+                document.getElementById('rotatorRows').innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 18px;">No proxies match the selected filters.</td></tr>';
+                return;
+            }
+
+            document.getElementById('rotatorRows').innerHTML = filtered.map(p => `
+                <tr>
+                    <td><span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${p.IsHealthy ? 'var(--emerald)' : 'var(--red)'}; color: #000;">${p.IsHealthy ? p.LatencyMs + 'ms' : 'FAIL'}</span></td>
+                    <td style="font-weight: bold; color: var(--cyan);">${p.CountryCode || 'UN'}</td>
+                    <td style="font-family: Consolas;">${p.Endpoint}</td>
+                    <td>${p.FormattedProtocol}</td>
+                    <td>${p.FormattedAnonymity}</td>
+                    <td>${p.LatencyMs} ms</td>
+                    <td>${p.Failures}</td>
+                    <td style="font-size: 10px; color: var(--text-muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${p.SourceUrl || 'Open-Source'}">${p.SourceUrl || 'Open-Source'}</td>
+                </tr>
+            `).join('');
         }
 
         async function updateRotatorConfig() {

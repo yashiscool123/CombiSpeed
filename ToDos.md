@@ -337,3 +337,17 @@
 - [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.3 Build 20).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.3.
+
+## Milestone 22: Multi-Faceted Sorting & Filtering for Proxy URLs [COMPLETED]
+- [x] Increment version to 2.1.4 and versionCode: 21 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Upgrade ProxyValidatorEngine (Windows, Linux, macOS) GetHealthyProxies() with maxLatencyMs, sourceFilter, and protocolFilter parameters.
+- [x] Overhaul Windows WPF MainViewModel.cs with ProxySearchText, LatencyFilters, SelectedLatencyFilter, SourceFilters, SelectedSourceFilter, ProtocolFilters, SelectedProtocolFilter, SortOptions, SelectedSortOption, and FilteredCountText.
+- [x] Implement real-time filtering, dynamic feed source extraction, and multi-criteria sorting in RefreshProxyCollection().
+- [x] Add Cyberpunk filter toolbar to Tab 4 in MainWindow.xaml (search box, latency dropdown, source dropdown, protocol dropdown, sort dropdown, and count badge).
+- [x] Enable DataGrid CanUserSortColumns="True" with explicit SortMemberPath attributes on all columns.
+- [x] Add interactive Cyberpunk filtering toolbar and clickable table headers with bidirectional sorting to Linux and macOS CyberpunkSpa.cs.
+- [x] Implement client-side JavaScript filtering, dynamic source extraction, and sorting in CyberpunkSpa.cs for Linux and macOS.
+- [x] Add [TEST 7/7] to --verify-rotator test suite verifying latency filtering (<150ms, <300ms), source filtering, protocol filtering, and LowestLatency sorting (100% pass rate).
+- [x] Rebuild and publish standalone release packages in publish/ for Windows, Linux, and macOS (v2.1.4 Build 21).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.4.

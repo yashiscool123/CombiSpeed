@@ -1,5 +1,31 @@
 # Release Notes
 
+## [2.1.4] - 2026-11-03 - Multi-Faceted Proxy Sorting & Filtering Release
+
+### 🚀 Highlights & Engineering Advancements
+- **⚡ Interactive Multi-Faceted Sorting & Filtering**:
+  - **Latency Threshold Filtering**: Filter candidate proxies instantaneously by latency tiers (`All Latencies`, `< 150 ms (Ultra-Fast)`, `< 300 ms (Fast)`, `< 500 ms (Normal)`, and `< 1000 ms`).
+  - **Dynamic Source Discovery & Origin Filtering**: Automatically extracts and groups repository source origins (e.g., *TheSpeedX*, *monosans*, *hookzof*, *proxyscrape*, or custom URL hosts) allowing users to filter proxies by their scraping feed origin.
+  - **Protocol Filtering**: Filter the active proxy pool by protocol specification (`HTTP`, `HTTPS`, `SOCKS4`, `SOCKS5`).
+  - **Universal Text Search**: Live search bar matches IP addresses, ports, country codes, protocols, and source repository URLs across the active proxy pool in real time.
+  - **Multi-Criteria Sorting**: Preset sorting options including `Lowest Latency (Fastest)`, `Highest Latency`, `Status / Working First`, `Source (A-Z)`, and `Country Code (A-Z)`.
+- **🖥️ Windows WPF Cyberpunk Filter Toolbar & DataGrid Column Sorting**:
+  - Added modern glassmorphic cyberpunk filter toolbar directly above the proxy grid in Tab 4 (`MainWindow.xaml`).
+  - Enabled full column header click-to-sort (`CanUserSortColumns="True"`) with explicit `SortMemberPath` definitions for Status, Country, Endpoint, Protocol, Anonymity, Latency, Failures, and Source.
+  - Integrated dynamic active/filtered counter badge (`Showing X of Y proxies`).
+- **🐧 Linux & 🍎 macOS Cyberpunk Web SPAs & Core Validator Engine**:
+  - Integrated responsive toolbar with input search, latency, source, protocol, and sort dropdowns in `CyberpunkSpa.cs`.
+  - Added clickable table headers (`STATUS ⇅`, `GEO ⇅`, `ENDPOINT ⇅`, `PROTOCOL ⇅`, `LATENCY ⇅`, `SOURCE ⇅`) with bidirectional asc/desc sorting.
+  - Upgraded validator engines (`ProxyValidatorEngine.cs`, `LinuxProxyValidator.cs`, `MacProxyValidator.cs`) with overloaded `GetHealthyProxies(..., maxLatencyMs, sourceFilter, protocolFilter)`.
+- **✅ Automated Verification**:
+  - Expanded `--verify-rotator` CLI suite with `[TEST 7/7]` verifying latency filtering, source matching, protocol filtering, and LowestLatency sort ordering with 100% pass rate.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.4-win-x64.zip` and `publish/CombiSpeed-v2.1.4-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.4-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.4-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.3] - 2026-11-03 - Bulk Proxy Repository Sources Management Release
 
 ### 🚀 Highlights & Engineering Advancements
