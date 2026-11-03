@@ -77,6 +77,9 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<AuditLogModel> AuditLogs { get; } = new();
     public ObservableCollection<string> SavedProfiles { get; } = new();
 
+    public string CombinableAdaptersCountText => $"{Adapters.Count} Detected ({Adapters.Count(a => a.IsEnabled)} Combined)";
+    public bool HasNoAdapters => Adapters.Count == 0;
+
     public VirtualBridgeModel VirtualBridge => _virtualBridgeManager.Model;
 
     private string _activeProfileName = "Default Combination";
@@ -608,6 +611,20 @@ public class MainViewModel : INotifyPropertyChanged
         NetworkDetector.RecalculateEffectivePercentages(Adapters);
         UpdateMergedSummary();
         _proxyEngine.UpdateThrottling(Adapters, Config);
+        _healthMonitor.TriggerImmediateCheck();
+
+        OnPropertyChanged(nameof(CombinableAdaptersCountText));
+        OnPropertyChanged(nameof(HasNoAdapters));
+
+        int enabledCount = Adapters.Count(a => a.IsEnabled);
+        AuditLogs.Insert(0, new AuditLogModel
+        {
+            Protocol = "NIC-SCAN",
+            TargetHost = "All Adapters",
+            Status = $"{Adapters.Count} detected ({enabledCount} combined)",
+            Timestamp = DateTime.Now
+        });
+        while (AuditLogs.Count > 100) AuditLogs.RemoveAt(AuditLogs.Count - 1);
     }
 
     private void OnAdapterWeightChanged()
@@ -617,6 +634,8 @@ public class MainViewModel : INotifyPropertyChanged
         _proxyEngine.UpdateThrottling(Adapters, Config);
         _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
         AutoSaveStatusText = "Saving changes...";
+        OnPropertyChanged(nameof(CombinableAdaptersCountText));
+        OnPropertyChanged(nameof(HasNoAdapters));
     }
 
     private void ApplyThrottlePreset(string preset)

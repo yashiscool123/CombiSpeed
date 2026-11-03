@@ -7,9 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>2.1.8</Version>
-    <AssemblyVersion>2.1.8.0</AssemblyVersion>
-    <FileVersion>2.1.8.0</FileVersion>
+    <Version>2.1.9</Version>
+    <AssemblyVersion>2.1.9.0</AssemblyVersion>
+    <FileVersion>2.1.9.0</FileVersion>
     <Product>CombiSpeed Multi-WAN Bandwidth Aggregator</Product>
     <Company>CombiSpeed</Company>
   </PropertyGroup>

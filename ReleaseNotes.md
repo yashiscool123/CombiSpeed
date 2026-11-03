@@ -1,5 +1,26 @@
 # Release Notes
 
+## [2.1.9] - 2026-11-04 - Combined Adapters Rescan & Multi-Adapter Discovery Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🖧 Combined Adapters Tab 1-Click Rescan**:
+  - **Prominent Toolbar Rescan Button**: Added a dedicated `⟳ Rescan Adapters` button directly to the Combined Adapters & Allocation tab header card (`MainWindow.xaml` for Windows WPF, and `CyberpunkSpa.cs` for Linux & macOS).
+  - **Live Combinable Adapters Count Badge**: Displays real-time adapter inventory (e.g. `4 Detected (3 Combined)`) right on the toolbar.
+  - **Instant Health & Latency Probe**: Rescanning triggers an immediate health check (`_healthMonitor.TriggerImmediateCheck()`) across all combinable interfaces without waiting for periodic polling intervals.
+  - **Dynamic Empty-State Resilience**: Implemented a responsive Cyberpunk empty state banner that appears if 0 network adapters are detected (e.g. during disconnect or airplane mode), providing troubleshooting guidance and a large 1-click rescan button.
+  - **Transparent Connection Audit Logging**: Every adapter rescan records a structured entry to the Connection Audit log (`[NIC-SCAN] Rescanned network adapters: X detected (Y combined)`).
+- **🌐 Cross-Platform REST API & Web Dashboard Parity**:
+  - **Linux & macOS API**: Implemented `POST /api/adapters/rescan` in `EmbeddedDashboardServer.cs` across Linux and macOS, detecting newly connected network adapters, preserving user combination weights, and returning updated counts.
+  - **Reactive Web Dashboard**: Enhanced `CyberpunkSpa.cs` with an interactive "⟳ Rescan Adapters" button with loading feedback, dynamic summary counter updates, and 0-adapter empty state handling.
+- **🧪 Dedicated Automated Verification**:
+  - Added adapter rescan verification tests to `--verify-persistence` on Windows, Linux, and macOS, confirming 100% test pass rate across all platforms.
+- **📦 Multi-OS Distributions**:
+  - Windows: `publish/windows/CombiSpeed-v2.1.9-win-x64.zip` and `publish/CombiSpeed-v2.1.9-win-x64.zip`
+  - Linux: `publish/linux/CombiSpeed-v2.1.9-linux-x64.tar.gz` and `.zip`
+  - macOS: `publish/macos/CombiSpeed-v2.1.9-macos-x64.tar.gz` and `.zip`
+
+---
+
 ## [2.1.8] - 2026-11-03 - Socket Address Reuse & Port Conflict Self-Healing Release
 
 ### 🚀 Highlights & Engineering Advancements

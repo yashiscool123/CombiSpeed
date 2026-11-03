@@ -45,6 +45,21 @@ public class HealthMonitor : IDisposable
         _timer = null;
     }
 
+    public void TriggerImmediateCheck()
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await CheckAllAsync();
+            }
+            catch
+            {
+                // Suppress background probe errors
+            }
+        });
+    }
+
     private async Task CheckAllAsync()
     {
         if (_isChecking) return;

@@ -588,6 +588,15 @@ public static class CyberpunkSpa
 
         <!-- TAB 2: Combined Adapters -->
         <div id="tabAdapters" class="tab-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
+                <div>
+                    <span style="font-size: 13px; font-weight: 700; color: var(--cyan); letter-spacing: 0.5px;">COMBINED ADAPTERS &amp; BANDWIDTH ALLOCATION</span>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;" id="adaptersSummaryText">Scan and aggregate physical Wi-Fi, Ethernet, Cellular &amp; Bridge connections.</div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn-cyber" onclick="rescanAdapters()" id="btnRescanAdapters" title="Rescan network adapters">⟳ Rescan Adapters</button>
+                </div>
+            </div>
             <div class="adapter-list" id="adapterCardsContainer"></div>
         </div>
 
@@ -981,6 +990,31 @@ public static class CyberpunkSpa
             await fetch('/api/adapters/update', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, isEnabled, weight }) });
         }
 
+        async function rescanAdapters() {
+            const btn = document.getElementById('btnRescanAdapters');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '⟳ Rescanning...';
+            }
+            try {
+                const res = await fetch('/api/adapters/rescan', { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.adapters) {
+                        renderAdapters(data.adapters);
+                        renderDistributionBar(data.adapters);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to rescan adapters:', e);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '⟳ Rescan Adapters';
+                }
+            }
+        }
+
         async function clearAudit() {
             await fetch('/api/audit/clear', { method: 'POST' });
             document.getElementById('auditRows').innerHTML = '';
@@ -1083,6 +1117,23 @@ public static class CyberpunkSpa
         function renderAdapters(adapters) {
             if (!adapters) return;
             const container = document.getElementById('adapterCardsContainer');
+            if (adapters.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted); background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; grid-column: 1 / -1;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">⚠️</div>
+                        <div style="font-size: 15px; font-weight: 700; color: #fff;">No Combinable Network Adapters Found</div>
+                        <div style="font-size: 12px; margin-top: 4px; margin-bottom: 16px;">Connect your Wi-Fi, Ethernet, 4G/5G Cellular USB dongle, or mobile hotspot.</div>
+                        <button class="btn-cyber" onclick="rescanAdapters()">⟳ Rescan All Adapters</button>
+                    </div>`;
+                const summaryEl = document.getElementById('adaptersSummaryText');
+                if (summaryEl) summaryEl.innerText = '0 adapters detected. Click Rescan to detect active network adapters.';
+                return;
+            }
+
+            const enabledCount = adapters.filter(a => a.isEnabled).length;
+            const summaryEl = document.getElementById('adaptersSummaryText');
+            if (summaryEl) summaryEl.innerText = `${adapters.length} adapters detected (${enabledCount} combinable/active).`;
+
             let html = '';
 
             adapters.forEach(a => {

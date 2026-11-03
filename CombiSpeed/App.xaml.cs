@@ -176,6 +176,34 @@ public partial class App : Application
                 if (System.IO.File.Exists(tempPac)) System.IO.File.Delete(tempPac);
                 Console.WriteLine("[PASS] PAC file generation and export verification passed (FindProxyForURL verified).");
 
+                // Test 7: Combined Adapters Rescan & Discovery Verification
+                Exception? vmEx = null;
+                var staThreadVm = new Thread(() =>
+                {
+                    try
+                    {
+                        var detector = new Services.NetworkDetector();
+                        var detectedAdapters = detector.DetectAdapters();
+                        Console.WriteLine($"[PASS] NetworkDetector scanned system: {detectedAdapters.Count} adapters detected.");
+
+                        var vm = new ViewModels.MainViewModel();
+                        vm.RefreshAdapters();
+                        if (string.IsNullOrWhiteSpace(vm.CombinableAdaptersCountText))
+                        {
+                            throw new Exception("CombinableAdaptersCountText was not populated during RefreshAdapters.");
+                        }
+                        Console.WriteLine($"[PASS] Combined Adapters Rescan verified: '{vm.CombinableAdaptersCountText}' (HasNoAdapters={vm.HasNoAdapters}).");
+                    }
+                    catch (Exception ex)
+                    {
+                        vmEx = ex;
+                    }
+                });
+                staThreadVm.SetApartmentState(ApartmentState.STA);
+                staThreadVm.Start();
+                staThreadVm.Join();
+                if (vmEx != null) throw vmEx;
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL ADAPTER PERSISTENCE & COMBINATION TESTS PASSED (100% OK)       ");
                 Console.WriteLine("=====================================================================");
@@ -427,7 +455,7 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.8";
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.9";
             Console.WriteLine($"CombiSpeed {verStr} (Build 25)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");

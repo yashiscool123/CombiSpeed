@@ -21,6 +21,7 @@ public class EmbeddedDashboardServer
     private readonly MacRotatingProxyServer? _rotatingServer;
     private readonly MacProxyHarvester? _harvester;
     private readonly MacProxyValidator? _validator;
+    private readonly MacNetworkDetector _detector;
     private HttpListener? _listener;
     private CancellationTokenSource? _cts;
     private bool _isEngineActive = true;
@@ -38,7 +39,8 @@ public class EmbeddedDashboardServer
         MacSettingsStorage storage,
         MacRotatingProxyServer? rotatingServer = null,
         MacProxyHarvester? harvester = null,
-        MacProxyValidator? validator = null)
+        MacProxyValidator? validator = null,
+        MacNetworkDetector? detector = null)
     {
         _config = config;
         _adapters = adapters;
@@ -51,6 +53,7 @@ public class EmbeddedDashboardServer
         _rotatingServer = rotatingServer;
         _harvester = harvester;
         _validator = validator;
+        _detector = detector ?? new MacNetworkDetector();
     }
 
     public void Start(bool openBrowser = true)
@@ -375,6 +378,25 @@ public class EmbeddedDashboardServer
                 }
 
                 res.StatusCode = 200;
+            }
+            else if (path == "/api/adapters/rescan" && req.HttpMethod == "POST")
+            {
+                var fresh = _detector.DetectAdapters();
+                _adapters.Clear();
+                _adapters.AddRange(fresh);
+                _storage.ApplyToAdapters(_adapters);
+                _loadBalancer.UpdateAdapters(_adapters, _config.RoutingMode, _config.ShaperMode);
+
+                string json = JsonSerializer.Serialize(new
+                {
+                    status = "ok",
+                    count = _adapters.Count,
+                    combinedCount = _adapters.Count(a => a.IsEnabled),
+                    adapters = _adapters
+                });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                await res.OutputStream.WriteAsync(bytes);
             }
             else if (path == "/api/shaper/mode" && req.HttpMethod == "POST")
             {

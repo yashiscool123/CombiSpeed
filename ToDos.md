@@ -394,3 +394,17 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.1.8 Build 25).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.1.8.
+
+## Milestone 27: Combined Adapters Rescan & Multi-Adapter Discovery [COMPLETED]
+- [x] Increment version to 2.1.9 and versionCode: 26 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Add prominent `⟳ Rescan Adapters` button directly to the Combined Adapters & Allocation tab header card (`MainWindow.xaml` for Windows WPF, and `CyberpunkSpa.cs` for Linux & macOS).
+- [x] Add live combinable adapter count badge (`CombinableAdaptersCountText`, e.g. `4 Detected (3 Combined)`) to the header card toolbar.
+- [x] Implement `TriggerImmediateCheck()` in `HealthMonitor.cs` to fire immediate ICMP ping probes for newly scanned adapters without waiting for timer ticks.
+- [x] Implement dynamic Cyberpunk empty state banner in Tab 1 when `Adapters.Count == 0`, explaining connection requirements and providing a 1-click rescan button.
+- [x] Implement transparent Connection Audit stream logging for adapter scans (`[NIC-SCAN] Rescanned network adapters: X detected (Y combined)`).
+- [x] Implement `POST /api/adapters/rescan` REST endpoint in `EmbeddedDashboardServer.cs` for Linux and macOS.
+- [x] Enhance Linux and macOS Web SPAs in `CyberpunkSpa.cs` with an interactive "⟳ Rescan Adapters" button, live loading feedback, adapter summary badge, and 0-adapter empty state handling.
+- [x] Add automated test step to `--verify-persistence` on Windows, Linux, and macOS verifying adapter scanning and count reporting (100% pass rate).
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.1.9 Build 26).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.1.9.

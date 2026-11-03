@@ -470,6 +470,30 @@
                     "progress": "Milestone 26 completed with 100% test pass rate and clean build."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-027",
+            "userQuery": "Combined Adapters tab should have an option to rescan all the adapters that can be combined.",
+            "status": "completed",
+            "createdAt": "2026-11-04T00:03:00+05:30",
+            "updatedAt": "2026-11-04T00:20:00+05:30",
+            "progress": "Delivered Milestone 27: Combined Adapters Rescan & Multi-Adapter Discovery across Windows, Linux, and macOS. Added prominent '⟳ Rescan Adapters' button and live adapter count badge (CombinableAdaptersCountText) to the Combined Adapters header card in MainWindow.xaml. Implemented immediate health check triggering via HealthMonitor.TriggerImmediateCheck(). Added dynamic empty state card when 0 adapters are detected. Implemented POST /api/adapters/rescan REST endpoint in EmbeddedDashboardServer.cs and interactive Cyberpunk Web UI rescan button in CyberpunkSpa.cs for Linux and macOS. Added automated verification test in --verify-persistence across Windows, Linux, and macOS (100% PASS). Bumped version to v2.1.9 (Build 26) and published release packages.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-2701",
+                    "timestamp": "2026-11-04T00:06:00+05:30",
+                    "inputs": "User requested an option in the Combined Adapters tab to rescan all adapters that can be combined.",
+                    "outputs": "Architected prominent '⟳ Rescan Adapters' button and live adapter count badge in Tab 1 (Combined Adapters) toolbar for Windows WPF MainWindow.xaml, empty state rescan card when 0 adapters detected, immediate HealthMonitor health trigger on rescan, /api/adapters/rescan REST endpoint and Web UI rescan button in Linux and macOS EmbeddedDashboardServer and CyberpunkSpa.",
+                    "progress": "Architecture and design planning completed."
+                },
+                {
+                    "checkpointId": "CP-2702",
+                    "timestamp": "2026-11-04T00:20:00+05:30",
+                    "inputs": "Verification, release packaging, documentation synchronization, and git check-in.",
+                    "outputs": "Added adapter rescan verification tests to --verify-persistence on Windows, Linux, and macOS (100% PASS). Rebuilt and published release archives in publish/ for Windows, Linux, and macOS under v2.1.9 (Build 26). Synchronized documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).",
+                    "progress": "Milestone 27 completed with 100% verification and clean packaging."
+                }
+            ]
         }
     ]
 }

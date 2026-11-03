@@ -13,7 +13,7 @@ public class Program
         if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) || a.Equals("-v", StringComparison.OrdinalIgnoreCase)))
         {
             var ver = typeof(Program).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.8";
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.9";
             Console.WriteLine($"CombiSpeed {verStr} (Build 25) - Linux Edition");
             Console.WriteLine("Multi-WAN Channel Bonding & Dynamic Bandwidth QoS Shaper");
             Console.WriteLine("Platform: Linux x64/arm64 (.NET 8.0)");
@@ -138,6 +138,13 @@ public class Program
                     if (File.Exists(tempProxyJson)) File.Delete(tempProxyJson);
                 }
 
+                // Test Combined Adapters Rescan Verification
+                var netDetector = new LinuxNetworkDetector();
+                var scannedAdapters = netDetector.DetectAdapters();
+                if (scannedAdapters == null || scannedAdapters.Count == 0) throw new Exception("LinuxNetworkDetector returned empty adapter list!");
+                storage.ApplyToAdapters(scannedAdapters);
+                Console.WriteLine($"[PASS] Linux Combined Adapters Rescan verified: {scannedAdapters.Count} adapters detected ({scannedAdapters.Count(a => a.IsEnabled)} combinable).");
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL LINUX PERSISTENCE & COMBINATION TESTS PASSED (100% OK)         ");
                 Console.WriteLine("=====================================================================");
@@ -190,7 +197,7 @@ public class Program
                                         a.Equals("--daemon", StringComparison.OrdinalIgnoreCase));
 
         var curVer = typeof(Program).Assembly.GetName().Version;
-        string curVerStr = curVer != null ? $"v{curVer.Major}.{curVer.Minor}.{curVer.Build}" : "v2.1.8";
+        string curVerStr = curVer != null ? $"v{curVer.Major}.{curVer.Minor}.{curVer.Build}" : "v2.1.9";
         Console.WriteLine("=====================================================================");
         Console.WriteLine($"   CombiSpeed {curVerStr} (Build 25) - Multi-WAN Bandwidth Aggregator (Linux) ");
         Console.WriteLine("=====================================================================");
