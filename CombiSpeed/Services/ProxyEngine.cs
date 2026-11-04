@@ -311,6 +311,7 @@ public class ProxyEngine : IDisposable
                                 if (tunnelOk)
                                 {
                                     connectedProxy = proxy;
+                                    RotatingRouter?.ConfirmLiveConnected(proxy);
                                     protocol += $" -> {proxy.Endpoint} ({proxy.CountryCode})";
                                     byte[] okReply = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
                                     await clientStream.WriteAsync(okReply, token);
@@ -719,6 +720,7 @@ public class ProxyEngine : IDisposable
                             if (tunnelOk)
                             {
                                 connectedProxy = proxy;
+                                RotatingRouter?.ConfirmLiveConnected(proxy);
                                 protocol += $" -> {proxy.Endpoint} ({proxy.CountryCode})";
                                 byte[] reply = new byte[] { 0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0 };
                                 await clientStream.WriteAsync(reply, token);

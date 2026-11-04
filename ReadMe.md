@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.2.3%20(Build%2030)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.2.4%20(Build%2031)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -37,8 +37,8 @@ CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-s
 2. **Parallel HTTP Range Chunk Combining**:
    Splits large file transfers ($\ge 512\text{ KB}$) into concurrent byte ranges dispatched simultaneously across different physical network adapters, combining multiple physical wire speeds into a single accelerated download stream.
 
-3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (Enhanced in v2.2.3)**:
-   A decoupled two-stage networking architecture: CombiSpeed first binds and load-balances outbound client sockets across physical network adapters for aggregate bandwidth and multi-NIC fault tolerance. Then, it tunnels all requests upstream through a user-selected, filtered rotating proxy server that dynamically rotates on a timely basis (configurable interval in seconds, e.g., 10s, 30s, 60s, 120s, 300s) with a live remaining countdown timer.
+3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (Enhanced in v2.2.4)**:
+   A decoupled two-stage networking architecture: CombiSpeed first binds and load-balances outbound client sockets across physical network adapters for aggregate bandwidth and multi-NIC fault tolerance. Then, it tunnels all requests upstream through a user-selected, filtered rotating proxy server that dynamically rotates on a timely basis with configurable intervals from 10s all the way up to **every 2 hours (7200s)**. The rotation countdown timer is strictly gated to begin ticking only once a proxy server is successfully connected and verified live.
 
 4. **Live Identity Refresh & Protocol-Aware Upstream Tunnels (NEW in v2.2.3)**:
    - **Tunnel-Probed Identity Refresh**: When a proxy connection is established, diagnostic GeoIP requests are tunnelled directly through the active proxy to immediately refresh and display the updated public WAN IP, ISP/ASN, city, and country flag emoji.
@@ -356,9 +356,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.2.3-win-x64.zip` and `publish/CombiSpeed-v2.2.3-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.2.3-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.3-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.2.3-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.3-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.2.4-win-x64.zip` and `publish/CombiSpeed-v2.2.4-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.2.4-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.4-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.2.4-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.4-macos-x64.zip`
 
 ---
 

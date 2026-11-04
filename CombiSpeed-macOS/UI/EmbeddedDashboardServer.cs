@@ -210,8 +210,10 @@ public class EmbeddedDashboardServer
                     routeBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
                     rotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds,
                     activeTimedProxy = _rotatingServer?.Router?.ActiveTimedProxy?.Endpoint,
-                    secondsUntilNextRotation = _rotatingServer?.Router?.SecondsUntilNextRotation ?? 0
+                    isLiveConnected = _rotatingServer?.Router?.IsLiveConnected ?? false,
+                    secondsUntilNextRotation = _rotatingServer?.Router?.SecondsUntilNextRotation ?? -1
                 };
+                _ = _rotatingServer?.Router?.CheckAutoRotationAsync();
                 string json = JsonSerializer.Serialize(status);
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
                 res.ContentType = "application/json";
@@ -236,7 +238,7 @@ public class EmbeddedDashboardServer
                 if (doc.RootElement.TryGetProperty("routeBondedTrafficThroughRotator", out var rb))
                     _config.RotatingProxy.RouteBondedTrafficThroughRotator = rb.GetBoolean();
                 if (doc.RootElement.TryGetProperty("rotationIntervalSeconds", out var ris))
-                    _config.RotatingProxy.RotationIntervalSeconds = ris.GetInt32();
+                    _config.RotatingProxy.RotationIntervalSeconds = Math.Clamp(ris.GetInt32(), 5, 7200);
 
                 _storage.Save(_adapters, _config);
                 res.StatusCode = 200;

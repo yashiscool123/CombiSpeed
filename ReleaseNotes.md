@@ -1,5 +1,32 @@
 # Release Notes
 
+## [2.2.4] - 2026-11-04 - Extended 2-Hour Proxy Rotation Intervals & Live Connection-Gated Countdown Release
+
+### 🚀 Highlights & Engineering Advancements
+- **⏱️ Extended Proxy Rotation Intervals Up to Every 2 Hours (7200s)**:
+  - **Comprehensive Interval Granularity**: Expanded the rotation interval selector to support durations ranging from 10 seconds all the way up to 2 hours (7200s).
+  - **Intuitive Human-Friendly Presets**:
+    - `10s`, `15s`, `30s`, `45s`
+    - `1 min (60s)`, `1.5 min (90s)`, `2 min (120s)`, `3 min (180s)`, `5 min (300s)`
+    - `10 min (600s)`, `15 min (900s)`, `30 min (1800s)`, `45 min (2700s)`
+    - `1 hour (3600s)`, `1.5 hours (5400s)`, `2 hours (7200s)`
+  - **Dynamic Custom Interval Adaptation**: Any custom interval integer up to 7200 seconds is automatically formatted, validated, and safely inserted into the selection options.
+  - **Persistent Interval State**: Configured intervals are persistently saved to `%LOCALAPPDATA%\CombiSpeed\proxy_state.json` and restored on startup.
+- **🔒 Live Connection-Gated Rotation Countdown**:
+  - **Strict Connection Gating**: The proxy rotation countdown timer is strictly held and will NOT start or decrement until a proxy server has successfully connected and verified live.
+  - **Pre-Connection Waiting State**: While the engine is idle, searching for candidates, or establishing a tunnel, the UI clearly displays `⏳ Waiting for live proxy connection...`, preventing inaccurate premature countdown ticks.
+  - **Live Confirmation Trigger**: Upon successful upstream socket connection or live reachability probe confirmation, `ConfirmLiveConnected(proxy)` triggers the countdown, starting from the configured interval (e.g. `Next rotation in 2h 00m 00s` or `Next rotation in 45s`).
+  - **Automatic Dynamic Formatting**: Long durations are formatted into human-readable hours, minutes, and seconds (e.g. `1h 45m 12s`, `4m 30s`, `25s`).
+  - **Fault-Tolerant Halting**: If an active proxy disconnects or is flagged unavailable (`MarkUnavailable`), the countdown immediately pauses until the next live proxy connection is confirmed.
+  - **Zero-Second Auto-Rotation Pipeline**: When the timer reaches 0s, `CheckAutoRotationAsync` automatically auto-advances to probe and connect to the next live proxy, pausing the countdown during transition and restarting only upon live connection confirmation.
+- **🌐 100% Cross-Platform Native Parity**:
+  - **Windows 10/11**: WPF ComboBox with `SelectedValuePath="Seconds"` and `DisplayMemberPath="Label"`, real-time countdown badge, and `RotatingProxyRouter` connection gating.
+  - **Linux & macOS**: Updated `CyberpunkSpa.cs` HTML `<select>` with full interval presets up to 2 hours, live JS countdown ticking with `formatRemainingTime()`, and REST API `/api/rotating-proxy/config` validation up to 7200s.
+- **🧪 Automated Verification (Phase 9 Expansion)**:
+  - Added automated test assertions to `--verify-rotator` (Windows) and `--verify-persistence` (Linux & macOS) verifying pre-connection paused state (`-1`), 2-hour interval configuration (7200s), active countdown ticking, and dynamic halting upon proxy eviction (**100% PASS**).
+
+---
+
 ## [2.2.3] - 2026-11-04 - Live Identity Refresh, Protocol-Aware Connections, Light/Dark Themes, Audit Stream & Instant Persistence Release
 
 ### 🚀 Highlights & Engineering Advancements

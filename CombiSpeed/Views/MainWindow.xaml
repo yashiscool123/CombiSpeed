@@ -967,9 +967,8 @@
 
                                             <!-- Interval Selector -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="⏱ Interval:" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <ComboBox ItemsSource="{Binding RotationIntervalOptions}" SelectedItem="{Binding RotationIntervalSeconds}" Width="65" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Timed rotation interval in seconds: automatically switches to the next live proxy when expired"/>
-                                                <TextBlock Text="s" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                                <TextBlock Text="⏱ Interval:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <ComboBox ItemsSource="{Binding RotationIntervalOptions}" SelectedValue="{Binding RotationIntervalSeconds}" SelectedValuePath="Seconds" DisplayMemberPath="Label" Width="82" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Timed rotation interval (up to 2 hours): automatically switches to the next live proxy when expired"/>
                                             </StackPanel>
                                         </Grid>
                                     </Border>

@@ -180,6 +180,7 @@ public class MacProxyEngine
                                 bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, connectCts.Token);
                                 if (tunnelOk)
                                 {
+                                    RotatingRouter?.ConfirmLiveConnected(proxy);
                                     byte[] ok = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
                                     await clientStream.WriteAsync(ok, 0, ok.Length, ct);
                                     AddAuditLog($"HTTPS -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp, $"{proxy.Protocol.ToString().ToLower()}://{proxy.Endpoint}", true, proxy.LatencyMs, proxy.Host);
@@ -336,6 +337,7 @@ public class MacProxyEngine
                             bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, connectCts.Token);
                             if (tunnelOk)
                             {
+                                RotatingRouter?.ConfirmLiveConnected(proxy);
                                 byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };
                                 await stream.WriteAsync(success, 0, success.Length, ct);
                                 AddAuditLog($"SOCKS5 -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp, $"{proxy.Protocol.ToString().ToLower()}://{proxy.Endpoint}", true, proxy.LatencyMs, proxy.Host);

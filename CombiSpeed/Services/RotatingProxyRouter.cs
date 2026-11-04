@@ -22,8 +22,11 @@ public class RotatingProxyRouter
     private readonly object _timeRotationLock = new();
     private HarvestedProxyModel? _activeTimedProxy;
     private DateTime _lastTimedRotation = DateTime.MinValue;
+    private bool _isLiveConnected = false;
+    private bool _isAutoRotating = false;
 
     public HarvestedProxyModel? ActiveTimedProxy => _activeTimedProxy;
+    public bool IsLiveConnected => _isLiveConnected;
     public event Action<HarvestedProxyModel?>? OnTimedRotation;
 
     public int SecondsUntilNextRotation
@@ -31,7 +34,8 @@ public class RotatingProxyRouter
         get
         {
             if (_config.Strategy != RotationStrategy.TimeBasedInterval) return 0;
-            int intervalSec = Math.Max(5, _config.RotationIntervalSeconds);
+            if (!_isLiveConnected || _activeTimedProxy == null) return -1;
+            int intervalSec = Math.Clamp(_config.RotationIntervalSeconds, 5, 7200);
             var elapsed = (DateTime.UtcNow - _lastTimedRotation).TotalSeconds;
             return Math.Max(0, (int)(intervalSec - elapsed));
         }
@@ -51,6 +55,23 @@ public class RotatingProxyRouter
     }
 
     /// <summary>
+    /// Confirms that a proxy is actively connected and responsive, starting the rotation countdown timer.
+    /// </summary>
+    public void ConfirmLiveConnected(HarvestedProxyModel proxy)
+    {
+        lock (_timeRotationLock)
+        {
+            _activeTimedProxy = proxy;
+            _lastTimedRotation = DateTime.UtcNow;
+            _isLiveConnected = true;
+            proxy.IsHealthy = true;
+            proxy.Failures = 0;
+        }
+        OnTimedRotation?.Invoke(proxy);
+        OnLog?.Invoke($"[Router] Live proxy connection confirmed: {proxy.Endpoint} ({proxy.CountryCode} {proxy.FlagEmoji}). Rotation countdown started ({Math.Clamp(_config.RotationIntervalSeconds, 5, 7200)}s).");
+    }
+
+    /// <summary>
     /// Forces an immediate rotation to the next available selected proxy.
     /// </summary>
     public HarvestedProxyModel? ForceRotate()
@@ -58,13 +79,43 @@ public class RotatingProxyRouter
         var healthy = GetCandidatePool();
         if (healthy.Count == 0) return null;
 
-        lock (_timeRotationLock)
+        var chosen = PickRoundRobin(healthy);
+        if (chosen != null)
         {
-            _activeTimedProxy = PickRoundRobin(healthy);
-            _lastTimedRotation = DateTime.UtcNow;
-            OnTimedRotation?.Invoke(_activeTimedProxy);
-            OnLog?.Invoke($"[Router] Manual rotation: Switched active proxy to {_activeTimedProxy?.Endpoint} ({_activeTimedProxy?.CountryCode} {_activeTimedProxy?.FlagEmoji}).");
-            return _activeTimedProxy;
+            ConfirmLiveConnected(chosen);
+        }
+        return _activeTimedProxy;
+    }
+
+    /// <summary>
+    /// Evaluates if the rotation interval has expired for the active live proxy,
+    /// and auto-advances to the next live proxy if expired.
+    /// </summary>
+    public async Task CheckAutoRotationAsync(CancellationToken ct = default)
+    {
+        if (_config.Strategy != RotationStrategy.TimeBasedInterval) return;
+        if (!_isLiveConnected || _activeTimedProxy == null || _isAutoRotating) return;
+
+        if (SecondsUntilNextRotation == 0)
+        {
+            _isAutoRotating = true;
+            try
+            {
+                OnLog?.Invoke($"[Router] Timed rotation interval expired ({_config.RotationIntervalSeconds}s). Probing and switching to next live proxy...");
+                lock (_timeRotationLock)
+                {
+                    _isLiveConnected = false;
+                }
+                var nextLive = await ForceConnectToLiveProxyAsync(null, ct);
+                if (nextLive == null)
+                {
+                    OnLog?.Invoke("[Router] No responsive proxy candidates available. Countdown paused.");
+                }
+            }
+            finally
+            {
+                _isAutoRotating = false;
+            }
         }
     }
 
@@ -108,14 +159,7 @@ public class RotatingProxyRouter
             bool ok = await ProbeLiveConnectionAsync(preferred, 1500, ct).ConfigureAwait(false);
             if (ok)
             {
-                lock (_timeRotationLock)
-                {
-                    _activeTimedProxy = preferred;
-                    _lastTimedRotation = DateTime.UtcNow;
-                    preferred.IsHealthy = true;
-                    preferred.Failures = 0;
-                }
-                OnTimedRotation?.Invoke(_activeTimedProxy);
+                ConfirmLiveConnected(preferred);
                 OnLog?.Invoke($"[Router] Successfully connected to selected proxy {preferred.Endpoint}!");
                 return _activeTimedProxy;
             }
@@ -143,14 +187,7 @@ public class RotatingProxyRouter
             bool isLive = await ProbeLiveConnectionAsync(candidate, 1200, ct).ConfigureAwait(false);
             if (isLive)
             {
-                lock (_timeRotationLock)
-                {
-                    _activeTimedProxy = candidate;
-                    _lastTimedRotation = DateTime.UtcNow;
-                    candidate.IsHealthy = true;
-                    candidate.Failures = 0;
-                }
-                OnTimedRotation?.Invoke(_activeTimedProxy);
+                ConfirmLiveConnected(candidate);
                 OnLog?.Invoke($"[Router] Live connection confirmed! Locked onto active proxy: {candidate.Endpoint} ({candidate.CountryCode} {candidate.FlagEmoji}).");
                 return _activeTimedProxy;
             }
@@ -311,6 +348,18 @@ public class RotatingProxyRouter
 
     /// <summary>
     /// Evicts an unavailable upstream proxy from the router pool and persistent storage immediately.
+    /// Halts rotation countdown if the active proxy becomes unavailable.
     /// </summary>
-    public bool MarkUnavailable(string endpoint) => _validator.MarkUnavailable(endpoint);
+    public bool MarkUnavailable(string endpoint)
+    {
+        lock (_timeRotationLock)
+        {
+            if (_activeTimedProxy != null && _activeTimedProxy.Endpoint.Equals(endpoint, StringComparison.OrdinalIgnoreCase))
+            {
+                _isLiveConnected = false;
+                OnLog?.Invoke($"[Router] Active proxy {endpoint} marked unavailable. Countdown paused until next live connection.");
+            }
+        }
+        return _validator.MarkUnavailable(endpoint);
+    }
 }

@@ -590,6 +590,30 @@
                     "progress": "Milestone 31 completed successfully with 100% verification and clean packaging."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-032",
+            "userQuery": "Allow Proxy Servers rotation to be set every upto every 2 hours. Count down for rotation should only start once a proxy server is successfully connected.",
+            "status": "completed",
+            "createdAt": "2026-11-04T16:39:30+05:30",
+            "updatedAt": "2026-11-04T17:05:00+05:30",
+            "progress": "Delivered Milestone 32: Extended proxy rotation interval selection up to 2 hours (7200 seconds) with intuitive presets (10s to 2 hours) and dynamic custom interval insertion; implemented live connection gating in RotatingProxyRouter, LinuxRotatingProxyRouter, and MacRotatingProxyRouter so that rotation countdown timers strictly pause at -1 in waiting state (⏳ Waiting for live proxy connection...) until a proxy server is confirmed live-connected, with automatic pause/resume on failure and zero-second auto-rotation. Verified 100% test pass rate across Windows, Linux, and macOS.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3201",
+                    "timestamp": "2026-11-04T16:39:30+05:30",
+                    "inputs": "User requested: 1) Proxy server rotation interval configurable up to every 2 hours; 2) Countdown for rotation starts only once a proxy server is successfully connected.",
+                    "outputs": "Architecture and implementation plan across Windows, Linux, and macOS.",
+                    "progress": "Planning and codebase inspection completed."
+                },
+                {
+                    "checkpointId": "CP-3202",
+                    "timestamp": "2026-11-04T17:05:00+05:30",
+                    "inputs": "Implementation, cross-platform unit and integration test verification, release packaging, and documentation synchronization.",
+                    "outputs": "Implemented 2-hour rotation interval in RotatingProxyConfigModel and PersistedProxyStateModel, RotationIntervalOptions in MainViewModel and CyberpunkSpa, live connection gating in RotatingProxyRouter (ConfirmLiveConnected, IsLiveConnected, SecondsUntilNextRotation == -1 when paused, CheckAutoRotationAsync), verified all 11 phases in --verify-rotator and all persistence/throttling tests (100% PASS), published v2.2.4 release packages, updated ReleaseNotes.md, KnownIssues.md, ToDos.md, and ReadMe.md.",
+                    "progress": "Milestone 32 completed successfully with 100% verification and clean packaging."
+                }
+            ]
         }
     ]
 }

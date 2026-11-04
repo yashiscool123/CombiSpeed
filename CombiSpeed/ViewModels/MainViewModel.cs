@@ -115,7 +115,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.3";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.4";
         }
     }
 
@@ -124,8 +124,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.3";
-            return $"{verStr} (Build 30)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.4";
+            return $"{verStr} (Build 31)";
         }
     }
 
@@ -405,12 +405,13 @@ public class MainViewModel : INotifyPropertyChanged
                 {
                     ActiveProxyDisplay = $"{proxy.Endpoint} ({proxy.CountryCode}) {proxy.FlagEmoji}";
                     await ResolveGeoIpAsync(forceRefresh: true, proxy: proxy);
+                    RotationCountdownText = $"Next rotation in {FormatRemainingTime(_rotatingRouter.SecondsUntilNextRotation)}";
                 }
                 else
                 {
                     ActiveProxyDisplay = "None Selected / Available";
+                    RotationCountdownText = "⏳ Waiting for live proxy connection...";
                 }
-                RotationCountdownText = $"Next rotation in {Config.RotatingProxy.RotationIntervalSeconds}s";
             });
         };
 
@@ -1048,8 +1049,23 @@ public class MainViewModel : INotifyPropertyChanged
         {
             if (Config.RotatingProxy.Strategy == RotationStrategy.TimeBasedInterval)
             {
-                int remaining = _rotatingRouter.SecondsUntilNextRotation;
-                RotationCountdownText = remaining > 0 ? $"Next rotation in {remaining}s" : "Rotating now...";
+                if (!_rotatingRouter.IsLiveConnected || _rotatingRouter.ActiveTimedProxy == null)
+                {
+                    RotationCountdownText = "⏳ Waiting for live proxy connection...";
+                }
+                else
+                {
+                    int remaining = _rotatingRouter.SecondsUntilNextRotation;
+                    if (remaining > 0)
+                    {
+                        RotationCountdownText = $"Next rotation in {FormatRemainingTime(remaining)}";
+                    }
+                    else
+                    {
+                        RotationCountdownText = "🔄 Rotating to next live proxy...";
+                        _ = _rotatingRouter.CheckAutoRotationAsync();
+                    }
+                }
             }
             else
             {
@@ -1939,7 +1955,7 @@ public class MainViewModel : INotifyPropertyChanged
         {
             ActiveProxyDisplay = $"{live.Endpoint} ({live.CountryCode}) {live.FlagEmoji}";
             HarvestStatusText = $"Successfully connected to live proxy {live.Endpoint} ({live.CountryCode} {live.FlagEmoji})";
-            RotationCountdownText = $"Next rotation in {Config.RotatingProxy.RotationIntervalSeconds}s";
+            RotationCountdownText = $"Next rotation in {FormatRemainingTime(_rotatingRouter.SecondsUntilNextRotation)}";
             RouteBondedTrafficThroughRotator = true;
             await ResolveGeoIpAsync(forceRefresh: true, proxy: live);
         }
@@ -1947,6 +1963,7 @@ public class MainViewModel : INotifyPropertyChanged
         {
             ActiveProxyDisplay = "Connection failed / No live proxy";
             HarvestStatusText = $"Failed to establish live connection to {targetDesc}.";
+            RotationCountdownText = "⏳ Waiting for live proxy connection...";
         }
     }
 
@@ -1997,24 +2014,83 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public List<int> RotationIntervalOptions { get; } = new() { 10, 15, 30, 45, 60, 120, 300 };
+    public ObservableCollection<RotationIntervalOptionItem> RotationIntervalOptions { get; } = new()
+    {
+        new() { Seconds = 10, Label = "10s" },
+        new() { Seconds = 15, Label = "15s" },
+        new() { Seconds = 30, Label = "30s" },
+        new() { Seconds = 45, Label = "45s" },
+        new() { Seconds = 60, Label = "1 min" },
+        new() { Seconds = 90, Label = "1.5 min" },
+        new() { Seconds = 120, Label = "2 min" },
+        new() { Seconds = 180, Label = "3 min" },
+        new() { Seconds = 300, Label = "5 min" },
+        new() { Seconds = 600, Label = "10 min" },
+        new() { Seconds = 900, Label = "15 min" },
+        new() { Seconds = 1800, Label = "30 min" },
+        new() { Seconds = 2700, Label = "45 min" },
+        new() { Seconds = 3600, Label = "1 hour" },
+        new() { Seconds = 5400, Label = "1.5 hours" },
+        new() { Seconds = 7200, Label = "2 hours" },
+    };
 
     public int RotationIntervalSeconds
     {
         get => Config.RotatingProxy.RotationIntervalSeconds;
         set
         {
-            if (Config.RotatingProxy.RotationIntervalSeconds != value)
+            int clamped = Math.Clamp(value, 5, 7200);
+            if (Config.RotatingProxy.RotationIntervalSeconds != clamped)
             {
-                Config.RotatingProxy.RotationIntervalSeconds = value;
+                Config.RotatingProxy.RotationIntervalSeconds = clamped;
+                EnsureIntervalOptionExists(clamped);
                 OnPropertyChanged();
                 SaveCurrentCombinationImmediate();
                 RequestSaveProxyState();
+                if (_rotatingRouter != null && _rotatingRouter.IsLiveConnected)
+                {
+                    int rem = _rotatingRouter.SecondsUntilNextRotation;
+                    RotationCountdownText = rem > 0 ? $"Next rotation in {FormatRemainingTime(rem)}" : "Rotating now...";
+                }
             }
         }
     }
 
-    private string _rotationCountdownText = "Next rotation: 30s";
+    private void EnsureIntervalOptionExists(int seconds)
+    {
+        if (!RotationIntervalOptions.Any(o => o.Seconds == seconds))
+        {
+            string label;
+            if (seconds >= 3600)
+                label = seconds % 3600 == 0 ? $"{seconds / 3600} hours" : $"{seconds / 3600.0:0.#} hours";
+            else if (seconds >= 60)
+                label = seconds % 60 == 0 ? $"{seconds / 60} min" : $"{seconds / 60.0:0.#} min";
+            else
+                label = $"{seconds}s";
+
+            var item = new RotationIntervalOptionItem { Seconds = seconds, Label = label };
+            int insertIdx = 0;
+            while (insertIdx < RotationIntervalOptions.Count && RotationIntervalOptions[insertIdx].Seconds < seconds)
+            {
+                insertIdx++;
+            }
+            RotationIntervalOptions.Insert(insertIdx, item);
+        }
+    }
+
+    public static string FormatRemainingTime(int totalSeconds)
+    {
+        if (totalSeconds < 0) return "Waiting for live proxy connection...";
+        if (totalSeconds == 0) return "Rotating to next live proxy...";
+        var ts = TimeSpan.FromSeconds(totalSeconds);
+        if (ts.TotalHours >= 1)
+            return $"{(int)ts.TotalHours}h {ts.Minutes:D2}m {ts.Seconds:D2}s";
+        if (ts.TotalMinutes >= 1)
+            return $"{ts.Minutes}m {ts.Seconds:D2}s";
+        return $"{ts.Seconds}s";
+    }
+
+    private string _rotationCountdownText = "⏳ Waiting for live proxy connection...";
     public string RotationCountdownText
     {
         get => _rotationCountdownText;
@@ -2050,4 +2126,11 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(name);
         return true;
     }
+}
+
+public class RotationIntervalOptionItem
+{
+    public int Seconds { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public override string ToString() => Label;
 }

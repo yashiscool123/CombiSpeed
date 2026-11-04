@@ -853,17 +853,26 @@ public static class CyberpunkSpa
                     <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="forceConnectSelectedOrNext()" title="Forcefully connects immediately to the next live responsive proxy in the candidate pool, probing until connected">🎯 Force Connect</button>
 
                     <span id="selectionSummaryPill" class="badge" style="background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green); margin-left: auto;" title="Count of healthy proxies selected to participate in rotation">Selected: 0 healthy</span>
-                    <span id="rotationCountdownBadge" class="badge" style="background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber);" title="Time remaining until the next automatic proxy server rotation">Next rotation: 30s</span>
+                    <span id="rotationCountdownBadge" class="badge" style="background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber);" title="Time remaining until the next automatic proxy server rotation">⏳ Waiting for live proxy connection...</span>
 
                     <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">Interval:</span>
-                    <select id="rotatorIntervalSelect" class="select-dark" style="padding: 3px 6px; font-size: 11px; width: 65px;" onchange="updateRotatorConfig()" title="Timed rotation interval in seconds">
+                    <select id="rotatorIntervalSelect" class="select-dark" style="padding: 3px 6px; font-size: 11px; width: 85px;" onchange="updateRotatorConfig()" title="Timed rotation interval (up to 2 hours)">
                         <option value="10">10s</option>
                         <option value="15">15s</option>
                         <option value="30">30s</option>
                         <option value="45">45s</option>
-                        <option value="60">60s</option>
-                        <option value="120">120s</option>
-                        <option value="300">300s</option>
+                        <option value="60">1 min</option>
+                        <option value="90">1.5 min</option>
+                        <option value="120">2 min</option>
+                        <option value="180">3 min</option>
+                        <option value="300">5 min</option>
+                        <option value="600">10 min</option>
+                        <option value="900">15 min</option>
+                        <option value="1800">30 min</option>
+                        <option value="2700">45 min</option>
+                        <option value="3600">1 hour</option>
+                        <option value="5400">1.5 hours</option>
+                        <option value="7200">2 hours</option>
                     </select>
                 </div>
 
@@ -1417,7 +1426,22 @@ public static class CyberpunkSpa
                     document.getElementById('selectionSummaryPill').innerText = 'Selected: ' + (st.selectedCount || 0) + ' healthy';
                 }
                 if (document.getElementById('rotationCountdownBadge')) {
-                    document.getElementById('rotationCountdownBadge').innerText = 'Next rotation: ' + (st.secondsUntilNextRotation || 30) + 's';
+                    const badge = document.getElementById('rotationCountdownBadge');
+                    currentIsLiveConnected = !!st.isLiveConnected;
+                    currentSecondsRemaining = st.secondsUntilNextRotation !== undefined ? st.secondsUntilNextRotation : -1;
+                    if (!currentIsLiveConnected || currentSecondsRemaining < 0) {
+                        badge.innerText = '⏳ Waiting for live proxy connection...';
+                        badge.style.color = 'var(--text-muted)';
+                        badge.style.borderColor = 'var(--text-muted)';
+                    } else if (currentSecondsRemaining > 0) {
+                        badge.innerText = 'Next rotation in ' + formatRemainingTime(currentSecondsRemaining);
+                        badge.style.color = 'var(--amber)';
+                        badge.style.borderColor = 'var(--amber)';
+                    } else {
+                        badge.innerText = '🔄 Rotating to next live proxy...';
+                        badge.style.color = 'var(--cyan)';
+                        badge.style.borderColor = 'var(--cyan)';
+                    }
                 }
 
                 if (currentTab === 'tabRotator') {
@@ -1757,20 +1781,39 @@ public static class CyberpunkSpa
             setInterval(fetchRotator, 3000);
             setInterval(() => {
                 const badge = document.getElementById('rotationCountdownBadge');
-                if (badge && badge.innerText.includes('Next rotation:')) {
-                    const match = badge.innerText.match(/Next rotation:\s*(\d+)s/);
-                    if (match) {
-                        let sec = parseInt(match[1], 10);
-                        if (sec > 1) {
-                            badge.innerText = 'Next rotation: ' + (sec - 1) + 's';
-                        } else {
-                            badge.innerText = 'Rotating now...';
-                        }
+                if (badge) {
+                    if (!currentIsLiveConnected || currentSecondsRemaining < 0) {
+                        badge.innerText = '⏳ Waiting for live proxy connection...';
+                        badge.style.color = 'var(--text-muted)';
+                        badge.style.borderColor = 'var(--text-muted)';
+                    } else if (currentSecondsRemaining > 0) {
+                        currentSecondsRemaining--;
+                        badge.innerText = 'Next rotation in ' + formatRemainingTime(currentSecondsRemaining);
+                        badge.style.color = 'var(--amber)';
+                        badge.style.borderColor = 'var(--amber)';
+                    } else {
+                        badge.innerText = '🔄 Rotating to next live proxy...';
+                        badge.style.color = 'var(--cyan)';
+                        badge.style.borderColor = 'var(--cyan)';
                     }
                 }
             }, 1000);
             drawWaveform();
         };
+
+        let currentIsLiveConnected = false;
+        let currentSecondsRemaining = -1;
+
+        function formatRemainingTime(totalSeconds) {
+            if (totalSeconds < 0) return '⏳ Waiting for live proxy connection...';
+            if (totalSeconds === 0) return '🔄 Rotating to next live proxy...';
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+            if (m > 0) return `${m}m ${String(s).padStart(2, '0')}s`;
+            return `${s}s`;
+        }
     </script>
 </body>
 </html>

@@ -918,15 +918,38 @@ public partial class App : Application
                     }
                     Log(" [PASS] Selective proxy pool strictly restricted traffic to user-checked proxies.");
 
+                    // Verify countdown does NOT start until a proxy is connected
+                    if (timedRouter.IsLiveConnected || timedRouter.SecondsUntilNextRotation != -1)
+                    {
+                        throw new Exception("Countdown must not start before a proxy is successfully connected!");
+                    }
+                    Log(" [PASS] Gated rotation countdown: paused (-1) before live proxy connection.");
+
                     // Test Force Rotate
                     var before = timedRouter.ActiveTimedProxy;
                     timedRouter.ForceRotate();
                     var after = timedRouter.ActiveTimedProxy;
                     Log($"Force rotation: {before?.Endpoint} -> {after?.Endpoint} (Countdown: {timedRouter.SecondsUntilNextRotation}s)");
-                    if (timedRouter.SecondsUntilNextRotation <= 0 || timedRouter.SecondsUntilNextRotation > 15)
+                    if (!timedRouter.IsLiveConnected || timedRouter.SecondsUntilNextRotation <= 0 || timedRouter.SecondsUntilNextRotation > 15)
                     {
                         throw new Exception("Timed countdown value out of expected bounds!");
                     }
+
+                    // Test 2-Hour Interval Configuration (7200s)
+                    timedConfig.RotationIntervalSeconds = 7200;
+                    if (timedRouter.SecondsUntilNextRotation <= 7190 || timedRouter.SecondsUntilNextRotation > 7200)
+                    {
+                        throw new Exception($"2-Hour rotation interval out of bounds: {timedRouter.SecondsUntilNextRotation}s");
+                    }
+                    Log(" [PASS] 2-Hour (7200s) rotation interval verified.");
+
+                    // Verify countdown pauses if active proxy is marked unavailable
+                    timedRouter.MarkUnavailable(after!.Endpoint);
+                    if (timedRouter.IsLiveConnected || timedRouter.SecondsUntilNextRotation != -1)
+                    {
+                        throw new Exception("Countdown should pause when active proxy becomes unavailable!");
+                    }
+                    Log(" [PASS] Countdown halts immediately upon active proxy unavailability.");
                     Log(" [PASS] Time-based interval rotation and forced rotation verified.");
 
                     // Test Flag Emoji generation

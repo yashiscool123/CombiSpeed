@@ -465,3 +465,16 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.3 Build 30).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.2.3.
+
+## Milestone 32: Extended 2-Hour Proxy Rotation Intervals & Live Connection-Gated Countdown [COMPLETED]
+- [x] Increment version to 2.2.4 and versionCode: 31 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Expand proxy rotation interval configuration up to 2 hours (7200 seconds) in `RotatingProxyConfigModel`, `PersistedProxyStateModel`, and validation clamping across Windows, Linux, and macOS.
+- [x] Provide comprehensive human-friendly interval options in UI (`10s`, `15s`, `30s`, `45s`, `1 min`, `1.5 min`, `2 min`, `3 min`, `5 min`, `10 min`, `15 min`, `30 min`, `45 min`, `1 hour`, `1.5 hours`, `2 hours`) with dynamic custom adaptation.
+- [x] Implement live connection gating for rotation countdown timer in `RotatingProxyRouter`, `LinuxRotatingProxyRouter`, and `MacRotatingProxyRouter`: countdown remains paused at `-1` in waiting state (`⏳ Waiting for live proxy connection...`) until a proxy server is successfully connected and verified live.
+- [x] Integrate `ConfirmLiveConnected` across active probes, force-connect flows, and `ProxyEngine` live data tunnels to initiate countdown upon confirmed connection.
+- [x] Implement automatic countdown halting on proxy failure/eviction (`MarkUnavailable`), pausing countdown until the next live proxy connection is established.
+- [x] Implement zero-second auto-rotation background check (`CheckAutoRotationAsync`) advancing to the next live proxy upon expiration and restarting countdown on connection.
+- [x] Add automated test step to `--verify-rotator` (Windows) and `--verify-persistence` (Linux & macOS) verifying pre-connection pause state, 2-hour interval (7200s), active countdown ticking, and dynamic halting upon proxy eviction (100% pass rate).
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.4 Build 31).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.2.4.

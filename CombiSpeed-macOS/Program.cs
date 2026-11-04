@@ -13,8 +13,8 @@ public class Program
         if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase) || a.Equals("-v", StringComparison.OrdinalIgnoreCase)))
         {
             var ver = typeof(Program).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.3";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 30) - macOS Edition");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.4";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 31) - macOS Edition");
             Console.WriteLine("Multi-WAN Channel Bonding & Dynamic Bandwidth QoS Shaper");
             Console.WriteLine("Platform: macOS x64/arm64 (.NET 8.0)");
             return;
@@ -144,6 +144,21 @@ public class Program
                 if (scannedAdapters == null || scannedAdapters.Count == 0) throw new Exception("MacNetworkDetector returned empty adapter list!");
                 storage.ApplyToAdapters(scannedAdapters);
                 Console.WriteLine($"[PASS] macOS Combined Adapters Rescan verified: {scannedAdapters.Count} adapters detected ({scannedAdapters.Count(a => a.IsEnabled)} combinable).");
+
+                // Test countdown gating and 2-hour interval
+                using var valTest = new MacProxyValidator();
+                var pTest = new HarvestedProxyModel { Host = "1.1.1.1", Port = 8080, IsHealthy = true, IsSelected = true };
+                valTest.AddCandidates(new[] { pTest });
+                var routerTest = new MacRotatingProxyRouter(valTest, new RotatingProxyConfigModel { Strategy = RotationStrategy.TimeBasedInterval, RotationIntervalSeconds = 7200 }, new MacLoadBalancer());
+                if (routerTest.IsLiveConnected || routerTest.SecondsUntilNextRotation != -1)
+                    throw new Exception("Countdown should not start before proxy connection!");
+                routerTest.ConfirmLiveConnected(pTest);
+                if (!routerTest.IsLiveConnected || routerTest.SecondsUntilNextRotation < 7195 || routerTest.SecondsUntilNextRotation > 7200)
+                    throw new Exception($"2-hour countdown did not initialize properly: {routerTest.SecondsUntilNextRotation}");
+                routerTest.MarkUnavailable(pTest.Endpoint);
+                if (routerTest.IsLiveConnected || routerTest.SecondsUntilNextRotation != -1)
+                    throw new Exception("Countdown should pause when active proxy is unavailable!");
+                Console.WriteLine("[PASS] macOS rotation countdown gating and 2-hour interval verified.");
 
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL macOS PERSISTENCE & COMBINATION TESTS PASSED (100% OK)         ");

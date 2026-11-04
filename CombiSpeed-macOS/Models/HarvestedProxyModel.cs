@@ -70,7 +70,12 @@ public class RotatingProxyConfigModel
 {
     public bool EnableRotatingProxy { get; set; } = true;
     public int RotatingProxyPort { get; set; } = 8081;
-    public int RotationIntervalSeconds { get; set; } = 30;
+    private int _rotationIntervalSeconds = 30;
+    public int RotationIntervalSeconds
+    {
+        get => _rotationIntervalSeconds;
+        set => _rotationIntervalSeconds = Math.Clamp(value, 5, 7200);
+    }
     public bool RouteBondedTrafficThroughRotator { get; set; } = false;
     public RotationStrategy Strategy { get; set; } = RotationStrategy.RoundRobin;
     public int StickySessionMinutes { get; set; } = 5;
@@ -449,7 +454,7 @@ public class RotatingProxyConfigModel
 /// </summary>
 public class PersistedProxyStateModel
 {
-    public string Version { get; set; } = "2.2.3";
+    public string Version { get; set; } = "2.2.4";
     public DateTime LastSaved { get; set; } = DateTime.UtcNow;
 
     // Active UI Filters
