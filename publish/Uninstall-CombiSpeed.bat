@@ -31,6 +31,10 @@ echo.
 echo [1/4] Stopping CombiSpeed and restoring system proxy...
 if exist "%~dp0Stop-CombiSpeed.bat" (
     call "%~dp0Stop-CombiSpeed.bat"
+) else if exist "%~dp0windows\bin\Stop-CombiSpeed.bat" (
+    call "%~dp0windows\bin\Stop-CombiSpeed.bat"
+) else if exist "%~dp0bin\Stop-CombiSpeed.bat" (
+    call "%~dp0bin\Stop-CombiSpeed.bat"
 ) else (
     taskkill /F /IM CombiSpeed.exe /T >nul 2>&1
     rasdial "CombiSpeed Bonded Bridge" /DISCONNECT >nul 2>&1

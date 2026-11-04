@@ -11,7 +11,10 @@ echo Stopping CombiSpeed and restoring system network settings...
 :: 1. Search for executable to invoke graceful --stop signal
 set "EXE_PATH="
 if exist "%~dp0CombiSpeed.exe" set "EXE_PATH=%~dp0CombiSpeed.exe"
+if not defined EXE_PATH if exist "%~dp0windows\bin\CombiSpeed.exe" set "EXE_PATH=%~dp0windows\bin\CombiSpeed.exe"
+if not defined EXE_PATH if exist "%~dp0bin\CombiSpeed.exe" set "EXE_PATH=%~dp0bin\CombiSpeed.exe"
 if not defined EXE_PATH if exist "%LOCALAPPDATA%\Programs\CombiSpeed\CombiSpeed.exe" set "EXE_PATH=%LOCALAPPDATA%\Programs\CombiSpeed\CombiSpeed.exe"
+if not defined EXE_PATH if exist "%~dp0publish\windows\bin\CombiSpeed.exe" set "EXE_PATH=%~dp0publish\windows\bin\CombiSpeed.exe"
 if not defined EXE_PATH if exist "%~dp0publish\CombiSpeed.exe" set "EXE_PATH=%~dp0publish\CombiSpeed.exe"
 
 if defined EXE_PATH (
@@ -31,7 +34,7 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v Pr
 
 echo.
 echo [SUCCESS] CombiSpeed stopped successfully.
-echo [SUCCESS] Virtual Bridge disconnected & Windows System Proxy disabled. Direct Internet restored!
+echo [SUCCESS] Virtual Bridge disconnected ^& Windows System Proxy disabled. Direct Internet restored!
 echo.
 timeout /t 2 >nul 2>&1 || ping -n 3 127.0.0.1 >nul
 exit /b 0

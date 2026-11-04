@@ -638,6 +638,30 @@
                     "progress": "Cleanup and verification completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-034",
+            "userQuery": "Move all the installers, batch files for starting / stopping the application under the \"publish\" folder.",
+            "status": "completed",
+            "createdAt": "2026-11-04T18:27:00+05:30",
+            "updatedAt": "2026-11-04T18:34:00+05:30",
+            "progress": "Moved all Windows installer, launcher, and service management batch scripts (Install-CombiSpeed.bat, Start-CombiSpeed.bat, Stop-CombiSpeed.bat, Install-Service.bat, Uninstall-CombiSpeed.bat, Uninstall-Service.bat) from repository root into publish/; upgraded all scripts with multi-tier smart path discovery supporting execution directly under publish/, publish/windows/bin/, or from %LOCALAPPDATA%\\Programs\\CombiSpeed; synchronized scripts to publish/windows/bin/ and re-packaged clean release archive CombiSpeed-v2.2.4-win-x64.zip; updated ReadMe.md, ReleaseNotes.md, and ToDos.md; left repository root completely clean of batch files.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3401",
+                    "timestamp": "2026-11-04T18:28:00+05:30",
+                    "inputs": "User requested moving all installers and start/stop batch files under the publish folder.",
+                    "outputs": "Planned git mv of all 6 batch files to publish/, path resolution enhancements, and documentation updates.",
+                    "progress": "Planning completed."
+                },
+                {
+                    "checkpointId": "CP-3402",
+                    "timestamp": "2026-11-04T18:34:00+05:30",
+                    "inputs": "Execution of file relocation, path adaptability upgrades, documentation sync, and archive re-packaging.",
+                    "outputs": "Relocated batch files to publish/, enhanced path search order in scripts, updated ReadMe.md paths, re-packaged 362 KB release archive, verified clean build and git status.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
         }
     ]
 }

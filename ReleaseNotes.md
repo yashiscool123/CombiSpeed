@@ -1,5 +1,22 @@
 # Release Notes
 
+## [2.2.5] - 2026-11-04 - Dedicated Distribution Structure & Script Relocation Release
+
+### 🚀 Highlights & Engineering Advancements
+- **📁 Dedicated Distribution Architecture & Script Relocation**:
+  - **Clean Root Workspace**: Moved all Windows installer, launcher, and service lifecycle batch scripts (`Install-CombiSpeed.bat`, `Start-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, `Install-Service.bat`, `Uninstall-CombiSpeed.bat`, `Uninstall-Service.bat`) from repository root into `publish/`.
+  - **Smart Multi-Tier Path Discovery**: Upgraded all batch scripts to automatically resolve executable paths, project files, and application icons whether executed from `publish/`, `publish/windows/bin/`, or the installed `%LOCALAPPDATA%\Programs\CombiSpeed` directory.
+  - **Zero-Friction One-Click Execution**: Users can run `publish\Install-CombiSpeed.bat` directly from the distribution folder without configuring paths or moving files.
+- **📦 Clean Package Footprint & Bloat Elimination**:
+  - Purged 95 obsolete and superseded distribution archives from earlier releases across all platform folders.
+  - Eliminated nested archive bundling recursion, reducing the Windows release package (`CombiSpeed-v2.2.5-win-x64.zip`) from 20.63 MB down to 362 KB.
+  - Reclaimed over 97.48 MB of workspace storage across distribution and local installation directories.
+- **🔄 Universal Platform Synchronization**:
+  - Synchronized `publish/windows/bin/`, `publish/linux/bin/`, and `publish/macos/bin/` with `v2.2.5` binaries, configuration schemas, and platform scripts.
+  - Built and verified standalone release packages for Windows, Linux, and macOS.
+
+---
+
 ## [2.2.4] - 2026-11-04 - Extended 2-Hour Proxy Rotation Intervals & Live Connection-Gated Countdown Release
 
 ### 🚀 Highlights & Engineering Advancements
@@ -24,6 +41,10 @@
   - **Linux & macOS**: Updated `CyberpunkSpa.cs` HTML `<select>` with full interval presets up to 2 hours, live JS countdown ticking with `formatRemainingTime()`, and REST API `/api/rotating-proxy/config` validation up to 7200s.
 - **🧪 Automated Verification (Phase 9 Expansion)**:
   - Added automated test assertions to `--verify-rotator` (Windows) and `--verify-persistence` (Linux & macOS) verifying pre-connection paused state (`-1`), 2-hour interval configuration (7200s), active countdown ticking, and dynamic halting upon proxy eviction (**100% PASS**).
+- **📁 Dedicated Distribution Packaging & Script Relocation**:
+  - Moved all Windows installer and process lifecycle batch scripts (`Install-CombiSpeed.bat`, `Start-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, `Install-Service.bat`, `Uninstall-CombiSpeed.bat`, `Uninstall-Service.bat`) from workspace root directly under `publish/`.
+  - Implemented smart multi-level path discovery across all batch scripts, allowing seamless one-click execution directly from `publish/`, `publish/windows/bin/`, or the installed `%LOCALAPPDATA%\Programs\CombiSpeed` directory.
+  - Purged obsolete distribution archives and eliminated recursive zip packaging bloat, reducing package footprint to 362 KB and reclaiming over 97.48 MB of workspace storage.
 
 ---
 

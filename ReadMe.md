@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.2.4%20(Build%2031)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.2.5%20(Build%2032)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -37,7 +37,7 @@ CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-s
 2. **Parallel HTTP Range Chunk Combining**:
    Splits large file transfers ($\ge 512\text{ KB}$) into concurrent byte ranges dispatched simultaneously across different physical network adapters, combining multiple physical wire speeds into a single accelerated download stream.
 
-3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (Enhanced in v2.2.4)**:
+3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (Enhanced in v2.2.5)**:
    A decoupled two-stage networking architecture: CombiSpeed first binds and load-balances outbound client sockets across physical network adapters for aggregate bandwidth and multi-NIC fault tolerance. Then, it tunnels all requests upstream through a user-selected, filtered rotating proxy server that dynamically rotates on a timely basis with configurable intervals from 10s all the way up to **every 2 hours (7200s)**. The rotation countdown timer is strictly gated to begin ticking only once a proxy server is successfully connected and verified live.
 
 4. **Live Identity Refresh & Protocol-Aware Upstream Tunnels (NEW in v2.2.3)**:
@@ -211,7 +211,7 @@ CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-s
 10. **Windows Service & Headless Background Mode**:
     - Runs headless as a background Windows Service without requiring active user logon or open GUI (`--service`, `--headless`).
     - CLI service management: `--service-install`, `--service-uninstall`, `--service-start`, `--service-stop`.
-    - 1-click scripts: `Install-Service.bat` and `Uninstall-Service.bat` registering `CombiSpeedService` in Windows Service Control Manager with automatic crash recovery.
+    - 1-click scripts: `publish\Install-Service.bat` and `publish\Uninstall-Service.bat` registering `CombiSpeedService` in Windows Service Control Manager with automatic crash recovery.
 
 11. **Native C# High-Performance Sockets**:
     - Outgoing sockets are explicitly bound to adapter local IPv4 addresses using `Socket.Bind(new IPEndPoint(localIp, 0))`.
@@ -356,18 +356,18 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.2.4-win-x64.zip` and `publish/CombiSpeed-v2.2.4-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.2.4-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.4-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.2.4-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.4-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.2.5-win-x64.zip` and `publish/CombiSpeed-v2.2.5-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.2.5-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.2.5-macos-x64.zip`
 
 ---
 
 ## ⚡ One-Click Start, Stop & Installers per OS
 
 ### 🪟 Windows 10 / 11
-- **Install**: Run `Install-CombiSpeed.bat` (installs to `%LOCALAPPDATA%\Programs\CombiSpeed`, creates Start Menu & Desktop shortcuts, registers in Installed Apps).
-- **Start**: Run `Start-CombiSpeed.bat` (launches WPF UI and engages channel bonding).
-- **Stop**: Run `Stop-CombiSpeed.bat` (halts processes and resets Windows WinINet proxy).
+- **Install**: Run `publish\Install-CombiSpeed.bat` (installs to `%LOCALAPPDATA%\Programs\CombiSpeed`, creates Start Menu & Desktop shortcuts, registers in Installed Apps).
+- **Start**: Run `publish\Start-CombiSpeed.bat` (launches WPF UI and engages channel bonding).
+- **Stop**: Run `publish\Stop-CombiSpeed.bat` (halts processes and resets Windows WinINet proxy).
 - **Export PAC**: Run `CombiSpeed.exe --export-pac [outputPath]` or click **"💾 Export PAC File..."** in Settings.
 
 ### 🐧 Linux (Ubuntu / Debian / Fedora / Arch)

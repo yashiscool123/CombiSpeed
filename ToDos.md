@@ -478,3 +478,11 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.4 Build 31).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.2.4.
+
+## Milestone 33: Relocation of Installers & Lifecycle Scripts under `publish/` [COMPLETED]
+- [x] Move all Windows installer and service/process lifecycle batch scripts (`Install-CombiSpeed.bat`, `Start-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, `Install-Service.bat`, `Uninstall-CombiSpeed.bat`, `Uninstall-Service.bat`) from repository root into `publish/`.
+- [x] Update path resolution in `Install-CombiSpeed.bat` to detect local `windows\bin` / `bin` / release directories and root project assets seamlessly.
+- [x] Update multi-path search order in `Start-CombiSpeed.bat`, `Stop-CombiSpeed.bat`, and `Install-Service.bat` for robust execution directly under `publish/`.
+- [x] Synchronize updated batch scripts to `publish/windows/bin/` and re-package clean release distribution archives.
+- [x] Update `ReadMe.md` execution paths to reference `publish\*.bat`.
+- [x] Verify clean workspace root and confirm 100% test pass rate across build outputs.

@@ -21,6 +21,9 @@ if errorlevel 1 (
 set "EXE_PATH="
 if exist "%LOCALAPPDATA%\Programs\CombiSpeed\CombiSpeed.exe" set "EXE_PATH=%LOCALAPPDATA%\Programs\CombiSpeed\CombiSpeed.exe"
 if not defined EXE_PATH if exist "%~dp0CombiSpeed.exe" set "EXE_PATH=%~dp0CombiSpeed.exe"
+if not defined EXE_PATH if exist "%~dp0windows\bin\CombiSpeed.exe" set "EXE_PATH=%~dp0windows\bin\CombiSpeed.exe"
+if not defined EXE_PATH if exist "%~dp0bin\CombiSpeed.exe" set "EXE_PATH=%~dp0bin\CombiSpeed.exe"
+if not defined EXE_PATH if exist "%~dp0publish\windows\bin\CombiSpeed.exe" set "EXE_PATH=%~dp0publish\windows\bin\CombiSpeed.exe"
 if not defined EXE_PATH if exist "%~dp0publish\CombiSpeed.exe" set "EXE_PATH=%~dp0publish\CombiSpeed.exe"
 
 if not defined EXE_PATH (

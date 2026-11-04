@@ -3,7 +3,16 @@
 **/obj/
 bin/
 obj/
-publish/
+publish/**/*.zip
+publish/**/*.tar.gz
+publish/**/*.dll
+publish/**/*.exe
+publish/**/*.pdb
+publish/**/*.deps.json
+publish/**/*.runtimeconfig.json
+publish/windows/bin/
+publish/linux/bin/
+publish/macos/bin/
 *.user
 *.suo
 *.userosscache
