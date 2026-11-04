@@ -614,6 +614,30 @@
                     "progress": "Milestone 32 completed successfully with 100% verification and clean packaging."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-033",
+            "userQuery": "Clean up all the unwanted files from the project folder.",
+            "status": "completed",
+            "createdAt": "2026-11-04T18:15:00+05:30",
+            "updatedAt": "2026-11-04T18:25:00+05:30",
+            "progress": "Completed comprehensive repository and distribution artifact cleanup: purged 95 obsolete and superseded release zip archives (v1.3.3 through v2.2.3) across publish/, publish/windows/, publish/linux/, publish/macos/, and publish/windows/bin/; removed loose duplicate binaries and batch files sitting in root of publish/ folders; eliminated nested packaging bug in publish/windows/bin which reduced CombiSpeed-v2.2.4-win-x64.zip from 20.6 MB to 362 KB; cleaned stray zip archives in %LOCALAPPDATA%\\Programs\\CombiSpeed; re-packaged lean, clean v2.2.4 distribution archives for Windows (362 KB), Linux (275 KB), and macOS (507 KB); total publish folder size reclaimed over 97.48 MB (reduced from 102.13 MB down to 4.65 MB).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3301",
+                    "timestamp": "2026-11-04T18:18:00+05:30",
+                    "inputs": "User requested cleanup of all unwanted files from project folder.",
+                    "outputs": "Audited entire repository, verified git status, identified 102 MB of obsolete release archives and loose duplicates in publish/ and %LOCALAPPDATA%.",
+                    "progress": "Audit completed."
+                },
+                {
+                    "checkpointId": "CP-3302",
+                    "timestamp": "2026-11-04T18:25:00+05:30",
+                    "inputs": "Execution of cleanup and repackaging.",
+                    "outputs": "Purged superseded archives (< v2.2.4) and duplicate loose binaries; eliminated nested zip recursion in publish/windows/bin; re-packaged clean v2.2.4 release archives; verified 0 build warnings/errors; verified clean git tree.",
+                    "progress": "Cleanup and verification completed successfully."
+                }
+            ]
         }
     ]
 }
