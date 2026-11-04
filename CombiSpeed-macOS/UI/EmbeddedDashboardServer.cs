@@ -54,6 +54,17 @@ public class EmbeddedDashboardServer
         _harvester = harvester;
         _validator = validator;
         _detector = detector ?? new MacNetworkDetector();
+
+        if (_rotatingServer?.Router != null)
+        {
+            _rotatingServer.Router.OnTimedRotation += (proxy) =>
+            {
+                if (proxy != null)
+                {
+                    _ = MacGeoIpService.ResolveCurrentLocationAsync(_adapters, proxy, forceRefresh: true);
+                }
+            };
+        }
     }
 
     public void Start(bool openBrowser = true)
@@ -173,7 +184,8 @@ public class EmbeddedDashboardServer
             }
             else if (path == "/api/geoip")
             {
-                var loc = await MacGeoIpService.ResolveCurrentLocationAsync(_adapters);
+                var activeProxy = _rotatingServer?.Router?.ActiveTimedProxy;
+                var loc = await MacGeoIpService.ResolveCurrentLocationAsync(_adapters, activeProxy);
                 string json = JsonSerializer.Serialize(loc);
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
                 res.ContentType = "application/json";
@@ -487,7 +499,9 @@ public class EmbeddedDashboardServer
                     shaperMode = _throttler.Mode.ToString(),
                     currentCapMbps = _throttler.CurrentCapMbps,
                     adapters = _adapters,
-                    auditLogs = _engine.RecentLogs.Take(25).ToList()
+                    auditLogs = _config.EnableAuditLogging ? _engine.RecentLogs.Take(25).ToList() : new List<AuditLogModel>(),
+                    enableAuditLogging = _config.EnableAuditLogging,
+                    selectedTheme = _config.SelectedTheme
                 };
 
                 // Clear momentary speeds for next sample
@@ -637,6 +651,38 @@ public class EmbeddedDashboardServer
                 if (doc.RootElement.TryGetProperty("isReduceMotion", out var rm)) _config.IsReduceMotion = rm.GetBoolean();
                 if (doc.RootElement.TryGetProperty("uiScale", out var us)) _config.UiScale = us.GetDouble();
                 _storage.Save(_adapters, _config);
+                res.StatusCode = 200;
+            }
+            else if (path == "/api/settings/theme" && req.HttpMethod == "POST")
+            {
+                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
+                string body = await reader.ReadToEndAsync();
+                try
+                {
+                    var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("theme", out var tProp))
+                    {
+                        _config.SelectedTheme = tProp.GetString() ?? "Dark";
+                        _storage.Save(_adapters, _config);
+                    }
+                }
+                catch { }
+                res.StatusCode = 200;
+            }
+            else if (path == "/api/settings/audit-logging" && req.HttpMethod == "POST")
+            {
+                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
+                string body = await reader.ReadToEndAsync();
+                try
+                {
+                    var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("enabled", out var enProp))
+                    {
+                        _config.EnableAuditLogging = enProp.GetBoolean();
+                        _storage.Save(_adapters, _config);
+                    }
+                }
+                catch { }
                 res.StatusCode = 200;
             }
             else

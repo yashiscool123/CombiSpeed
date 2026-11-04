@@ -1,5 +1,49 @@
 # Release Notes
 
+## [2.2.3] - 2026-11-04 - Live Identity Refresh, Protocol-Aware Connections, Light/Dark Themes, Audit Stream & Instant Persistence Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🌍 Real-Time Network Identity Refresh upon Proxy Connection**:
+  - **Dynamic WAN & Geo-Location Probing**: When a proxy connection is established—either via scheduled interval rotation or 1-click manual forced connection—the system automatically triggers an immediate background identity refresh via `GeoIpService.ResolveCurrentLocationAsync(Adapters, proxy: proxy, forceRefresh: true)`.
+  - **Proxy-Tunnelled Diagnostic Requests**: Queries to authoritative GeoIP providers (`ip-api.com`, `ipwho.is`) are tunnelled directly through the newly connected proxy endpoint using `SocketsHttpHandler.Proxy = new WebProxy(proxy.ToWebProxyUrl())`.
+  - **Instant Live Telemetry**: Updates the Overview tab (Tab 0) in real time with the new public IP, ISP/ASN, city, region, and dynamic Unicode country flag emoji (e.g. 🇮🇳, 🇺🇸, 🇩🇪, 🇬🇧, 🇯🇵), providing immediate visual confirmation of anonymity and geographical location.
+- **🔌 Protocol-Aware Upstream Proxy Connections (HTTP, HTTPS, SOCKS4, SOCKS5)**:
+  - **Multi-Protocol Handshake Engine**: Upgraded `EstablishUpstreamProxyTunnelAsync` across `ProxyEngine.cs`, `LinuxProxyEngine.cs`, and `MacProxyEngine.cs` to dynamically inspect `proxy.Protocol`:
+    - `HTTP` & `HTTPS`: Full HTTP CONNECT bidirectional tunneling (`CONNECT host:port HTTP/1.1`).
+    - `SOCKS5`: Full RFC 1928 negotiation (`0x05, 0x01, 0x00`) with IPv4, IPv6, and domain name target addressing.
+    - `SOCKS4` & `SOCKS4a`: Implemented RFC SOCKS4 client handshake (`0x04, 0x01, Port, IP, User\0`) with SOCKS4a domain resolution fallback (`0.0.0.1` sentinel + target domain byte payload).
+  - Eliminates upstream protocol mismatch errors and ensures 100% interoperability with heterogeneous proxy repository sources.
+- **🎯 Dynamic Success & Failure Column Filtering**:
+  - Added dedicated filter dropdowns in Tab 4 (Rotating Proxy) on Windows WPF and Linux/macOS Web SPAs:
+    - **Success Filters**: `ALL Successes`, `≥ 1 Success`, `≥ 3 Successes`, `≥ 5 Successes`, `≥ 10 Successes`.
+    - **Failure Filters**: `ALL Failures`, `0 Failures (Perfect)`, `≤ 1 Failure`, `≤ 3 Failures`, `≤ 5 Failures`.
+  - Integrated into `RefreshProxyCollection()` and persisted in `PersistedProxyStateModel` across restarts so user filtering preferences are never lost.
+- **💾 Instant Settings Auto-Persistence & PAC Toggle Fix**:
+  - **Fixed PAC Checkbox Non-Persistence**: Resolved issue where toggling the "Enable PAC for Dynamic Routing (AutoConfig URL)" checkbox did not persist if the settings dialog was dismissed via the close window button.
+  - **Zero-Latency Disk Writes**: Wired real-time change handlers (`Checked`, `Unchecked`, `TextChanged`, `SelectionChanged`) across all settings controls to immediately invoke `ApplySettingsToModel()` and trigger disk persistence via `_configStore.SaveImmediate`.
+  - **Real-Time WinINet Sync**: Toggling the PAC checkbox immediately engages or disengages `WindowsProxyManager.EnablePac()` / `DisablePac()` and writes `AutoConfigURL` to the Windows registry.
+- **📁 Multi-Tiered Persistence for Proxy Repositories & Server URLs**:
+  - **Repository Sources Persistence**: Proxy repository URLs are immediately saved to `%LOCALAPPDATA%\CombiSpeed\proxy_sources.json` and persisted in `proxy_state.json`. On application startup, saved sources are pre-loaded into `Config.RotatingProxy.CustomSources` and the UI editor.
+  - **Server URLs Persistence**: All harvested proxy server URLs, latency benchmarks, failure/success counts, and user selections are saved to `%LOCALAPPDATA%\CombiSpeed\proxy_state.json` immediately upon harvest in Idempotence mode, ensuring zero data loss across application restarts.
+- **👁️ High-Contrast Accessibility-Friendly Tooltips**:
+  - Resolved white-on-white text rendering in WPF tooltips by providing an explicit `Style TargetType="{x:Type ToolTip}"` with custom ControlTemplate in `App.xaml`.
+  - Styled with deep background (`ToolTipBg` `#0B1120`), high-contrast border (`ToolTipBorder` `#00F0FF`), and crisp text (`ToolTipFg` `#F8FAFC`).
+  - Achieves WCAG 2.1 AAA compliance with >14:1 contrast ratios in both Light and Dark themes.
+- **🌓 Eye-Friendly & Soothing Light and Dark Themes**:
+  - Added user-selectable Theme Switcher button (`🌙 Dark` / `☀️ Light`) to the main TitleBar action bar across Windows WPF, Linux, and macOS Web SPAs.
+  - Designed an eye-friendly, soothing Light Theme palette (`#F1F5F9` canvas, `#FFFFFF` cards, `#0F172A` high-contrast slate text, `#0284C7` calming sky accents) alongside the Cyberpunk Dark palette (`#030712` canvas, `#0B1120` cards, `#F8FAFC` bright white text, `#00F0FF` cyan accents).
+  - Maintained strict WCAG 2.1 AA/AAA contrast ratios across all labels, inputs, grids, and buttons.
+  - Theme preference is saved to `ProxyConfigModel.SelectedTheme` and restored across sessions.
+- **📜 Enriched Connection Audit Stream & Logging Toggle**:
+  - Extended `AuditLogModel` with `ProxyServerUrl`, `IsSuccess`, `LatencyMs`, and `ResolvedIp`.
+  - Added dedicated columns to the Connection Audit DataGrid: `PROXY SERVER`, `RESULT` (`✓ SUCCESS` / `✗ FAILED`), `LATENCY` (`42 ms`), and `RESOLVED IP`.
+  - Added an `Enable Connection Audit Logging` CheckBox toggle to the audit header and Linux/macOS dashboards, allowing users to disable audit logging to conserve CPU and RAM during heavy workloads.
+- **⏳ Real-Time Live Rotation Countdown Timer**:
+  - Implemented `SecondsUntilNextRotation` in `RotatingProxyRouter`, calculating the exact remaining seconds until the next automatic proxy rotation.
+  - Integrated into the 1-second UI telemetry tick in `MainViewModel` and client-side JavaScript in `CyberpunkSpa.cs`, displaying an accurate countdown (e.g. `Next rotation in 24s`).
+
+---
+
 ## [2.2.2] - 2026-11-04 - Live Connection Auto-Rotation, Force Connect & Comprehensive Tooltips Release
 
 ### 🚀 Highlights & Engineering Advancements

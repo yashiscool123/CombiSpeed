@@ -9,11 +9,16 @@ namespace CombiSpeed.Views;
 public partial class SettingsWindow : Window
 {
     private readonly ProxyConfigModel _config;
+    private readonly Action? _onConfigChanged;
+    private readonly WindowsProxyManager? _proxyManager;
+    private bool _isInitializing = true;
 
-    public SettingsWindow(ProxyConfigModel config)
+    public SettingsWindow(ProxyConfigModel config, Action? onConfigChanged = null, WindowsProxyManager? proxyManager = null)
     {
         InitializeComponent();
         _config = config;
+        _onConfigChanged = onConfigChanged;
+        _proxyManager = proxyManager;
 
         TxtHttpPort.Text = config.HttpPort.ToString();
         TxtSocksPort.Text = config.SocksPort.ToString();
@@ -79,6 +84,48 @@ public partial class SettingsWindow : Window
         UpdateCliText();
         TxtHttpPort.TextChanged += (s, e) => UpdateCliText();
         TxtSocksPort.TextChanged += (s, e) => UpdateCliText();
+
+        _isInitializing = false;
+
+        // Wire immediate auto-save on every setting change
+        ChkAutoVirtualBridge.Checked += (s, e) => OnSettingInputChanged();
+        ChkAutoVirtualBridge.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkAutoWindowsProxy.Checked += (s, e) => OnSettingInputChanged();
+        ChkAutoWindowsProxy.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkEnablePac.Checked += (s, e) => OnSettingInputChanged();
+        ChkEnablePac.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkEnableThrottling.Checked += (s, e) => OnSettingInputChanged();
+        ChkEnableThrottling.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkCombineSpeeds.Checked += (s, e) => OnSettingInputChanged();
+        ChkCombineSpeeds.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkDynamicShaping.Checked += (s, e) => OnSettingInputChanged();
+        ChkDynamicShaping.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkHighContrast.Checked += (s, e) => OnSettingInputChanged();
+        ChkHighContrast.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkReduceMotion.Checked += (s, e) => OnSettingInputChanged();
+        ChkReduceMotion.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkScreenReader.Checked += (s, e) => OnSettingInputChanged();
+        ChkScreenReader.Unchecked += (s, e) => OnSettingInputChanged();
+
+        TxtHttpPort.TextChanged += (s, e) => OnSettingInputChanged();
+        TxtSocksPort.TextChanged += (s, e) => OnSettingInputChanged();
+        TxtBridgePort.TextChanged += (s, e) => OnSettingInputChanged();
+        TxtDownloadLimit.TextChanged += (s, e) => OnSettingInputChanged();
+        TxtUploadLimit.TextChanged += (s, e) => OnSettingInputChanged();
+
+        CmbRoutingMode.SelectionChanged += (s, e) => OnSettingInputChanged();
+        CmbShaperMode.SelectionChanged += (s, e) => OnSettingInputChanged();
+        CmbDownloadUnit.SelectionChanged += (s, e) => OnSettingInputChanged();
+        CmbUploadUnit.SelectionChanged += (s, e) => OnSettingInputChanged();
+        CmbBurstWindow.SelectionChanged += (s, e) => OnSettingInputChanged();
+        CmbUiScale.SelectionChanged += (s, e) => OnSettingInputChanged();
+    }
+
+    private void OnSettingInputChanged()
+    {
+        if (_isInitializing) return;
+        ApplySettingsToModel();
+        _onConfigChanged?.Invoke();
     }
 
     private void SelectUnit(ComboBox cmb, string unit)
@@ -158,7 +205,7 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void SaveButton_Click(object sender, RoutedEventArgs e)
+    private void ApplySettingsToModel()
     {
         if (int.TryParse(TxtHttpPort.Text, out int httpPort)) _config.HttpPort = httpPort;
         if (int.TryParse(TxtSocksPort.Text, out int socksPort)) _config.SocksPort = socksPort;
@@ -171,7 +218,21 @@ public partial class SettingsWindow : Window
 
         _config.EnableVirtualBridge = ChkAutoVirtualBridge.IsChecked == true;
         _config.EnableWindowsProxy = ChkAutoWindowsProxy.IsChecked == true;
-        _config.EnablePac = ChkEnablePac.IsChecked == true;
+
+        bool pacEnabled = ChkEnablePac.IsChecked == true;
+        if (_config.EnablePac != pacEnabled)
+        {
+            _config.EnablePac = pacEnabled;
+            if (_proxyManager != null)
+            {
+                if (pacEnabled) _proxyManager.EnablePac(_config.PacUrl);
+                else _proxyManager.DisablePac();
+            }
+        }
+        else
+        {
+            _config.EnablePac = pacEnabled;
+        }
 
         if (CmbShaperMode.SelectedItem is ComboBoxItem shaperItem && Enum.TryParse<SpeedShaperMode>(shaperItem.Tag?.ToString(), out var shaperMode))
         {
@@ -198,6 +259,7 @@ public partial class SettingsWindow : Window
         {
             string unit = (CmbUploadUnit.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Mbps";
             _config.GlobalUploadLimitBps = BandwidthThrottler.ConvertToBytesPerSec(ul, unit);
+            _config.CustomThrottleUnit = unit;
         }
         else
         {
@@ -219,7 +281,12 @@ public partial class SettingsWindow : Window
         {
             _config.UiScale = sc;
         }
+    }
 
+    private void SaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        ApplySettingsToModel();
+        _onConfigChanged?.Invoke();
         DialogResult = true;
         Close();
     }

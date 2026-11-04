@@ -15,7 +15,17 @@ public class AuditLogModel
     public string Status { get; set; } = "Completed";
     public string? ErrorMessage { get; set; }
 
+    // Enriched Proxy & Connection Audit Properties
+    public string? ProxyServerUrl { get; set; }
+    public bool IsSuccess { get; set; } = true;
+    public long LatencyMs { get; set; }
+    public string? ResolvedIp { get; set; }
+
     public string TimeFormatted => Timestamp.ToString("HH:mm:ss");
     public string VolumeFormatted => NetworkAdapterModel.FormatBytes(BytesTransferred);
     public string DestinationFormatted => $"{TargetHost}:{TargetPort}";
+    public string ProxyDisplay => !string.IsNullOrEmpty(ProxyServerUrl) ? ProxyServerUrl : "Direct Multi-WAN";
+    public string LatencyDisplay => LatencyMs > 0 ? $"{LatencyMs}ms" : $"{DurationMs}ms";
+    public string ResolvedIpDisplay => !string.IsNullOrEmpty(ResolvedIp) ? ResolvedIp : ClientIp;
+    public string ResultFormatted => IsSuccess ? "✓ Success" : $"✗ Failed{(string.IsNullOrEmpty(ErrorMessage) ? "" : $": {ErrorMessage}")}";
 }

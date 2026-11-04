@@ -449,7 +449,7 @@ public class RotatingProxyConfigModel
 /// </summary>
 public class PersistedProxyStateModel
 {
-    public string Version { get; set; } = "2.2.1";
+    public string Version { get; set; } = "2.2.3";
     public DateTime LastSaved { get; set; } = DateTime.UtcNow;
 
     // Active UI Filters
@@ -457,6 +457,8 @@ public class PersistedProxyStateModel
     public string SelectedSourceFilter { get; set; } = "ALL Sources";
     public string SelectedProtocolFilter { get; set; } = "ALL Protocols";
     public string SelectedCountryFilter { get; set; } = "ALL";
+    public string SelectedSuccessFilter { get; set; } = "ALL Successes";
+    public string SelectedFailureFilter { get; set; } = "ALL Failures";
     public string ProxySearchText { get; set; } = "";
 
     // Active UI Sorting
@@ -466,6 +468,9 @@ public class PersistedProxyStateModel
     public bool RouteBondedTrafficThroughRotator { get; set; } = false;
     public int RotationIntervalSeconds { get; set; } = 30;
     public string SelectedRotationStrategy { get; set; } = "Round Robin (Per-Request)";
+
+    // Persistent Proxy Repository Sources
+    public List<string> RepositorySources { get; set; } = new();
 
     // Harvested proxies list including user modifications (IsSelected, LatencyMs, IsHealthy, Failures, etc.)
     public List<HarvestedProxyModel> Proxies { get; set; } = new();

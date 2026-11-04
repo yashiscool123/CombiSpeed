@@ -36,6 +36,46 @@ public static class CyberpunkSpa
             --text-muted: #38BDF8;
         }
 
+        body.light-theme {
+            --bg-dark: #F1F5F9;
+            --card-bg: #FFFFFF;
+            --card-border: #CBD5E1;
+            --cyan: #0284C7;
+            --purple: #7C3AED;
+            --emerald: #059669;
+            --amber: #D97706;
+            --red: #DC2626;
+            --text-high: #0F172A;
+            --text-mid: #334155;
+            --text-muted: #64748B;
+        }
+        body.light-theme header {
+            background: rgba(255, 255, 255, 0.95);
+        }
+        body.light-theme .shaper-card,
+        body.light-theme .metric-card,
+        body.light-theme .adapter-card,
+        body.light-theme .bridge-card,
+        body.light-theme .modal-card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+        body.light-theme .audit-table th {
+            background: #E2E8F0;
+            color: #0284C7;
+        }
+        body.light-theme .audit-table td {
+            border-bottom: 1px solid #E2E8F0;
+        }
+        body.light-theme .audit-table tr:hover {
+            background: #F8FAFC;
+        }
+        body.light-theme .select-dark,
+        body.light-theme .select-cyber {
+            background: #FFFFFF !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
+        }
+
         body.reduce-motion * {
             animation: none !important;
             transition: none !important;
@@ -512,6 +552,7 @@ public static class CyberpunkSpa
         </div>
 
         <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btnThemeToggle" class="btn-cyber" onclick="toggleTheme()" title="Toggle between Dark Cyberpunk and Soothing Light Themes">🌙 Dark</button>
             <button class="btn-cyber" onclick="openAccessibilityModal()">♿ Display</button>
             <button class="btn-cyber" onclick="openSettingsModal()">⚙ Settings</button>
             <button id="btnPower" class="power-toggle-btn" onclick="togglePower()">
@@ -665,7 +706,12 @@ public static class CyberpunkSpa
             <div class="shaper-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <span style="font-size: 13px; font-weight: 700; color: var(--cyan);">LIVE CONNECTION AUDIT STREAM</span>
-                    <button class="btn-cyber" onclick="clearAudit()">Clear Log</button>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--text-mid);">
+                            <input type="checkbox" id="chkEnableAudit" checked onchange="toggleAuditLogging(this.checked)"> Enable Connection Audit Logging
+                        </label>
+                        <button class="btn-cyber" onclick="clearAudit()">Clear Log</button>
+                    </div>
                 </div>
                 <table class="audit-table">
                     <thead>
@@ -673,8 +719,13 @@ public static class CyberpunkSpa
                             <th>TIME</th>
                             <th>PROTOCOL</th>
                             <th>DESTINATION</th>
-                            <th>PORT</th>
+                            <th>PROXY SERVER</th>
+                            <th>RESULT</th>
+                            <th>LATENCY</th>
+                            <th>RESOLVED IP</th>
                             <th>OUTBOUND ADAPTER</th>
+                            <th>VOLUME</th>
+                            <th>DURATION</th>
                             <th>STATUS</th>
                         </tr>
                     </thead>
@@ -767,6 +818,20 @@ public static class CyberpunkSpa
                         <option value="HTTPS">HTTPS</option>
                         <option value="SOCKS4">SOCKS4</option>
                         <option value="SOCKS5">SOCKS5</option>
+                    </select>
+                    <select id="filterSuccess" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()" title="Filter proxies by minimum successful connections">
+                        <option value="0">All Successes</option>
+                        <option value="1">≥ 1 Success</option>
+                        <option value="3">≥ 3 Successes</option>
+                        <option value="5">≥ 5 Successes</option>
+                        <option value="10">≥ 10 Successes</option>
+                    </select>
+                    <select id="filterFailure" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()" title="Filter proxies by maximum tolerated failures">
+                        <option value="-1">All Failures</option>
+                        <option value="0">0 Failures (Perfect)</option>
+                        <option value="1">≤ 1 Failure</option>
+                        <option value="3">≤ 3 Failures</option>
+                        <option value="5">≤ 5 Failures</option>
                     </select>
                     <select id="filterSort" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()" title="Sort the proxy list dynamically">
                         <option value="latency_asc">Lowest Latency (Fastest)</option>
@@ -990,6 +1055,20 @@ public static class CyberpunkSpa
         function changeScale(val) {
             document.documentElement.style.setProperty('--ui-scale', val);
             fetch('/api/accessibility', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ uiScale: parseFloat(val) }) });
+        }
+
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-theme');
+            const btn = document.getElementById('btnThemeToggle');
+            if (btn) btn.innerText = isLight ? '☀️ Light' : '🌙 Dark';
+            try {
+                localStorage.setItem('combispeed_theme', isLight ? 'Light' : 'Dark');
+                fetch('/api/settings/theme', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ theme: isLight ? 'Light' : 'Dark' }) });
+            } catch(e) {}
+        }
+
+        function toggleAuditLogging(val) {
+            fetch('/api/settings/audit-logging', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ enabled: val }) });
         }
 
         async function togglePower() {
@@ -1229,19 +1308,38 @@ public static class CyberpunkSpa
         function renderAudit(logs) {
             const tbody = document.getElementById('auditRows');
             let html = '';
-            logs.slice(0, 20).forEach(l => {
+            logs.slice(0, 25).forEach(l => {
+                const isOk = l.IsSuccess !== false && (!l.Status || l.Status === 'Completed' || l.Status === 'OK');
+                const resultBadge = isOk ? '<span style="color: var(--emerald); font-weight: bold;">✓ OK</span>' : '<span style="color: var(--red); font-weight: bold;">✕ FAIL</span>';
+                const proxyUrl = l.ProxyServerUrl || 'Direct Multi-WAN';
+                const latency = l.LatencyMs > 0 ? `${l.LatencyMs} ms` : '-';
+                const resolvedIp = l.ResolvedIp || '-';
+                const volume = l.BytesTransferred > 0 ? formatBytes(l.BytesTransferred) : '-';
+                const duration = l.DurationMs > 0 ? `${l.DurationMs} ms` : '-';
                 html += `
                     <tr>
-                        <td>${new Date(l.timestamp).toLocaleTimeString()}</td>
-                        <td style="color: var(--cyan);">${l.protocol}</td>
-                        <td>${l.targetHost}</td>
-                        <td>${l.targetPort}</td>
-                        <td>${l.outboundAdapter}</td>
-                        <td style="color: var(--emerald);">${l.status}</td>
+                        <td>${new Date(l.Timestamp || l.timestamp).toLocaleTimeString()}</td>
+                        <td style="color: var(--cyan);">${l.Protocol || l.protocol}</td>
+                        <td title="${l.TargetHost || l.targetHost}">${(l.TargetHost || l.targetHost) + (l.TargetPort || l.targetPort ? ':' + (l.TargetPort || l.targetPort) : '')}</td>
+                        <td style="font-family: Consolas; font-size: 11px;">${proxyUrl}</td>
+                        <td>${resultBadge}</td>
+                        <td>${latency}</td>
+                        <td style="font-family: Consolas; font-size: 11px;">${resolvedIp}</td>
+                        <td>${l.AdapterName || l.outboundAdapter || '-'}</td>
+                        <td>${volume}</td>
+                        <td>${duration}</td>
+                        <td>${l.Status || l.status}</td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
+        }
+
+        function formatBytes(b) {
+            if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
+            if (b >= 1048576) return (b / 1048576).toFixed(2) + ' MB';
+            if (b >= 1024) return (b / 1024).toFixed(1) + ' KB';
+            return b + ' B';
         }
 
         function drawWaveform() {
@@ -1394,6 +1492,8 @@ public static class CyberpunkSpa
             const latencyMax = parseInt(document.getElementById('filterLatency')?.value || '0', 10);
             const sourceSel = document.getElementById('filterSource')?.value || 'ALL';
             const protoSel = (document.getElementById('filterProtocol')?.value || 'ALL').toUpperCase();
+            const successMin = parseInt(document.getElementById('filterSuccess')?.value || '0', 10);
+            const failureMax = parseInt(document.getElementById('filterFailure')?.value || '-1', 10);
             const sortSel = document.getElementById('filterSort')?.value || 'latency_asc';
 
             if (sortSel === 'latency_asc') { currentSortField = 'latency'; currentSortDirection = 'asc'; }
@@ -1405,6 +1505,8 @@ public static class CyberpunkSpa
             try {
                 if (document.getElementById('filterLatency')) localStorage.setItem('combispeed_filter_latency', document.getElementById('filterLatency').value);
                 if (document.getElementById('filterProtocol')) localStorage.setItem('combispeed_filter_proto', document.getElementById('filterProtocol').value);
+                if (document.getElementById('filterSuccess')) localStorage.setItem('combispeed_filter_success', document.getElementById('filterSuccess').value);
+                if (document.getElementById('filterFailure')) localStorage.setItem('combispeed_filter_failure', document.getElementById('filterFailure').value);
                 if (document.getElementById('filterSort')) localStorage.setItem('combispeed_filter_sort', document.getElementById('filterSort').value);
                 if (document.getElementById('filterSearch')) localStorage.setItem('combispeed_filter_search', document.getElementById('filterSearch').value);
             } catch(e) {}
@@ -1425,6 +1527,12 @@ public static class CyberpunkSpa
                 }
                 if (protoSel !== 'ALL') {
                     if (!(p.FormattedProtocol || '').toUpperCase().includes(protoSel)) return false;
+                }
+                if (successMin > 0) {
+                    if ((p.Successes || 0) < successMin) return false;
+                }
+                if (failureMax >= 0) {
+                    if ((p.Failures || 0) > failureMax) return false;
                 }
                 return true;
             });
@@ -1624,10 +1732,20 @@ public static class CyberpunkSpa
 
         window.onload = () => {
             try {
+                const savedTheme = localStorage.getItem('combispeed_theme');
+                if (savedTheme === 'Light') {
+                    document.body.classList.add('light-theme');
+                    const btn = document.getElementById('btnThemeToggle');
+                    if (btn) btn.innerText = '☀️ Light';
+                }
                 const savedLat = localStorage.getItem('combispeed_filter_latency');
                 if (savedLat && document.getElementById('filterLatency')) document.getElementById('filterLatency').value = savedLat;
                 const savedProto = localStorage.getItem('combispeed_filter_proto');
                 if (savedProto && document.getElementById('filterProtocol')) document.getElementById('filterProtocol').value = savedProto;
+                const savedSucc = localStorage.getItem('combispeed_filter_success');
+                if (savedSucc && document.getElementById('filterSuccess')) document.getElementById('filterSuccess').value = savedSucc;
+                const savedFail = localStorage.getItem('combispeed_filter_failure');
+                if (savedFail && document.getElementById('filterFailure')) document.getElementById('filterFailure').value = savedFail;
                 const savedSort = localStorage.getItem('combispeed_filter_sort');
                 if (savedSort && document.getElementById('filterSort')) document.getElementById('filterSort').value = savedSort;
                 const savedSearch = localStorage.getItem('combispeed_filter_search');
@@ -1637,6 +1755,20 @@ public static class CyberpunkSpa
             fetchRotator();
             fetchGeoIp();
             setInterval(fetchRotator, 3000);
+            setInterval(() => {
+                const badge = document.getElementById('rotationCountdownBadge');
+                if (badge && badge.innerText.includes('Next rotation:')) {
+                    const match = badge.innerText.match(/Next rotation:\s*(\d+)s/);
+                    if (match) {
+                        let sec = parseInt(match[1], 10);
+                        if (sec > 1) {
+                            badge.innerText = 'Next rotation: ' + (sec - 1) + 's';
+                        } else {
+                            badge.innerText = 'Rotating now...';
+                        }
+                    }
+                }
+            }, 1000);
             drawWaveform();
         };
     </script>

@@ -28,6 +28,11 @@ public class AuditLogModel
     public string ClientEndpoint { get; set; } = string.Empty;
     public long BytesTransferred { get; set; }
     public string Status { get; set; } = "Established";
+    public string? ProxyServerUrl { get; set; }
+    public bool IsSuccess { get; set; } = true;
+    public long LatencyMs { get; set; }
+    public string? ResolvedIp { get; set; }
+    public string? ErrorMessage { get; set; }
 }
 
 public class VirtualBridgeModel

@@ -14,24 +14,60 @@ public static class GeoIpService
     private static DateTime _cacheExpiry = DateTime.MinValue;
     private static readonly SemaphoreSlim _resolveLock = new(1, 1);
 
-    public static async Task<IpGeoLocationModel> ResolveCurrentLocationAsync(IEnumerable<NetworkAdapterModel> adapters, bool forceRefresh = false, CancellationToken token = default)
+    public static async Task<IpGeoLocationModel> ResolveCurrentLocationAsync(
+        IEnumerable<NetworkAdapterModel> adapters, 
+        HarvestedProxyModel? proxy = null, 
+        bool forceRefresh = false, 
+        CancellationToken token = default)
     {
-        if (!forceRefresh && DateTime.UtcNow < _cacheExpiry && _cachedLocation.InternetIp != "Resolving...")
+        if (!forceRefresh && DateTime.UtcNow < _cacheExpiry && _cachedLocation.InternetIp != "Resolving..." && proxy == null)
         {
             UpdateIntranetIp(_cachedLocation, adapters);
             return _cachedLocation;
         }
 
-        if (!await _resolveLock.WaitAsync(100, token))
+        if (!await _resolveLock.WaitAsync(200, token))
         {
             UpdateIntranetIp(_cachedLocation, adapters);
             return _cachedLocation;
         }
 
+        HttpClient? proxyClient = null;
         try
         {
             var result = new IpGeoLocationModel();
             UpdateIntranetIp(result, adapters);
+
+            HttpClient clientToUse = _httpClient;
+            if (proxy != null)
+            {
+                try
+                {
+                    var handler = new SocketsHttpHandler
+                    {
+                        ConnectTimeout = TimeSpan.FromSeconds(3),
+                        PooledConnectionLifetime = TimeSpan.FromMinutes(1)
+                    };
+                    if (proxy.Protocol == ProxyProtocol.Socks5 || proxy.Protocol == ProxyProtocol.Socks4)
+                    {
+                        handler.Proxy = new WebProxy($"socks5://{proxy.Host}:{proxy.Port}");
+                    }
+                    else
+                    {
+                        handler.Proxy = new WebProxy($"http://{proxy.Host}:{proxy.Port}");
+                    }
+                    if (!string.IsNullOrEmpty(proxy.Username))
+                    {
+                        handler.Proxy.Credentials = new NetworkCredential(proxy.Username, proxy.Password ?? "");
+                    }
+                    proxyClient = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(4) };
+                    clientToUse = proxyClient;
+                }
+                catch
+                {
+                    clientToUse = _httpClient;
+                }
+            }
 
             // Provider 1: ip-api.com (JSON, ultra-fast)
             try
@@ -39,7 +75,7 @@ public static class GeoIpService
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
                 cts.CancelAfter(3000);
 
-                string json = await _httpClient.GetStringAsync("http://ip-api.com/json/", cts.Token);
+                string json = await clientToUse.GetStringAsync("http://ip-api.com/json/", cts.Token);
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
@@ -70,7 +106,7 @@ public static class GeoIpService
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
                 cts.CancelAfter(3000);
 
-                string json = await _httpClient.GetStringAsync("https://ipwho.is/", cts.Token);
+                string json = await clientToUse.GetStringAsync("https://ipwho.is/", cts.Token);
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
@@ -89,7 +125,7 @@ public static class GeoIpService
                     result.LastResolved = DateTime.Now;
 
                     _cachedLocation = result;
-                    _cacheExpiry = DateTime.UtcNow.AddSeconds(60);
+                    _cacheExpiry = DateTime.UtcNow.AddSeconds(45);
                     return result;
                 }
             }
@@ -98,10 +134,24 @@ public static class GeoIpService
                 Debug.WriteLine($"[GeoIp] Secondary provider failed: {ex.Message}");
             }
 
+            // If proxy was specified and remote lookup timed out, fall back to known proxy properties
+            if (proxy != null && (result.InternetIp == "Resolving..." || result.InternetIp == "Unknown"))
+            {
+                result.InternetIp = proxy.Host;
+                result.Country = proxy.CountryCode;
+                result.CountryCode = proxy.CountryCode;
+                result.FlagEmoji = proxy.FlagEmoji;
+                result.City = "Proxy Node";
+                result.Isp = $"{proxy.Protocol} Upstream";
+                result.LastResolved = DateTime.Now;
+                _cachedLocation = result;
+                return result;
+            }
+
             // Provider 3: api.ipify.org fallback for IP only
             try
             {
-                string ip = await _httpClient.GetStringAsync("https://api.ipify.org?format=text", token);
+                string ip = await clientToUse.GetStringAsync("https://api.ipify.org?format=text", token);
                 result.InternetIp = ip.Trim();
                 result.Country = "Global / UN";
                 result.CountryCode = "UN";
@@ -109,7 +159,7 @@ public static class GeoIpService
                 result.LastResolved = DateTime.Now;
 
                 _cachedLocation = result;
-                _cacheExpiry = DateTime.UtcNow.AddSeconds(60);
+                _cacheExpiry = DateTime.UtcNow.AddSeconds(45);
                 return result;
             }
             catch
@@ -121,6 +171,7 @@ public static class GeoIpService
         }
         finally
         {
+            proxyClient?.Dispose();
             _resolveLock.Release();
         }
     }

@@ -118,6 +118,14 @@
 
                     <!-- TitleBar Action Controls -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <!-- Theme Switcher (Dark / Light) -->
+                        <Button Command="{Binding ToggleThemeCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="8,4" FontSize="11" ToolTip="Toggle between Dark Cyberpunk and Soothing Light Themes (WCAG 2.1 AA/AAA compliant)" AutomationProperties.Name="Toggle Light and Dark Theme">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding ThemeToggleIcon}" FontSize="12" Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding ThemeToggleText}" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
                         <!-- Quick Accessibility Button -->
                         <Button Click="OpenAccessibility_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="10,4" FontSize="11" ToolTip="Configure accessibility features, UI scaling, screen reader settings, and view keyboard shortcuts (Alt+A)" AutomationProperties.Name="Open Accessibility Options">
                             <StackPanel Orientation="Horizontal">
@@ -694,21 +702,28 @@
                                 <StackPanel>
                                     <Grid Margin="0,0,0,10">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="CONNECTION AUDIT STREAM" FontSize="12" FontWeight="Bold" Foreground="#00F0FF"/>
-                                            <TextBlock Text=" (Live Network Requests &amp; Physical NIC Routing)" FontSize="11" Foreground="#CBD5E1" Margin="6,0,0,0"/>
+                                            <TextBlock Text="CONNECTION AUDIT STREAM" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource CyberCyan}"/>
+                                            <TextBlock Text=" (Live Network Requests, Proxy Routing &amp; Physical NIC Telemetry)" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="6,0,0,0"/>
                                         </StackPanel>
-                                        <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}" Style="{StaticResource CyberButton}" HorizontalAlignment="Right" Padding="12,4" FontSize="11" ToolTip="Clear all recorded connection audit events from the table" AutomationProperties.Name="Clear Connection Audit Logs"/>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <CheckBox Content="Enable Connection Audit Logging" IsChecked="{Binding EnableAuditLogging}" Style="{StaticResource CyberCheckBox}" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Toggle live connection audit event recording to optimize memory and CPU performance" AutomationProperties.Name="Toggle Connection Audit Logging"/>
+                                            <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}" Style="{StaticResource CyberButton}" Padding="12,4" FontSize="11" ToolTip="Clear all recorded connection audit events from the table" AutomationProperties.Name="Clear Connection Audit Logs"/>
+                                        </StackPanel>
                                     </Grid>
 
-                                    <DataGrid ItemsSource="{Binding AuditLogs}" AutoGenerateColumns="False" IsReadOnly="True" Height="480" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" ToolTip="Historical log of outbound socket connections, showing protocol, target destination, selected physical adapter, transferred bytes, and latency" AutomationProperties.Name="Connection Audit Logs Table">
+                                    <DataGrid ItemsSource="{Binding AuditLogs}" AutoGenerateColumns="False" IsReadOnly="True" Height="480" Background="{DynamicResource CyberBg}" BorderBrush="{DynamicResource CyberBorder}" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="{DynamicResource CyberCard}" Foreground="{DynamicResource TextPrimary}" HeadersVisibility="Column" ToolTip="Historical log of outbound socket connections, showing protocol, target destination, selected proxy server, connection result, latency, resolved IP, selected physical adapter, transferred bytes, and duration" AutomationProperties.Name="Connection Audit Logs Table">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="TIME" Binding="{Binding TimeFormatted}" Width="80"/>
-                                            <DataGridTextColumn Header="PROTOCOL" Binding="{Binding Protocol}" Width="95"/>
+                                            <DataGridTextColumn Header="TIME" Binding="{Binding TimeFormatted}" Width="75"/>
+                                            <DataGridTextColumn Header="PROTOCOL" Binding="{Binding Protocol}" Width="85"/>
                                             <DataGridTextColumn Header="TARGET DESTINATION" Binding="{Binding DestinationFormatted}" Width="*"/>
-                                            <DataGridTextColumn Header="DISPATCHED ADAPTER" Binding="{Binding AdapterName}" Width="180"/>
-                                            <DataGridTextColumn Header="VOLUME" Binding="{Binding VolumeFormatted}" Width="90"/>
-                                            <DataGridTextColumn Header="DURATION" Binding="{Binding DurationMs, StringFormat='{}{0}ms'}" Width="90"/>
-                                            <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="90"/>
+                                            <DataGridTextColumn Header="PROXY SERVER" Binding="{Binding ProxyDisplay}" Width="150"/>
+                                            <DataGridTextColumn Header="RESULT" Binding="{Binding ResultFormatted}" Width="75"/>
+                                            <DataGridTextColumn Header="LATENCY" Binding="{Binding LatencyDisplay}" Width="75"/>
+                                            <DataGridTextColumn Header="RESOLVED IP" Binding="{Binding ResolvedIpDisplay}" Width="110"/>
+                                            <DataGridTextColumn Header="DISPATCHED ADAPTER" Binding="{Binding AdapterName}" Width="140"/>
+                                            <DataGridTextColumn Header="VOLUME" Binding="{Binding VolumeFormatted}" Width="80"/>
+                                            <DataGridTextColumn Header="DURATION" Binding="{Binding DurationMs, StringFormat='{}{0}ms'}" Width="75"/>
+                                            <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="80"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </StackPanel>
@@ -859,49 +874,65 @@
                                     </Grid>
 
                                     <!-- Interactive Sorting & Multi-Faceted Filtering Bar -->
-                                    <Border Background="#080C14" CornerRadius="8" BorderBrush="#1E293B" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
+                                    <Border Background="{DynamicResource CyberCard}" CornerRadius="8" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
                                         <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
 
-                                            <!-- Keyword Search -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                                                <TextBlock Text="🔍" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <TextBox Text="{Binding ProxySearchText, UpdateSourceTrigger=PropertyChanged}" Width="145" Height="26" Padding="6,2" FontSize="11" ToolTip="Search proxies by IP address, port number, country code, or repository source" AutomationProperties.Name="Filter Proxies Search Box"/>
-                                            </StackPanel>
+                                            <!-- Row 0: Search, Latency, Source & Protocol -->
+                                            <WrapPanel Grid.Row="0" VerticalAlignment="Center" Margin="0,0,0,6">
+                                                <!-- Keyword Search -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="🔍" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                    <TextBox Text="{Binding ProxySearchText, UpdateSourceTrigger=PropertyChanged}" Width="150" Height="26" Padding="6,2" FontSize="11" ToolTip="Search proxies by IP address, port number, country code, or repository source" AutomationProperties.Name="Filter Proxies Search Box"/>
+                                                </StackPanel>
 
-                                            <!-- Latency Filter -->
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                                                <TextBlock Text="⚡ Ping:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding LatencyFilters}" SelectedItem="{Binding SelectedLatencyFilter}" Width="140" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter visible proxies by maximum round-trip latency threshold (e.g. &lt;= 150ms, &lt;= 300ms)"/>
-                                            </StackPanel>
+                                                <!-- Latency Filter -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="⚡ Ping:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                    <ComboBox ItemsSource="{Binding LatencyFilters}" SelectedItem="{Binding SelectedLatencyFilter}" Width="145" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter visible proxies by maximum round-trip latency threshold (e.g. &lt;= 150ms, &lt;= 300ms)"/>
+                                                </StackPanel>
 
-                                            <!-- Source Filter -->
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                                                <TextBlock Text="📁 Source:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding SourceFilters}" SelectedItem="{Binding SelectedSourceFilter}" Width="125" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies harvested from a specific GitHub repository or API feed"/>
-                                            </StackPanel>
+                                                <!-- Source Filter -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="📁 Source:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                    <ComboBox ItemsSource="{Binding SourceFilters}" SelectedItem="{Binding SelectedSourceFilter}" Width="135" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies harvested from a specific GitHub repository or API feed"/>
+                                                </StackPanel>
 
-                                            <!-- Protocol Filter -->
-                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                                                <TextBlock Text="🔒 Proto:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding ProtocolFilters}" SelectedItem="{Binding SelectedProtocolFilter}" Width="105" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies by supported protocol (HTTP, HTTPS, SOCKS4, SOCKS5)"/>
-                                            </StackPanel>
+                                                <!-- Protocol Filter -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                    <TextBlock Text="🔒 Proto:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                    <ComboBox ItemsSource="{Binding ProtocolFilters}" SelectedItem="{Binding SelectedProtocolFilter}" Width="110" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies by supported protocol (HTTP, HTTPS, SOCKS4, SOCKS5)"/>
+                                                </StackPanel>
+                                            </WrapPanel>
 
-                                            <!-- Sort Option -->
-                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                                                <TextBlock Text="⇅ Sort:" FontSize="11" FontWeight="SemiBold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Width="160" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Sort the proxy list dynamically by Latency, Success Rate, Failures, Country, Protocol, or Endpoint"/>
-                                            </StackPanel>
+                                            <!-- Row 1: Successes, Failures, Sort Option & Result Count Badge -->
+                                            <Grid Grid.Row="1">
+                                                <WrapPanel VerticalAlignment="Center">
+                                                    <!-- Success Filter -->
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                        <TextBlock Text="✓ Succ:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <ComboBox ItemsSource="{Binding SuccessFilters}" SelectedItem="{Binding SelectedSuccessFilter}" Width="135" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies by minimum successful connection benchmark (e.g. ≥ 1, ≥ 5)"/>
+                                                    </StackPanel>
 
-                                            <!-- Filtered Count Badge -->
-                                            <TextBlock Grid.Column="5" Text="{Binding FilteredCountText}" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas" ToolTip="Total proxies matching active search criteria and filters"/>
+                                                    <!-- Failure Filter -->
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                        <TextBlock Text="✕ Fail:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <ComboBox ItemsSource="{Binding FailureFilters}" SelectedItem="{Binding SelectedFailureFilter}" Width="135" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies by maximum tolerated failure count (e.g. 0 Failures Perfect, ≤ 1, ≤ 3)"/>
+                                                    </StackPanel>
+
+                                                    <!-- Sort Option -->
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                        <TextBlock Text="⇅ Sort:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource CyberCyan}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Width="165" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Sort the proxy list dynamically by Latency, Success Rate, Failures, Country, Protocol, or Endpoint"/>
+                                                    </StackPanel>
+                                                </WrapPanel>
+
+                                                <!-- Filtered Count Badge -->
+                                                <TextBlock Text="{Binding FilteredCountText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource CyberCyan}" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas" ToolTip="Total proxies matching active search criteria and filters"/>
+                                            </Grid>
                                         </Grid>
                                     </Border>
 

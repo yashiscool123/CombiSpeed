@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
@@ -108,6 +109,15 @@ public partial class ProxySourcesDialog : Window
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         int count = _config.SetSourcesFromText(TxtSources.Text);
+        try
+        {
+            string appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CombiSpeed");
+            Directory.CreateDirectory(appData);
+            string sourcesPath = Path.Combine(appData, "proxy_sources.json");
+            string json = System.Text.Json.JsonSerializer.Serialize(_config.GetEffectiveSources(), new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(sourcesPath, json);
+        }
+        catch { }
         DialogResult = true;
         Close();
     }

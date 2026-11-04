@@ -450,3 +450,18 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.2 Build 29).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.2.2.
+
+## Milestone 31: Live Identity Refresh, Protocol-Aware Connections, Light/Dark Themes, Audit Stream & Instant Persistence [COMPLETED]
+- [x] Increment version to 2.2.3 and versionCode: 30 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Implement real-time identity refresh via connected proxy upon rotation in `GeoIpService`, `LinuxGeoIpService`, and `MacGeoIpService` by tunnelling GeoIP diagnostic requests through `SocketsHttpHandler.Proxy`.
+- [x] Implement native RFC SOCKS4 & SOCKS4a protocol handshake in `ProxyEngine.cs`, `LinuxProxyEngine.cs`, and `MacProxyEngine.cs`, ensuring protocol-aware upstream connections across HTTP, HTTPS, SOCKS4, and SOCKS5.
+- [x] Implement dynamic Success filters (`ALL`, `≥ 1`, `≥ 3`, `≥ 5`, `≥ 10`) and Failure filters (`ALL`, `0 (Perfect)`, `≤ 1`, `≤ 3`, `≤ 5`) in Tab 4 filter bar across Windows WPF and Linux/macOS Web SPAs.
+- [x] Resolve PAC checkbox (`Enable PAC for Dynamic Routing (AutoConfig URL)`) non-persistence in `SettingsWindow.xaml.cs` and implement zero-latency disk auto-persistence on all settings changes.
+- [x] Implement multi-tiered persistent storage for proxy repository source URLs (`proxy_sources.json`) and harvested proxy server URLs (`proxy_state.json`) with automatic pre-warming on startup.
+- [x] Fix white-on-white tooltip contrast in `App.xaml` with custom `ControlTemplate`, dark background, cyan border, and crisp text exceeding WCAG 2.1 AAA standards.
+- [x] Implement user-selectable Light and Cyberpunk Dark themes with eye-friendly, soothing palettes and high-contrast ratios across Windows WPF and Linux/macOS Web SPAs.
+- [x] Enrich Connection Audit data stream (`AuditLogModel`) with proxy server URL, connection result, latency, and resolved IP, and add an audit logging toggle to disable logging when desired.
+- [x] Implement live remaining rotation countdown timer in `RotatingProxyRouter` (`SecondsUntilNextRotation`) and display real-time ticking in the UI.
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.3 Build 30).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.2.3.

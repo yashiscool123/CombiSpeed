@@ -1,7 +1,9 @@
 using CombiSpeed.Views;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -113,7 +115,7 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.0";
+            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.3";
         }
     }
 
@@ -122,8 +124,8 @@ public class MainViewModel : INotifyPropertyChanged
         get
         {
             var ver = typeof(MainViewModel).Assembly.GetName().Version;
-            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.1.1";
-            return $"{verStr} (Build 18)";
+            var verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.3";
+            return $"{verStr} (Build 30)";
         }
     }
 
@@ -351,9 +353,11 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ForceRotateCommand { get; }
     public ICommand ForceConnectSelectedOrNextCommand { get; }
     public ICommand RefreshGeoIpCommand { get; }
+    public ICommand ToggleThemeCommand { get; }
 
     public SpeedTester SpeedTesterService => _speedTester;
     public LoadBalancerEngine LoadBalancerService => _loadBalancer;
+    public WindowsProxyManager ProxyManager => _proxyManager;
 
     public MainViewModel()
     {
@@ -385,6 +389,7 @@ public class MainViewModel : INotifyPropertyChanged
         ForceRotateCommand = new RelayCommand(async () => await ForceRotateProxyAsync());
         ForceConnectSelectedOrNextCommand = new RelayCommand<HarvestedProxyModel>(async (proxy) => await ForceConnectSelectedOrNextAsync(proxy));
         RefreshGeoIpCommand = new RelayCommand(async () => await ResolveGeoIpAsync(forceRefresh: true));
+        ToggleThemeCommand = new RelayCommand(() => SelectedTheme = SelectedTheme.Equals("Light", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light");
 
         _rotatingRouter = new RotatingProxyRouter(_proxyValidator, Config.RotatingProxy, _loadBalancer);
         _proxyEngine.RotatingRouter = _rotatingRouter;
@@ -394,11 +399,12 @@ public class MainViewModel : INotifyPropertyChanged
 
         _rotatingRouter.OnTimedRotation += (proxy) =>
         {
-            Application.Current?.Dispatcher.InvokeAsync(() =>
+            Application.Current?.Dispatcher.InvokeAsync(async () =>
             {
                 if (proxy != null)
                 {
                     ActiveProxyDisplay = $"{proxy.Endpoint} ({proxy.CountryCode}) {proxy.FlagEmoji}";
+                    await ResolveGeoIpAsync(forceRefresh: true, proxy: proxy);
                 }
                 else
                 {
@@ -493,6 +499,10 @@ public class MainViewModel : INotifyPropertyChanged
             _uiScale = Config.UiScale;
             _isReduceMotion = Config.IsReduceMotion;
             _isScreenReaderOptimized = Config.IsScreenReaderOptimized;
+            Config.EnableAuditLogging = _configStore.Data.Config.EnableAuditLogging;
+            Config.SelectedTheme = !string.IsNullOrEmpty(_configStore.Data.Config.SelectedTheme) ? _configStore.Data.Config.SelectedTheme : "Dark";
+            _selectedTheme = Config.SelectedTheme;
+            ApplyTheme(_selectedTheme);
             if (_isHighContrast)
             {
                 ApplyHighContrastTheme(true);
@@ -585,6 +595,21 @@ public class MainViewModel : INotifyPropertyChanged
         SyncSelectedThrottlePreset();
         UpdateThrottlingState();
 
+        // Restore persistent proxy repository sources
+        string sourcesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CombiSpeed", "proxy_sources.json");
+        if (File.Exists(sourcesPath))
+        {
+            try
+            {
+                var loadedSources = JsonSerializer.Deserialize<List<string>>(File.ReadAllText(sourcesPath));
+                if (loadedSources != null && loadedSources.Count > 0)
+                {
+                    Config.RotatingProxy.CustomSources = loadedSources.Distinct().ToList();
+                }
+            }
+            catch { }
+        }
+
         // Check if Windows Proxy is currently active in registry
         IsWindowsProxyActive = _proxyManager.GetSystemProxyStatus(out _);
 
@@ -596,10 +621,16 @@ public class MainViewModel : INotifyPropertyChanged
             if (!string.IsNullOrEmpty(savedProxyState.SelectedSourceFilter)) _selectedSourceFilter = savedProxyState.SelectedSourceFilter;
             if (!string.IsNullOrEmpty(savedProxyState.SelectedProtocolFilter)) _selectedProtocolFilter = savedProxyState.SelectedProtocolFilter;
             if (!string.IsNullOrEmpty(savedProxyState.SelectedCountryFilter)) Config.RotatingProxy.CountryFilter = savedProxyState.SelectedCountryFilter;
+            if (!string.IsNullOrEmpty(savedProxyState.SelectedSuccessFilter)) _selectedSuccessFilter = savedProxyState.SelectedSuccessFilter;
+            if (!string.IsNullOrEmpty(savedProxyState.SelectedFailureFilter)) _selectedFailureFilter = savedProxyState.SelectedFailureFilter;
             if (!string.IsNullOrEmpty(savedProxyState.SelectedSortOption)) _selectedSortOption = savedProxyState.SelectedSortOption;
             if (!string.IsNullOrEmpty(savedProxyState.ProxySearchText)) _proxySearchText = savedProxyState.ProxySearchText;
             if (savedProxyState.RotationIntervalSeconds > 0) Config.RotatingProxy.RotationIntervalSeconds = savedProxyState.RotationIntervalSeconds;
             Config.RotatingProxy.RouteBondedTrafficThroughRotator = savedProxyState.RouteBondedTrafficThroughRotator;
+            if ((Config.RotatingProxy.CustomSources == null || Config.RotatingProxy.CustomSources.Count == 0) && savedProxyState.RepositorySources != null && savedProxyState.RepositorySources.Count > 0)
+            {
+                Config.RotatingProxy.CustomSources = savedProxyState.RepositorySources.Distinct().ToList();
+            }
 
             HarvestStatusText = $"Loaded {savedProxyState.Proxies?.Count ?? _proxyValidator.TotalCount} proxies and active filter/sort state from persistent disk storage.";
             RefreshProxyCollection();
@@ -1012,6 +1043,19 @@ public class MainViewModel : INotifyPropertyChanged
         _uploadHistory.Add(_proxyEngine.InstantUploadSpeedBps);
 
         UpdateWaveformGeometry();
+
+        if (_rotatingRouter != null)
+        {
+            if (Config.RotatingProxy.Strategy == RotationStrategy.TimeBasedInterval)
+            {
+                int remaining = _rotatingRouter.SecondsUntilNextRotation;
+                RotationCountdownText = remaining > 0 ? $"Next rotation in {remaining}s" : "Rotating now...";
+            }
+            else
+            {
+                RotationCountdownText = $"Strategy: {Config.RotatingProxy.Strategy}";
+            }
+        }
     }
 
     private void UpdateWaveformGeometry()
@@ -1079,6 +1123,83 @@ public class MainViewModel : INotifyPropertyChanged
             res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
             res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
             res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+        }
+    }
+
+    public void ApplyTheme(string theme)
+    {
+        if (Application.Current == null) return;
+
+        var res = Application.Current.Resources;
+        bool isLight = theme.Equals("Light", StringComparison.OrdinalIgnoreCase);
+
+        if (isLight)
+        {
+            // Soothing, eye-friendly light theme (WCAG 2.1 AAA/AA compliant)
+            res["CyberBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
+            res["CyberSurface"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["CyberCard"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
+            res["CyberBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+            res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#334155"));
+            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
+            res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            res["ToolTipBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["ToolTipFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
+            res["ToolTipBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            res["CyberCyan"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            res["CyberCyanHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0369A1"));
+        }
+        else
+        {
+            // Dark cyberpunk glassmorphic theme
+            res["CyberBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#080C14"));
+            res["CyberSurface"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["CyberCard"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#131D33"));
+            res["CyberBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
+            res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
+            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+            res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["ToolTipBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0B1120"));
+            res["ToolTipFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
+            res["ToolTipBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["CyberCyan"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["CyberCyanHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+        }
+    }
+
+    private string _selectedTheme = "Dark";
+    public string SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (SetField(ref _selectedTheme, value))
+            {
+                Config.SelectedTheme = value;
+                ApplyTheme(value);
+                OnPropertyChanged(nameof(ThemeToggleIcon));
+                OnPropertyChanged(nameof(ThemeToggleText));
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
+        }
+    }
+
+    public string ThemeToggleIcon => SelectedTheme.Equals("Light", StringComparison.OrdinalIgnoreCase) ? "🌙" : "☀️";
+    public string ThemeToggleText => SelectedTheme.Equals("Light", StringComparison.OrdinalIgnoreCase) ? "Dark Mode" : "Light Mode";
+
+    public bool EnableAuditLogging
+    {
+        get => Config.EnableAuditLogging;
+        set
+        {
+            if (Config.EnableAuditLogging != value)
+            {
+                Config.EnableAuditLogging = value;
+                OnPropertyChanged();
+                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+            }
         }
     }
 
@@ -1235,6 +1356,17 @@ public class MainViewModel : INotifyPropertyChanged
         try
         {
             var sources = Config.RotatingProxy.GetEffectiveSources();
+
+            // Persist repository sources to disk immediately
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CombiSpeed");
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                string sourcesFile = Path.Combine(dir, "proxy_sources.json");
+                File.WriteAllText(sourcesFile, JsonSerializer.Serialize(sources, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            catch { }
+
             var harvested = await _proxyHarvester.HarvestAllAsync(sources, Config.RotatingProxy.MaxPoolSize);
 
             // IDEMPOTENCE MODE: deduplicate candidates, strictly preserving existing user selections and benchmarks
@@ -1445,6 +1577,52 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public List<string> SuccessFilters { get; } = new()
+    {
+        "ALL Success Counts",
+        "≥ 1 Success",
+        "≥ 3 Successes",
+        "≥ 5 Successes",
+        "≥ 10 Successes"
+    };
+
+    private string _selectedSuccessFilter = "ALL Success Counts";
+    public string SelectedSuccessFilter
+    {
+        get => _selectedSuccessFilter;
+        set
+        {
+            if (SetField(ref _selectedSuccessFilter, value))
+            {
+                RefreshProxyCollection();
+                RequestSaveProxyState();
+            }
+        }
+    }
+
+    public List<string> FailureFilters { get; } = new()
+    {
+        "ALL Failure Counts",
+        "0 Failures (Perfect)",
+        "≤ 1 Failure",
+        "≤ 3 Failures",
+        "≤ 5 Failures"
+    };
+
+    private string _selectedFailureFilter = "ALL Failure Counts";
+    public string SelectedFailureFilter
+    {
+        get => _selectedFailureFilter;
+        set
+        {
+            if (SetField(ref _selectedFailureFilter, value))
+            {
+                RefreshProxyCollection();
+                RequestSaveProxyState();
+            }
+        }
+    }
+
     public List<string> SortOptions { get; } = new()
     {
         "Lowest Latency (Fastest)",
@@ -1578,7 +1756,25 @@ public class MainViewModel : INotifyPropertyChanged
                 }
             }
 
-            // 6. Text Search Filter (IP, Port, Country, Source, Protocol)
+            // 6. Success Count Filter
+            if (!string.IsNullOrWhiteSpace(SelectedSuccessFilter) && !SelectedSuccessFilter.StartsWith("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                if (SelectedSuccessFilter.Contains("10")) all = all.Where(p => p.Successes >= 10);
+                else if (SelectedSuccessFilter.Contains("5")) all = all.Where(p => p.Successes >= 5);
+                else if (SelectedSuccessFilter.Contains("3")) all = all.Where(p => p.Successes >= 3);
+                else if (SelectedSuccessFilter.Contains("1")) all = all.Where(p => p.Successes >= 1);
+            }
+
+            // 7. Failure Count Filter
+            if (!string.IsNullOrWhiteSpace(SelectedFailureFilter) && !SelectedFailureFilter.StartsWith("ALL", StringComparison.OrdinalIgnoreCase))
+            {
+                if (SelectedFailureFilter.Contains("0") || SelectedFailureFilter.Contains("Perfect")) all = all.Where(p => p.Failures == 0);
+                else if (SelectedFailureFilter.Contains("1")) all = all.Where(p => p.Failures <= 1);
+                else if (SelectedFailureFilter.Contains("3")) all = all.Where(p => p.Failures <= 3);
+                else if (SelectedFailureFilter.Contains("5")) all = all.Where(p => p.Failures <= 5);
+            }
+
+            // 8. Text Search Filter (IP, Port, Country, Source, Protocol)
             if (!string.IsNullOrWhiteSpace(ProxySearchText))
             {
                 string q = ProxySearchText.Trim();
@@ -1588,7 +1784,7 @@ public class MainViewModel : INotifyPropertyChanged
                                      p.FormattedProtocol.Contains(q, StringComparison.OrdinalIgnoreCase));
             }
 
-            // 7. Multi-Criteria Sorting
+            // 9. Multi-Criteria Sorting
             all = SelectedSortOption switch
             {
                 "Lowest Latency (Fastest)" => all.OrderBy(p => !p.IsHealthy).ThenBy(p => p.LatencyMs),
@@ -1680,11 +1876,14 @@ public class MainViewModel : INotifyPropertyChanged
             SelectedSourceFilter = SelectedSourceFilter,
             SelectedProtocolFilter = SelectedProtocolFilter,
             SelectedCountryFilter = Config.RotatingProxy.CountryFilter,
+            SelectedSuccessFilter = SelectedSuccessFilter,
+            SelectedFailureFilter = SelectedFailureFilter,
             ProxySearchText = ProxySearchText,
             SelectedSortOption = SelectedSortOption,
             RouteBondedTrafficThroughRotator = RouteBondedTrafficThroughRotator,
             RotationIntervalSeconds = RotationIntervalSeconds,
-            SelectedRotationStrategy = SelectedRotationStrategy
+            SelectedRotationStrategy = SelectedRotationStrategy,
+            RepositorySources = Config.RotatingProxy.GetEffectiveSources().Distinct().ToList()
         };
         _proxyValidator.SavePersistedState(state);
     }
@@ -1700,11 +1899,14 @@ public class MainViewModel : INotifyPropertyChanged
             SelectedSourceFilter = SelectedSourceFilter,
             SelectedProtocolFilter = SelectedProtocolFilter,
             SelectedCountryFilter = Config.RotatingProxy.CountryFilter,
+            SelectedSuccessFilter = SelectedSuccessFilter,
+            SelectedFailureFilter = SelectedFailureFilter,
             ProxySearchText = ProxySearchText,
             SelectedSortOption = SelectedSortOption,
             RouteBondedTrafficThroughRotator = RouteBondedTrafficThroughRotator,
             RotationIntervalSeconds = RotationIntervalSeconds,
-            SelectedRotationStrategy = SelectedRotationStrategy
+            SelectedRotationStrategy = SelectedRotationStrategy,
+            RepositorySources = Config.RotatingProxy.GetEffectiveSources().Distinct().ToList()
         });
     }
 
@@ -1739,6 +1941,7 @@ public class MainViewModel : INotifyPropertyChanged
             HarvestStatusText = $"Successfully connected to live proxy {live.Endpoint} ({live.CountryCode} {live.FlagEmoji})";
             RotationCountdownText = $"Next rotation in {Config.RotatingProxy.RotationIntervalSeconds}s";
             RouteBondedTrafficThroughRotator = true;
+            await ResolveGeoIpAsync(forceRefresh: true, proxy: live);
         }
         else
         {
@@ -1762,11 +1965,11 @@ public class MainViewModel : INotifyPropertyChanged
     public string CurrentIsp => _currentGeoLocation.Isp;
     public string CurrentFlagEmoji => _currentGeoLocation.FlagEmoji;
 
-    public async Task ResolveGeoIpAsync(bool forceRefresh = false)
+    public async Task ResolveGeoIpAsync(bool forceRefresh = false, HarvestedProxyModel? proxy = null)
     {
         try
         {
-            var loc = await GeoIpService.ResolveCurrentLocationAsync(Adapters, forceRefresh);
+            var loc = await GeoIpService.ResolveCurrentLocationAsync(Adapters, proxy: proxy, forceRefresh: forceRefresh);
             CurrentGeoLocation = loc;
             OnPropertyChanged(nameof(CurrentIntranetIp));
             OnPropertyChanged(nameof(CurrentInternetIp));

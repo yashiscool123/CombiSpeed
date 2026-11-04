@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.2.2%20(Build%2029)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.2.3%20(Build%2030)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -37,31 +37,42 @@ CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-s
 2. **Parallel HTTP Range Chunk Combining**:
    Splits large file transfers ($\ge 512\text{ KB}$) into concurrent byte ranges dispatched simultaneously across different physical network adapters, combining multiple physical wire speeds into a single accelerated download stream.
 
-3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (Enhanced in v2.2.2)**:
-   A decoupled two-stage networking architecture: CombiSpeed first binds and load-balances outbound client sockets across physical network adapters for aggregate bandwidth and multi-NIC fault tolerance. Then, it tunnels all requests upstream through a user-selected, filtered rotating proxy server that dynamically rotates on a timely basis (configurable interval in seconds, e.g., 10s, 30s, 60s, 120s, 300s).
+3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (Enhanced in v2.2.3)**:
+   A decoupled two-stage networking architecture: CombiSpeed first binds and load-balances outbound client sockets across physical network adapters for aggregate bandwidth and multi-NIC fault tolerance. Then, it tunnels all requests upstream through a user-selected, filtered rotating proxy server that dynamically rotates on a timely basis (configurable interval in seconds, e.g., 10s, 30s, 60s, 120s, 300s) with a live remaining countdown timer.
 
-4. **Live Connection Auto-Rotation Retry & Probing (NEW in v2.2.2)**:
-   Active socket-level connectivity probing and automatic retry loops ensure that proxy rotation never gets stuck on dead or unresponsive endpoints. Upon rotating, the engine continually advances to subsequent candidates until a verified live connection is established, evicting dead nodes on the fly.
+4. **Live Identity Refresh & Protocol-Aware Upstream Tunnels (NEW in v2.2.3)**:
+   - **Tunnel-Probed Identity Refresh**: When a proxy connection is established, diagnostic GeoIP requests are tunnelled directly through the active proxy to immediately refresh and display the updated public WAN IP, ISP/ASN, city, and country flag emoji.
+   - **Full Protocol Interoperability**: Upstream tunnels dynamically negotiate based on protocol: HTTP/HTTPS CONNECT, RFC 1928 SOCKS5, and RFC SOCKS4/SOCKS4a.
+   - **Live Connection Auto-Rotation Retry**: Automatically retries and advances to subsequent candidate nodes upon connection or handshake failures, evicting dead proxies until a live connection is established.
 
-5. **Direct Force Connect & Selection Controls (NEW in v2.2.2)**:
+5. **Direct Force Connect & Selection Controls**:
    Allows instant manual lock-on via the `🎯 Force Connect` toolbar button or per-row `Connect` buttons to immediately switch to a specific chosen proxy or advance to the next live node without waiting for timer expiration.
 
-6. **Comprehensive Explanatory Tooltips (NEW in v2.2.2)**:
-   Every key button, input field, slider, checkbox, toggle, and telemetry card features rich, informative tooltips describing its purpose, underlying behavior, and recommended usage for an accessible, transparent user experience.
+6. **Eye-Friendly Light & Dark Themes & High-Contrast Tooltips (NEW in v2.2.3)**:
+   - **Theme Switcher**: 1-click switching between a soothing, eye-friendly Light Theme and a Cyberpunk Dark Theme across Windows WPF and Linux/macOS dashboards, exceeding WCAG 2.1 AAA contrast standards.
+   - **High-Contrast Tooltips**: Every key button, input field, slider, checkbox, toggle, and telemetry card features rich, readable, high-contrast tooltips describing its purpose and underlying behavior.
 
-7. **Live Intranet & Internet Geo-Location Identity Resolution (v2.2.0)**:
+7. **Dynamic Success/Failure Filters & Instant Settings Persistence (NEW in v2.2.3)**:
+   - **Success & Failure Column Filters**: Multi-tiered filtering by verified successes (`≥ 1`, `≥ 3`, `≥ 5`, `≥ 10`) and failures (`0 Perfect`, `≤ 1`, `≤ 3`, `≤ 5`).
+   - **Zero-Latency Settings Auto-Persistence**: All settings changes (including PAC Dynamic Routing toggle) are immediately saved to disk on interaction.
+   - **Multi-Tiered Repository & Server URLs Storage**: Preserves custom repository sources in `proxy_sources.json` and harvested candidates in `proxy_state.json` across restarts.
+
+8. **Enriched Connection Audit Stream & Toggle (NEW in v2.2.3)**:
+   Connection audit log displays the active proxy server URL, connection result (`✓ SUCCESS` / `✗ FAILED`), latency, and resolved IP, with a dedicated toggle to turn audit logging off when not needed.
+
+9. **Live Intranet & Internet Geo-Location Identity Resolution**:
    Continuously monitors and resolves real-time network identity with dual-provider fast fallback (`http://ip-api.com/json/`, `https://ipwho.is/`, `https://api.ipify.org?format=text`), displaying local intranet IP aggregation, public Internet WAN IP, city, region, country, ISP/ASN, and dynamic Unicode country flag emojis (e.g. 🇮🇳, 🇺🇸, 🇩🇪, 🇬🇧, 🇯🇵).
 
-8. **Automated Idempotent Rotating Proxy Harvester & State Persistence (v2.2.1)**:
-   Scrapes, parses, and validates thousands of proxy candidate nodes from 255+ curated open-source feeds across HTTP, HTTPS, SOCKS4, and SOCKS5 in **strict Idempotence mode** ($f(f(x)) = f(x)$). Eliminates duplicate insertions, preserves user checkbox selections (`IsSelected`) and verified benchmarks across repeated harvests. Automatically persists all harvested candidates, user selections, and active UI filters & sorting configurations (`proxy_state.json`), restoring the exact interface state seamlessly upon application restart.
+10. **Automated Idempotent Rotating Proxy Harvester & State Persistence**:
+    Scrapes, parses, and validates thousands of proxy candidate nodes from 255+ curated open-source feeds across HTTP, HTTPS, SOCKS4, and SOCKS5 in **strict Idempotence mode** ($f(f(x)) = f(x)$). Eliminates duplicate insertions, preserves user checkbox selections (`IsSelected`) and verified benchmarks across repeated harvests. Automatically persists all harvested candidates, user selections, and active UI filters & sorting configurations (`proxy_state.json`), restoring the exact interface state seamlessly upon application restart.
 
-9. **Dynamic QoS Traffic Shaping**:
-   Three specialized adaptive shaping modes:
-   - `Maximum Bandwidth`: Aggressive TCP window scaling (150ms burst window) optimized for multi-gigabit downloads.
-   - `Lowest Latency`: Anti-bufferbloat pacing (20ms burst window) prioritizing low-ping fiber over high-latency cellular for lag-free gaming and VoIP.
-   - `Balanced Dynamic`: Real-time health monitoring that dynamically shifts allocation away from jittery or degraded adapters.
+11. **Dynamic QoS Traffic Shaping**:
+    Three specialized adaptive shaping modes:
+    - `Maximum Bandwidth`: Aggressive TCP window scaling (150ms burst window) optimized for multi-gigabit downloads.
+    - `Lowest Latency`: Anti-bufferbloat pacing (20ms burst window) prioritizing low-ping fiber over high-latency cellular for lag-free gaming and VoIP.
+    - `Balanced Dynamic`: Real-time health monitoring that dynamically shifts allocation away from jittery or degraded adapters.
 
-10. **Cross-Platform Standalone Native Codebases**:
+12. **Cross-Platform Standalone Native Codebases**:
     - **`CombiSpeed/`**: Windows 10/11 WPF application with hardware-accelerated DirectX rendering, WinINet registry automation, and Virtual Bonded Bridge support.
     - **`CombiSpeed-Linux/`**: Linux daemon with `SO_BINDTODEVICE` binding, GNOME `gsettings` integration, shell environment generation, and responsive Cyberpunk Web UI.
     - **`CombiSpeed-macOS/`**: macOS application bundle with `IP_BOUND_IF` socket binding, `networksetup` proxy control, and matching Cyberpunk Web UI.
@@ -345,9 +356,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.2.2-win-x64.zip` and `publish/CombiSpeed-v2.2.2-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.2.2-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.2-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.2.2-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.2-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.2.3-win-x64.zip` and `publish/CombiSpeed-v2.2.3-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.2.3-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.3-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.2.3-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.3-macos-x64.zip`
 
 ---
 

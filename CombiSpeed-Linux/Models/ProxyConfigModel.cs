@@ -42,5 +42,9 @@ public class ProxyConfigModel
     public double UiScale { get; set; } = 1.0;
     public bool IsReduceMotion { get; set; } = false;
     public bool IsScreenReaderOptimized { get; set; } = false;
+    public string SelectedTheme { get; set; } = "Dark"; // "Dark" or "Light"
+
+    // Audit Logging Preference
+    public bool EnableAuditLogging { get; set; } = true;
 }
 

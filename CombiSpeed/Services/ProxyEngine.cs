@@ -212,6 +212,8 @@ public class ProxyEngine : IDisposable
         int targetPort = 80;
         string protocol = "HTTP";
         NetworkAdapterModel? chosenAdapter = null;
+        HarvestedProxyModel? connectedProxy = null;
+        string? resolvedIp = null;
         long bytesSession = 0;
         string? error = null;
 
@@ -308,6 +310,7 @@ public class ProxyEngine : IDisposable
                                 bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(targetStream, proxy, targetHost, targetPort, connectCts.Token);
                                 if (tunnelOk)
                                 {
+                                    connectedProxy = proxy;
                                     protocol += $" -> {proxy.Endpoint} ({proxy.CountryCode})";
                                     byte[] okReply = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
                                     await clientStream.WriteAsync(okReply, token);
@@ -405,7 +408,11 @@ public class ProxyEngine : IDisposable
                     BytesTransferred = bytesSession,
                     DurationMs = sw.ElapsedMilliseconds,
                     Status = error == null ? "Completed" : "Failed",
-                    ErrorMessage = error
+                    ErrorMessage = error,
+                    ProxyServerUrl = connectedProxy != null ? $"{connectedProxy.Protocol.ToString().ToLower()}://{connectedProxy.Endpoint}" : "Direct Multi-WAN",
+                    IsSuccess = error == null,
+                    LatencyMs = connectedProxy != null ? connectedProxy.LatencyMs : chosenAdapter.PingMs,
+                    ResolvedIp = connectedProxy != null ? connectedProxy.Host : (resolvedIp?.ToString() ?? chosenAdapter.Address)
                 };
 
                 AddAuditLog(log);
@@ -483,6 +490,50 @@ public class ProxyEngine : IDisposable
                 r = await stream.ReadAsync(resp.AsMemory(0, resp.Length), token);
                 return r >= 4 && resp[0] == 0x05 && resp[1] == 0x00;
             }
+            else if (proxy.Protocol == ProxyProtocol.Socks4)
+            {
+                // RFC SOCKS4 / SOCKS4a Handshake
+                bool isIp = IPAddress.TryParse(targetHost, out var ip) && ip.AddressFamily == AddressFamily.InterNetwork;
+                byte[] userBytes = Encoding.ASCII.GetBytes(proxy.Username ?? "combispeed");
+                byte[] req;
+
+                if (isIp && ip != null)
+                {
+                    // SOCKS4
+                    var ipBytes = ip.GetAddressBytes();
+                    req = new byte[8 + userBytes.Length + 1];
+                    req[0] = 0x04; // SOCKS4
+                    req[1] = 0x01; // CONNECT
+                    req[2] = (byte)((targetPort >> 8) & 0xFF);
+                    req[3] = (byte)(targetPort & 0xFF);
+                    Array.Copy(ipBytes, 0, req, 4, 4);
+                    Array.Copy(userBytes, 0, req, 8, userBytes.Length);
+                    req[req.Length - 1] = 0x00; // NULL terminator
+                }
+                else
+                {
+                    // SOCKS4a for domain name resolution
+                    var hostBytes = Encoding.ASCII.GetBytes(targetHost);
+                    req = new byte[8 + userBytes.Length + 1 + hostBytes.Length + 1];
+                    req[0] = 0x04; // SOCKS4
+                    req[1] = 0x01; // CONNECT
+                    req[2] = (byte)((targetPort >> 8) & 0xFF);
+                    req[3] = (byte)(targetPort & 0xFF);
+                    req[4] = 0x00;
+                    req[5] = 0x00;
+                    req[6] = 0x00;
+                    req[7] = 0x01; // SOCKS4a marker 0.0.0.x (x != 0)
+                    Array.Copy(userBytes, 0, req, 8, userBytes.Length);
+                    req[8 + userBytes.Length] = 0x00; // NULL terminator for user
+                    Array.Copy(hostBytes, 0, req, 9 + userBytes.Length, hostBytes.Length);
+                    req[req.Length - 1] = 0x00; // NULL terminator for host
+                }
+
+                await stream.WriteAsync(req, token);
+                byte[] resp = new byte[8];
+                int r = await stream.ReadAsync(resp.AsMemory(0, 8), token);
+                return r >= 8 && resp[0] == 0x00 && resp[1] == 0x5A; // 0x5A = Request granted
+            }
             else
             {
                 // HTTP / HTTPS CONNECT tunnel
@@ -534,6 +585,8 @@ public class ProxyEngine : IDisposable
         int targetPort = 0;
         string protocol = "SOCKS5";
         NetworkAdapterModel? chosenAdapter = null;
+        HarvestedProxyModel? connectedProxy = null;
+        string? resolvedIp = null;
         long bytesSession = 0;
         string? error = null;
 
@@ -665,6 +718,7 @@ public class ProxyEngine : IDisposable
                             bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(targetStream, proxy, targetHost, targetPort, connectCts.Token);
                             if (tunnelOk)
                             {
+                                connectedProxy = proxy;
                                 protocol += $" -> {proxy.Endpoint} ({proxy.CountryCode})";
                                 byte[] reply = new byte[] { 0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0 };
                                 await clientStream.WriteAsync(reply, token);
@@ -723,7 +777,11 @@ public class ProxyEngine : IDisposable
                     BytesTransferred = bytesSession,
                     DurationMs = sw.ElapsedMilliseconds,
                     Status = error == null ? "Completed" : "Failed",
-                    ErrorMessage = error
+                    ErrorMessage = error,
+                    ProxyServerUrl = connectedProxy != null ? $"{connectedProxy.Protocol.ToString().ToLower()}://{connectedProxy.Endpoint}" : "Direct Multi-WAN",
+                    IsSuccess = error == null,
+                    LatencyMs = connectedProxy != null ? connectedProxy.LatencyMs : chosenAdapter.PingMs,
+                    ResolvedIp = connectedProxy != null ? connectedProxy.Host : (resolvedIp?.ToString() ?? chosenAdapter.Address)
                 };
 
                 AddAuditLog(log);

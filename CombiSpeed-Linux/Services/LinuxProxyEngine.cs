@@ -183,7 +183,7 @@ public class LinuxProxyEngine
                                 {
                                     byte[] ok = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
                                     await clientStream.WriteAsync(ok, 0, ok.Length, ct);
-                                    AddAuditLog($"HTTPS -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
+                                    AddAuditLog($"HTTPS -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp, $"{proxy.Protocol.ToString().ToLower()}://{proxy.Endpoint}", true, proxy.LatencyMs, proxy.Host);
                                     await PipeBidirectionalAsync(clientStream, remoteStream, adapter, ct);
                                     connected = true;
                                     break;
@@ -342,7 +342,7 @@ public class LinuxProxyEngine
                             {
                                 byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };
                                 await stream.WriteAsync(success, 0, success.Length, ct);
-                                AddAuditLog($"SOCKS5 -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
+                                AddAuditLog($"SOCKS5 -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp, $"{proxy.Protocol.ToString().ToLower()}://{proxy.Endpoint}", true, proxy.LatencyMs, proxy.Host);
                                 await PipeBidirectionalAsync(stream, remoteStream, adapter, ct);
                                 connected = true;
                                 break;
@@ -453,6 +453,48 @@ public class LinuxProxyEngine
                 r = await stream.ReadAsync(resp.AsMemory(0, resp.Length), token);
                 return r >= 4 && resp[0] == 0x05 && resp[1] == 0x00;
             }
+            else if (proxy.Protocol == ProxyProtocol.Socks4)
+            {
+                // RFC SOCKS4 / SOCKS4a Handshake
+                bool isIp = IPAddress.TryParse(targetHost, out var ip) && ip.AddressFamily == AddressFamily.InterNetwork;
+                byte[] userBytes = Encoding.ASCII.GetBytes(proxy.Username ?? "combispeed");
+                byte[] req;
+
+                if (isIp && ip != null)
+                {
+                    var ipBytes = ip.GetAddressBytes();
+                    req = new byte[8 + userBytes.Length + 1];
+                    req[0] = 0x04;
+                    req[1] = 0x01;
+                    req[2] = (byte)((targetPort >> 8) & 0xFF);
+                    req[3] = (byte)(targetPort & 0xFF);
+                    Array.Copy(ipBytes, 0, req, 4, 4);
+                    Array.Copy(userBytes, 0, req, 8, userBytes.Length);
+                    req[req.Length - 1] = 0x00;
+                }
+                else
+                {
+                    var hostBytes = Encoding.ASCII.GetBytes(targetHost);
+                    req = new byte[8 + userBytes.Length + 1 + hostBytes.Length + 1];
+                    req[0] = 0x04;
+                    req[1] = 0x01;
+                    req[2] = (byte)((targetPort >> 8) & 0xFF);
+                    req[3] = (byte)(targetPort & 0xFF);
+                    req[4] = 0x00;
+                    req[5] = 0x00;
+                    req[6] = 0x00;
+                    req[7] = 0x01;
+                    Array.Copy(userBytes, 0, req, 8, userBytes.Length);
+                    req[8 + userBytes.Length] = 0x00;
+                    Array.Copy(hostBytes, 0, req, 9 + userBytes.Length, hostBytes.Length);
+                    req[req.Length - 1] = 0x00;
+                }
+
+                await stream.WriteAsync(req, token);
+                byte[] resp = new byte[8];
+                int r = await stream.ReadAsync(resp.AsMemory(0, 8), token);
+                return r >= 8 && resp[0] == 0x00 && resp[1] == 0x5A;
+            }
             else
             {
                 // HTTP / HTTPS CONNECT tunnel
@@ -554,8 +596,9 @@ public class LinuxProxyEngine
         await Task.WhenAny(clientToRemote, remoteToClient);
     }
 
-    private void AddAuditLog(string protocol, string host, int port, string adapter, string clientEp)
+    private void AddAuditLog(string protocol, string host, int port, string adapter, string clientEp, string? proxyUrl = null, bool isSuccess = true, long latencyMs = 0, string? resolvedIp = null, string? error = null)
     {
+        if (_config?.EnableAuditLogging == false) return;
         lock (RecentLogs)
         {
             RecentLogs.Insert(0, new AuditLogModel
@@ -565,7 +608,12 @@ public class LinuxProxyEngine
                 TargetPort = port,
                 OutboundAdapter = adapter,
                 ClientEndpoint = clientEp,
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.Now,
+                ProxyServerUrl = proxyUrl ?? "Direct Multi-WAN",
+                IsSuccess = isSuccess,
+                LatencyMs = latencyMs,
+                ResolvedIp = resolvedIp ?? host,
+                ErrorMessage = error
             });
 
             if (RecentLogs.Count > 100) RecentLogs.RemoveAt(RecentLogs.Count - 1);

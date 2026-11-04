@@ -70,15 +70,13 @@ public partial class MainWindow : Window
     private void OpenSettings_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null) return;
-        var win = new SettingsWindow(ViewModel.Config)
+        var win = new SettingsWindow(ViewModel.Config, () => ViewModel.SaveCurrentCombinationImmediate(), ViewModel.ProxyManager)
         {
             Owner = this
         };
-        if (win.ShowDialog() == true)
-        {
-            ViewModel.UpdateThrottlingState();
-            ViewModel.SaveCurrentCombinationImmediate();
-        }
+        win.ShowDialog();
+        ViewModel.UpdateThrottlingState();
+        ViewModel.SaveCurrentCombinationImmediate();
     }
 
     private void NewProfile_Click(object sender, RoutedEventArgs e)
