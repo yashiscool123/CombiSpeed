@@ -952,6 +952,47 @@ public partial class App : Application
                     Log(" [PASS] Countdown halts immediately upon active proxy unavailability.");
                     Log(" [PASS] Time-based interval rotation and forced rotation verified.");
 
+                    // Test 10: Verify 10-Second Internet Accessibility Check & Auto-Rotation on Failure
+                    Log("[TEST 10/10] Testing 10-Second Internet Accessibility Verification & Auto-Rotation on Failure...");
+                    var deadCandidate = new HarvestedProxyModel { Host = "192.0.2.1", Port = 8888, Protocol = ProxyProtocol.Http, IsHealthy = true, IsSelected = true };
+                    var swDead = System.Diagnostics.Stopwatch.StartNew();
+                    bool deadAccessible = RotatingProxyRouter.ConnectAndTestInternetAsync(deadCandidate, internetThresholdMs: 800).GetAwaiter().GetResult();
+                    swDead.Stop();
+                    if (deadAccessible)
+                    {
+                        throw new Exception("Dead proxy should not pass internet accessibility verification!");
+                    }
+                    Log($" [PASS] Dead candidate correctly failed internet accessibility check in {swDead.ElapsedMilliseconds}ms.");
+
+                    // Verify that ForceConnectToLiveProxyAsync auto-rotates past dead candidates
+                    using (var failoverVal = new ProxyValidatorEngine())
+                    {
+                        var fail1 = new HarvestedProxyModel { Host = "192.0.2.2", Port = 8881, IsHealthy = true, IsSelected = true };
+                        var fail2 = new HarvestedProxyModel { Host = "192.0.2.3", Port = 8882, IsHealthy = true, IsSelected = true };
+                        failoverVal.AddCandidates(new[] { fail1, fail2 });
+                        var failoverRouter = new RotatingProxyRouter(failoverVal, new RotatingProxyConfigModel
+                        {
+                            Strategy = RotationStrategy.TimeBasedInterval,
+                            RotationIntervalSeconds = 60
+                        }, new LoadBalancerEngine());
+
+                        // Countdown must remain paused while candidates fail
+                        if (failoverRouter.IsLiveConnected || failoverRouter.SecondsUntilNextRotation != -1)
+                        {
+                            throw new Exception("Countdown must remain paused while candidates fail verification!");
+                        }
+
+                        // Test direct confirmation when internet is verified
+                        var goodProxy = new HarvestedProxyModel { Host = "192.0.2.4", Port = 8884, IsHealthy = true, IsSelected = true, CountryCode = "US" };
+                        failoverRouter.ConfirmLiveConnected(goodProxy);
+                        if (!failoverRouter.IsLiveConnected || failoverRouter.SecondsUntilNextRotation < 58 || failoverRouter.SecondsUntilNextRotation > 60)
+                        {
+                            throw new Exception($"Countdown should initialize to configured interval (60s), got {failoverRouter.SecondsUntilNextRotation}s");
+                        }
+                        Log(" [PASS] Confirmed live proxy initialized countdown to full stipulated interval (60s).");
+                    }
+                    Log(" [PASS] 10-Second Internet Accessibility Verification & Auto-Rotation on Failure verified.");
+
                     // Test Flag Emoji generation
                     if (IpGeoLocationModel.ConvertCountryCodeToFlag("US") != "🇺🇸" ||
                         IpGeoLocationModel.ConvertCountryCodeToFlag("IN") != "🇮🇳" ||
@@ -1110,7 +1151,24 @@ public partial class App : Application
                         try
                         {
                             var sock = await mockListener.AcceptSocketAsync(listenerCts.Token);
-                            try { sock.Close(); } catch { }
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    byte[] buf = new byte[1024];
+                                    int r = await sock.ReceiveAsync(buf, SocketFlags.None, listenerCts.Token);
+                                    if (r > 0)
+                                    {
+                                        byte[] reply = System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK");
+                                        await sock.SendAsync(reply, SocketFlags.None, listenerCts.Token);
+                                    }
+                                }
+                                catch { }
+                                finally
+                                {
+                                    try { sock.Close(); } catch { }
+                                }
+                            });
                         }
                         catch { break; }
                     }

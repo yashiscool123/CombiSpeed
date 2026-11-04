@@ -951,8 +951,8 @@
                                                 <Button Content="Select All" Command="{Binding SelectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Select all proxies in view to participate in rotation"/>
                                                 <Button Content="Deselect All" Command="{Binding DeselectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Uncheck all proxies so none are flagged for rotation"/>
                                                 <Button Content="Select Fast (≤300ms)" Command="{Binding SelectFastProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Automatically select all healthy proxies with response times under 300ms"/>
-                                                <Button Content="⚡ Rotate Now" Command="{Binding ForceRotateCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Immediately rotate to the next proxy server in the pool, continuing to probe candidates until finding a live connection"/>
-                                                <Button Content="🎯 Force Connect" Command="{Binding ForceConnectSelectedOrNextCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="8,4" FontSize="11" ToolTip="Forcefully connects immediately to the proxy selected in the table, or auto-probes and connects to the next live responsive proxy in the candidate pool"/>
+                                                <Button Content="⚡ Rotate Now" Command="{Binding ForceRotateCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Immediately rotates to the next proxy server in the pool, tests internet accessibility with a 10s threshold, and waits for configured interval once verified"/>
+                                                <Button Content="🎯 Force Connect" Command="{Binding ForceConnectSelectedOrNextCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="8,4" FontSize="11" ToolTip="Forcefully connects immediately to the selected or next proxy, tests internet accessibility (10s threshold), and auto-rotates if internet is unreachable"/>
                                             </StackPanel>
 
                                             <!-- Current Selection Summary & Countdown -->
@@ -985,7 +985,7 @@
                                             <DataGridTemplateColumn Header="ACTION" Width="75">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
-                                                        <Button Content="Connect" Command="{Binding DataContext.ForceConnectSelectedOrNextCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource CyberButton}" Padding="4,2" FontSize="10" ToolTip="Forcefully connect to this specific proxy server immediately"/>
+                                                        <Button Content="Connect" Command="{Binding DataContext.ForceConnectSelectedOrNextCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource CyberButton}" Padding="4,2" FontSize="10" ToolTip="Forcefully connect to this specific proxy server and verify internet accessibility (10s threshold)"/>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>

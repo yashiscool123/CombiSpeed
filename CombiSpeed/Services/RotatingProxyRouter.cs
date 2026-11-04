@@ -1,6 +1,9 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
+using System.Text;
 using CombiSpeed.Models;
 
 namespace CombiSpeed.Services;
@@ -55,7 +58,7 @@ public class RotatingProxyRouter
     }
 
     /// <summary>
-    /// Confirms that a proxy is actively connected and responsive, starting the rotation countdown timer.
+    /// Confirms that a proxy is actively connected and tested with live internet, starting the rotation countdown timer.
     /// </summary>
     public void ConfirmLiveConnected(HarvestedProxyModel proxy)
     {
@@ -66,9 +69,10 @@ public class RotatingProxyRouter
             _isLiveConnected = true;
             proxy.IsHealthy = true;
             proxy.Failures = 0;
+            proxy.Successes++;
         }
         OnTimedRotation?.Invoke(proxy);
-        OnLog?.Invoke($"[Router] Live proxy connection confirmed: {proxy.Endpoint} ({proxy.CountryCode} {proxy.FlagEmoji}). Rotation countdown started ({Math.Clamp(_config.RotationIntervalSeconds, 5, 7200)}s).");
+        OnLog?.Invoke($"[Router] Live proxy connection confirmed with verified internet: {proxy.Endpoint} ({proxy.CountryCode} {proxy.FlagEmoji}). Rotation countdown started ({Math.Clamp(_config.RotationIntervalSeconds, 5, 7200)}s).");
     }
 
     /// <summary>
@@ -90,6 +94,7 @@ public class RotatingProxyRouter
     /// <summary>
     /// Evaluates if the rotation interval has expired for the active live proxy,
     /// and auto-advances to the next live proxy if expired.
+    /// Waits for the configured interval once connected and tested successfully for internet.
     /// </summary>
     public async Task CheckAutoRotationAsync(CancellationToken ct = default)
     {
@@ -101,7 +106,7 @@ public class RotatingProxyRouter
             _isAutoRotating = true;
             try
             {
-                OnLog?.Invoke($"[Router] Timed rotation interval expired ({_config.RotationIntervalSeconds}s). Probing and switching to next live proxy...");
+                OnLog?.Invoke($"[Router] Timed rotation interval expired ({_config.RotationIntervalSeconds}s). Auto-rotating to next proxy server and testing internet (10s threshold)...");
                 lock (_timeRotationLock)
                 {
                     _isLiveConnected = false;
@@ -109,7 +114,7 @@ public class RotatingProxyRouter
                 var nextLive = await ForceConnectToLiveProxyAsync(null, ct);
                 if (nextLive == null)
                 {
-                    OnLog?.Invoke("[Router] No responsive proxy candidates available. Countdown paused.");
+                    OnLog?.Invoke("[Router] No proxy candidates with accessible internet found. Countdown paused.");
                 }
             }
             finally
@@ -122,7 +127,7 @@ public class RotatingProxyRouter
     /// <summary>
     /// Proactively probes a proxy endpoint to verify live TCP/protocol connectivity within a short timeout.
     /// </summary>
-    public static async Task<bool> ProbeLiveConnectionAsync(HarvestedProxyModel proxy, int timeoutMs = 1500, CancellationToken ct = default)
+    public static async Task<bool> ProbeLiveConnectionAsync(HarvestedProxyModel proxy, int timeoutMs = 2500, CancellationToken ct = default)
     {
         try
         {
@@ -143,36 +148,250 @@ public class RotatingProxyRouter
     }
 
     /// <summary>
+    /// Verifies whether the proxy server URL provides active, functioning internet access
+    /// within the specified threshold (default 10,000 ms / 10 seconds).
+    /// Tests reachability to high-reliability internet test endpoints through the proxy.
+    /// Supports HTTP, HTTPS, SOCKS4, and SOCKS5.
+    /// </summary>
+    public static async Task<bool> TestInternetAccessibilityAsync(
+        HarvestedProxyModel proxy, 
+        int thresholdMs = 10000, 
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(proxy.Host) || proxy.Port <= 0) return false;
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(thresholdMs);
+        var token = cts.Token;
+
+        try
+        {
+            // Primary Method: Native SocketsHttpHandler via WebProxy (HTTP, HTTPS, SOCKS5)
+            if (proxy.Protocol != ProxyProtocol.Socks4)
+            {
+                try
+                {
+                    var handler = new SocketsHttpHandler
+                    {
+                        ConnectTimeout = TimeSpan.FromMilliseconds(Math.Min(4000, thresholdMs)),
+                        PooledConnectionLifetime = TimeSpan.FromSeconds(15)
+                    };
+
+                    string scheme = (proxy.Protocol == ProxyProtocol.Socks5) ? "socks5" : "http";
+                    handler.Proxy = new WebProxy($"{scheme}://{proxy.Host}:{proxy.Port}");
+                    if (!string.IsNullOrEmpty(proxy.Username))
+                    {
+                        handler.Proxy.Credentials = new NetworkCredential(proxy.Username, proxy.Password ?? "");
+                    }
+
+                    using var client = new HttpClient(handler)
+                    {
+                        Timeout = TimeSpan.FromMilliseconds(thresholdMs)
+                    };
+
+                    using var response = await client.GetAsync("http://1.1.1.1/", HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
+                    if ((int)response.StatusCode >= 200 && (int)response.StatusCode < 400)
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // Fall through to socket-level tunnel verification
+                }
+            }
+
+            // Secondary / Socket-level Method: Protocol tunnel to 1.1.1.1:80
+            using var socket = new Socket(SocketType.Stream, ProtocolType.Tcp)
+            {
+                NoDelay = true,
+                SendTimeout = 4000,
+                ReceiveTimeout = 4000
+            };
+
+            await socket.ConnectAsync(proxy.Host, proxy.Port, token).ConfigureAwait(false);
+            using var stream = new NetworkStream(socket, ownsSocket: false);
+
+            if (proxy.Protocol == ProxyProtocol.Socks5)
+            {
+                // RFC 1928 SOCKS5 Handshake
+                bool hasAuth = !string.IsNullOrEmpty(proxy.Username);
+                byte[] greeting = hasAuth ? new byte[] { 0x05, 0x02, 0x00, 0x02 } : new byte[] { 0x05, 0x01, 0x00 };
+                await stream.WriteAsync(greeting, token).ConfigureAwait(false);
+
+                byte[] reply = new byte[2];
+                int r = await stream.ReadAsync(reply.AsMemory(0, 2), token).ConfigureAwait(false);
+                if (r < 2 || reply[0] != 0x05) return false;
+
+                if (reply[1] == 0x02 && hasAuth)
+                {
+                    var uBytes = Encoding.UTF8.GetBytes(proxy.Username ?? "");
+                    var pBytes = Encoding.UTF8.GetBytes(proxy.Password ?? "");
+                    var authMsg = new byte[3 + uBytes.Length + pBytes.Length];
+                    authMsg[0] = 0x01;
+                    authMsg[1] = (byte)uBytes.Length;
+                    Array.Copy(uBytes, 0, authMsg, 2, uBytes.Length);
+                    authMsg[2 + uBytes.Length] = (byte)pBytes.Length;
+                    Array.Copy(pBytes, 0, authMsg, 3 + uBytes.Length, pBytes.Length);
+                    await stream.WriteAsync(authMsg, token).ConfigureAwait(false);
+
+                    byte[] authReply = new byte[2];
+                    r = await stream.ReadAsync(authReply.AsMemory(0, 2), token).ConfigureAwait(false);
+                    if (r < 2 || authReply[1] != 0x00) return false;
+                }
+                else if (reply[1] != 0x00)
+                {
+                    return false;
+                }
+
+                // SOCKS5 Connect to 1.1.1.1:80
+                byte[] req = new byte[] { 0x05, 0x01, 0x00, 0x01, 1, 1, 1, 1, 0, 80 };
+                await stream.WriteAsync(req, token).ConfigureAwait(false);
+                byte[] resp = new byte[512];
+                r = await stream.ReadAsync(resp.AsMemory(0, resp.Length), token).ConfigureAwait(false);
+                if (r < 4 || resp[0] != 0x05 || resp[1] != 0x00) return false;
+            }
+            else if (proxy.Protocol == ProxyProtocol.Socks4)
+            {
+                // RFC SOCKS4 Handshake to 1.1.1.1:80
+                byte[] userBytes = Encoding.ASCII.GetBytes(proxy.Username ?? "combispeed");
+                byte[] req = new byte[8 + userBytes.Length + 1];
+                req[0] = 0x04;
+                req[1] = 0x01;
+                req[2] = 0;
+                req[3] = 80;
+                req[4] = 1;
+                req[5] = 1;
+                req[6] = 1;
+                req[7] = 1;
+                Array.Copy(userBytes, 0, req, 8, userBytes.Length);
+                req[req.Length - 1] = 0x00;
+
+                await stream.WriteAsync(req, token).ConfigureAwait(false);
+                byte[] resp = new byte[8];
+                int r = await stream.ReadAsync(resp.AsMemory(0, 8), token).ConfigureAwait(false);
+                if (r < 8 || resp[0] != 0x00 || resp[1] != 0x5A) return false;
+            }
+            else
+            {
+                // HTTP Forward GET to 1.1.1.1
+                string authHeader = "";
+                if (!string.IsNullOrEmpty(proxy.Username))
+                {
+                    string creds = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{proxy.Username}:{proxy.Password ?? ""}"));
+                    authHeader = $"Proxy-Authorization: Basic {creds}\r\n";
+                }
+                string getReq = $"GET http://1.1.1.1/ HTTP/1.1\r\nHost: 1.1.1.1\r\n{authHeader}Connection: close\r\n\r\n";
+                byte[] reqBytes = Encoding.ASCII.GetBytes(getReq);
+                await stream.WriteAsync(reqBytes, token).ConfigureAwait(false);
+
+                byte[] buf = new byte[512];
+                int r = await stream.ReadAsync(buf.AsMemory(0, buf.Length), token).ConfigureAwait(false);
+                if (r > 0)
+                {
+                    string respStr = Encoding.ASCII.GetString(buf, 0, r);
+                    if (respStr.StartsWith("HTTP/1.0 200") || respStr.StartsWith("HTTP/1.1 200") ||
+                        respStr.StartsWith("HTTP/1.0 301") || respStr.StartsWith("HTTP/1.1 301") ||
+                        respStr.StartsWith("HTTP/1.0 302") || respStr.StartsWith("HTTP/1.1 302"))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // For SOCKS tunnels, send a lightweight HTTP HEAD / to verify actual internet data transit
+            byte[] testHttp = Encoding.ASCII.GetBytes("HEAD / HTTP/1.1\r\nHost: 1.1.1.1\r\nConnection: close\r\n\r\n");
+            await stream.WriteAsync(testHttp, token).ConfigureAwait(false);
+            byte[] httpResp = new byte[256];
+            int httpRead = await stream.ReadAsync(httpResp.AsMemory(0, httpResp.Length), token).ConfigureAwait(false);
+            if (httpRead > 0)
+            {
+                string httpHeader = Encoding.ASCII.GetString(httpResp, 0, httpRead);
+                return httpHeader.StartsWith("HTTP/1.");
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Step 1: Connects to the proxy server URL.
+    /// Step 2: Once connected successfully, tests the proxy server URL to check if internet is accessible with a threshold of 10 seconds.
+    /// Returns true only if the proxy server URL connects AND has verified internet access.
+    /// </summary>
+    public static async Task<bool> ConnectAndTestInternetAsync(
+        HarvestedProxyModel proxy, 
+        int internetThresholdMs = 10000, 
+        Action<string>? log = null, 
+        CancellationToken ct = default)
+    {
+        // 1. Initial proxy server connection probe
+        log?.Invoke($"[Router] Connecting to proxy server URL {proxy.Endpoint} ({proxy.CountryCode})...");
+        bool serverConnected = await ProbeLiveConnectionAsync(proxy, 3000, ct).ConfigureAwait(false);
+        if (!serverConnected)
+        {
+            log?.Invoke($"[Router] Cannot connect to proxy server URL {proxy.Endpoint}: host unreachable or connection refused.");
+            return false;
+        }
+
+        // 2. Once connected successfully, test internet accessibility with 10s threshold
+        log?.Invoke($"[Router] Proxy server URL {proxy.Endpoint} connected successfully. Testing internet accessibility (threshold: 10s)...");
+        var sw = Stopwatch.StartNew();
+        bool internetAccessible = await TestInternetAccessibilityAsync(proxy, internetThresholdMs, ct).ConfigureAwait(false);
+        sw.Stop();
+
+        if (internetAccessible)
+        {
+            proxy.LatencyMs = (int)sw.ElapsedMilliseconds;
+            log?.Invoke($"[Router] Internet access confirmed via {proxy.Endpoint} in {sw.ElapsedMilliseconds}ms (threshold: {internetThresholdMs}ms).");
+            return true;
+        }
+        else
+        {
+            log?.Invoke($"[Router] Proxy server {proxy.Endpoint} connected, but internet is NOT accessible within 10s threshold ({sw.ElapsedMilliseconds}ms).");
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Forces a connection to a specific target proxy (if provided) or rotates through candidates
-    /// until a live, responsive connection is found and connected.
-    /// Guaranteed to continue rotating until finding a live connection or exhausting candidate pool.
+    /// until a proxy server is connected AND tested successfully for internet access (10s threshold).
+    /// If internet is not accessible, only then does it rotate to the next available proxy server.
+    /// Once connected and tested successfully, the rotation waits for the configured interval time.
     /// </summary>
     public async Task<HarvestedProxyModel?> ForceConnectToLiveProxyAsync(HarvestedProxyModel? preferred = null, CancellationToken ct = default)
     {
         var pool = GetCandidatePool();
         if (pool.Count == 0) return null;
 
+        const int internetThresholdMs = 10000; // 10 seconds threshold
+
         // 1. If user specifically selected a preferred proxy, attempt it first
         if (preferred != null)
         {
-            OnLog?.Invoke($"[Router] Attempting direct connection to user-selected proxy {preferred.Endpoint} ({preferred.CountryCode} {preferred.FlagEmoji})...");
-            bool ok = await ProbeLiveConnectionAsync(preferred, 1500, ct).ConfigureAwait(false);
+            OnLog?.Invoke($"[Router] Attempting connection to user-selected proxy {preferred.Endpoint} ({preferred.CountryCode} {preferred.FlagEmoji})...");
+            bool ok = await ConnectAndTestInternetAsync(preferred, internetThresholdMs, msg => OnLog?.Invoke(msg), ct).ConfigureAwait(false);
             if (ok)
             {
                 ConfirmLiveConnected(preferred);
-                OnLog?.Invoke($"[Router] Successfully connected to selected proxy {preferred.Endpoint}!");
+                OnLog?.Invoke($"[Router] Successfully connected & verified internet access via {preferred.Endpoint}! Waiting for configured interval ({_config.RotationIntervalSeconds}s) before next rotation.");
                 return _activeTimedProxy;
             }
             else
             {
-                OnLog?.Invoke($"[Router] Selected proxy {preferred.Endpoint} failed live probe. Auto-rotating to find next live connection...");
+                OnLog?.Invoke($"[Router] Selected proxy {preferred.Endpoint} failed internet access test (10s threshold). Auto-rotating to next available proxy server...");
                 MarkUnavailable(preferred.Endpoint);
             }
         }
 
-        // 2. Continue rotating through candidates until finding a live connection
+        // 2. Rotate through candidates until finding one with verified internet access
         var refreshedPool = GetCandidatePool();
-        int maxAttempts = Math.Min(refreshedPool.Count, 15);
+        int maxAttempts = Math.Min(refreshedPool.Count, 25);
 
         for (int i = 0; i < maxAttempts; i++)
         {
@@ -183,23 +402,23 @@ public class RotatingProxyRouter
             }
             if (candidate == null) break;
 
-            OnLog?.Invoke($"[Router] Probing candidate {candidate.Endpoint} ({candidate.CountryCode})...");
-            bool isLive = await ProbeLiveConnectionAsync(candidate, 1200, ct).ConfigureAwait(false);
-            if (isLive)
+            bool isVerified = await ConnectAndTestInternetAsync(candidate, internetThresholdMs, msg => OnLog?.Invoke(msg), ct).ConfigureAwait(false);
+            if (isVerified)
             {
                 ConfirmLiveConnected(candidate);
-                OnLog?.Invoke($"[Router] Live connection confirmed! Locked onto active proxy: {candidate.Endpoint} ({candidate.CountryCode} {candidate.FlagEmoji}).");
+                OnLog?.Invoke($"[Router] Locked onto verified live proxy: {candidate.Endpoint} ({candidate.CountryCode} {candidate.FlagEmoji}) with internet access! Waiting for configured interval ({_config.RotationIntervalSeconds}s) before next rotation.");
                 return _activeTimedProxy;
             }
             else
             {
-                OnLog?.Invoke($"[Router] Proxy {candidate.Endpoint} unresponsive. Evicting and rotating to next...");
+                OnLog?.Invoke($"[Router] Proxy {candidate.Endpoint} internet test failed (10s threshold). Auto-rotating to next available proxy server...");
                 MarkUnavailable(candidate.Endpoint);
                 refreshedPool = GetCandidatePool();
                 if (refreshedPool.Count == 0) break;
             }
         }
 
+        OnLog?.Invoke("[Router] Exhausted candidate pool without finding a proxy server with accessible internet.");
         return null;
     }
 

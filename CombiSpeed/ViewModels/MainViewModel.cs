@@ -1948,21 +1948,22 @@ public class MainViewModel : INotifyPropertyChanged
         if (_rotatingRouter == null) return;
         var preferred = target ?? SelectedProxyRow;
         string targetDesc = preferred != null ? $"{preferred.Endpoint} ({preferred.CountryCode})" : "next live candidate";
-        HarvestStatusText = $"Probing and connecting to {targetDesc}...";
+        HarvestStatusText = $"Connecting to {targetDesc} and testing internet accessibility (10s threshold)...";
+        RotationCountdownText = "⏳ Testing internet accessibility (10s threshold)...";
 
         var live = await _rotatingRouter.ForceConnectToLiveProxyAsync(preferred);
         if (live != null)
         {
             ActiveProxyDisplay = $"{live.Endpoint} ({live.CountryCode}) {live.FlagEmoji}";
-            HarvestStatusText = $"Successfully connected to live proxy {live.Endpoint} ({live.CountryCode} {live.FlagEmoji})";
+            HarvestStatusText = $"Successfully connected & verified internet access via {live.Endpoint} ({live.CountryCode} {live.FlagEmoji})";
             RotationCountdownText = $"Next rotation in {FormatRemainingTime(_rotatingRouter.SecondsUntilNextRotation)}";
             RouteBondedTrafficThroughRotator = true;
             await ResolveGeoIpAsync(forceRefresh: true, proxy: live);
         }
         else
         {
-            ActiveProxyDisplay = "Connection failed / No live proxy";
-            HarvestStatusText = $"Failed to establish live connection to {targetDesc}.";
+            ActiveProxyDisplay = "Connection failed / No internet access";
+            HarvestStatusText = $"Failed to establish internet-accessible proxy connection to {targetDesc} (10s threshold).";
             RotationCountdownText = "⏳ Waiting for live proxy connection...";
         }
     }

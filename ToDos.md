@@ -486,3 +486,13 @@
 - [x] Synchronize updated batch scripts to `publish/windows/bin/` and re-package clean release distribution archives.
 - [x] Update `ReadMe.md` execution paths to reference `publish\*.bat`.
 - [x] Verify clean workspace root and confirm 100% test pass rate across build outputs.
+
+## Milestone 34: 10-Second Proxy Internet Accessibility Verification & Active Rotation [COMPLETED]
+- [x] Implement `TestInternetAccessibilityAsync` in `RotatingProxyRouter`, `LinuxRotatingProxyRouter`, and `MacRotatingProxyRouter` with a strict 10-second threshold testing outward internet reachability through the connected proxy server URL.
+- [x] Implement `ConnectAndTestInternetAsync` executing a 2-step pipeline: 1) socket connection to proxy server URL; 2) 10-second internet accessibility test with live latency calculation.
+- [x] Upgrade `ForceConnectToLiveProxyAsync` across Windows, Linux, and macOS to only rotate to subsequent candidates if internet accessibility test fails, and confirm live connection once internet access is verified.
+- [x] Ensure proxy rotation countdown strictly waits for the full stipulated/configured interval time (up to 2 hours) once connected and tested successfully for internet.
+- [x] Update status displays and tooltips across Windows WPF and Linux/macOS Web SPAs to reflect 10-second internet verification threshold.
+- [x] Add automated test step to `--verify-rotator` (Windows) and `--verify-persistence` (Linux & macOS) verifying 10s internet check, dead candidate rejection, and interval initialization (100% pass rate).
+- [x] Increment version to 2.2.6 (Build 33) across all project definitions, documentation, and release archives.
+- [x] Build, test, and package standalone v2.2.6 distribution archives in `publish/`.

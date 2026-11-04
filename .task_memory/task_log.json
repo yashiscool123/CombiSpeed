@@ -662,6 +662,30 @@
                     "progress": "All tasks completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-035",
+            "userQuery": "Once a proxy server URL is connected successfully, the application should test the proxy server url to check if internet is accessible with a threshold of 10 seconds, if it is still not connected, only then the application should rotate to the next available proxy server. The proxy server rotation should wait for the stipulated / configured interval time once connected and tested successfully for internet.",
+            "status": "completed",
+            "createdAt": "2026-11-04T19:42:00+05:30",
+            "updatedAt": "2026-11-04T20:02:00+05:30",
+            "progress": "Delivered Milestone 34: Implemented TestInternetAccessibilityAsync with 10-second threshold testing real outward internet connectivity via SocketsHttpHandler WebProxy and socket-level protocol tunneling across HTTP, HTTPS, SOCKS4, and SOCKS5; implemented ConnectAndTestInternetAsync with two-step validation (socket connect + 10s internet probe); upgraded ForceConnectToLiveProxyAsync across Windows, Linux, and macOS to auto-rotate only if internet is unreachable; strictly gated rotation countdown timer to wait for the full stipulated/configured interval time (up to 2 hours) once connected and verified for internet access; verified with automated test suites across all 3 platforms (100% PASS); published v2.2.6 release packages.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3501",
+                    "timestamp": "2026-11-04T19:42:30+05:30",
+                    "inputs": "User requested: 1) Test proxy server URL for internet accessibility with 10-second threshold once connected; 2) Auto-rotate only if still not connected / internet inaccessible; 3) Proxy rotation waits for stipulated interval time once connected and tested successfully for internet.",
+                    "outputs": "Comprehensive implementation plan for RotatingProxyRouter, LinuxRotatingProxyRouter, MacRotatingProxyRouter, MainViewModel, CyberpunkSpa, and test suites.",
+                    "progress": "Planning and design completed."
+                },
+                {
+                    "checkpointId": "CP-3502",
+                    "timestamp": "2026-11-04T20:02:00+05:30",
+                    "inputs": "Implementation, cross-platform testing, packaging, and documentation synchronization.",
+                    "outputs": "Implemented TestInternetAccessibilityAsync, ConnectAndTestInternetAsync, updated ForceConnectToLiveProxyAsync and CheckAutoRotationAsync, updated UI tooltips and status text, verified --verify-rotator and --verify-persistence with 100% pass rates, incremented version to 2.2.6 (Build 33), published distribution archives, updated ReadMe.md, ReleaseNotes.md, ToDos.md.",
+                    "progress": "All requirements implemented and verified successfully."
+                }
+            ]
         }
     ]
 }

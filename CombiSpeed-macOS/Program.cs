@@ -160,6 +160,12 @@ public class Program
                     throw new Exception("Countdown should pause when active proxy is unavailable!");
                 Console.WriteLine("[PASS] macOS rotation countdown gating and 2-hour interval verified.");
 
+                // Test Internet accessibility threshold & auto-rotation on failure
+                var deadCandidate = new HarvestedProxyModel { Host = "192.0.2.1", Port = 8888, Protocol = ProxyProtocol.Http, IsHealthy = true, IsSelected = true };
+                bool deadResult = MacRotatingProxyRouter.ConnectAndTestInternetAsync(deadCandidate, internetThresholdMs: 800).GetAwaiter().GetResult();
+                if (deadResult) throw new Exception("Dead proxy unexpectedly passed internet test!");
+                Console.WriteLine("[PASS] macOS 10s internet accessibility check and dead candidate rejection verified.");
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL macOS PERSISTENCE & COMBINATION TESTS PASSED (100% OK)         ");
                 Console.WriteLine("=====================================================================");

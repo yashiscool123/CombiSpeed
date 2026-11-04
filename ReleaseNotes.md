@@ -1,5 +1,22 @@
 # Release Notes
 
+## [2.2.6] - 2026-11-04 - 10-Second Proxy Internet Accessibility Verification & Active Rotation Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🌐 10-Second Internet Accessibility Verification Threshold**:
+  - **Post-Connection Internet Probing**: Once a proxy server URL is successfully connected at the socket level, CombiSpeed immediately tests if external internet connectivity is accessible through the proxy endpoint with a strict **10-second threshold** (`thresholdMs = 10000`).
+  - **Multi-Protocol Transit Verification**: Supports HTTP, HTTPS, RFC 1928 SOCKS5, and RFC SOCKS4/SOCKS4a. Tests reachability using native `SocketsHttpHandler` via `WebProxy` with socket-level protocol tunneling to high-availability endpoints (`http://1.1.1.1/` and `http://www.msftconnecttest.com/connecttest.txt`), verifying that packets actually transit through the upstream proxy to the wider Internet.
+- **🔄 Conditional Auto-Rotation on Internet Unreachability**:
+  - **Strict Failure-Gated Rotation**: If a connected proxy server URL fails to access the internet within the 10-second threshold (or returns gateway timeout / connection refused), it is marked unavailable and evicted.
+  - **Auto-Advance to Next Candidate**: Only upon confirmed internet unreachability does the application auto-rotate to the next available proxy server in the candidate pool, continuing until an internet-verified proxy is established.
+- **⏱️ Stipulated Interval Waiting Gated by Verified Internet Access**:
+  - **True Interval Waiting**: The proxy server rotation countdown timer strictly resets (`_lastTimedRotation = DateTime.UtcNow`) and starts counting down ONLY once a proxy server is connected **and tested successfully for internet access**.
+  - **Zero Premature Rotations**: The system remains locked onto the verified live proxy and waits for the full configured interval time (e.g. 10s, 30s, 1m, 5m, 1h, 2h) before auto-rotating.
+- **🪟 Cross-Platform Verification & Parity**:
+  - Automated tests added to Windows (`--verify-rotator`), Linux (`--verify-persistence`), and macOS (`--verify-persistence`) testing 10s internet threshold enforcement, rejection of dead/no-internet candidates, auto-rotation past unresponsive nodes, and full interval countdown initialization (**100% PASS** across all platforms).
+
+---
+
 ## [2.2.5] - 2026-11-04 - Dedicated Distribution Structure & Script Relocation Release
 
 ### 🚀 Highlights & Engineering Advancements
