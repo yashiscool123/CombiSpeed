@@ -496,3 +496,16 @@
 - [x] Add automated test step to `--verify-rotator` (Windows) and `--verify-persistence` (Linux & macOS) verifying 10s internet check, dead candidate rejection, and interval initialization (100% pass rate).
 - [x] Increment version to 2.2.6 (Build 33) across all project definitions, documentation, and release archives.
 - [x] Build, test, and package standalone v2.2.6 distribution archives in `publish/`.
+
+## Milestone 35: Timely Proxy Rotation, Pause Rotation, Proxy Disconnect, Proxy-Only Mode & Light Theme Contrast [COMPLETED]
+- [x] Implement instant persistence for "Enable Connection Audit Logging" in `ProxyEngine`, `SettingsWindow`, and Linux/macOS storage; unchecking instantly saves setting to disk and immediately halts all audit event generation.
+- [x] Clear active audit memory queue on disabling audit logging and display visual "Auditing Stopped" indicator badge in connection audit panel.
+- [x] Redesign Light Mode Theme across WPF XAML (`App.xaml`, `MainWindow.xaml`, `SettingsWindow.xaml`, `AccessibilityDialog.xaml`) and Linux/macOS `CyberpunkSpa.cs` to eliminate dark text/background mismatches and deliver high-contrast, eye-friendly, soothing palettes meeting WCAG 2.1 AA standards.
+- [x] Fix proxy rotation engine in `RotatingProxyRouter.cs`, `LinuxRotatingProxyRouter.cs`, and `MacRotatingProxyRouter.cs` to eliminate mid-stream race conditions in `SelectUpstreamProxy`, ensuring automatic rotation occurs strictly at user-configured intervals.
+- [x] Add ability to pause/disable proxy rotation while staying connected to the current proxy server via "⏸ Pause Rotation" / "▶ Resume Rotation" toggle across Windows WPF and Linux/macOS Web SPAs.
+- [x] Add explicit "Disconnect" proxy button (`DisconnectProxyCommand` / `/api/rotating-proxy/disconnect`), gracefully terminating the proxy session and falling back to direct Multi-WAN adapter bonding.
+- [x] Implement "Combine Adapters with Proxy" toggle (`CombineAdaptersWithProxy`), allowing proxy-only routing without adapter speed combination or multi-adapter bonding without proxy connections.
+- [x] Increment semantic version to 2.2.7 and versionCode to 34 across all platforms (`version.json`, `.csproj` files, `Info.plist`, `Install-CombiSpeed.bat`).
+- [x] Rebuild Release binaries and package standalone release archives (`CombiSpeed-v2.2.7-win-x64.zip`, `CombiSpeed-v2.2.7-linux-x64.zip`, `CombiSpeed-v2.2.7-macos-x64.zip`) under `publish/`.
+- [x] Verify 100% test pass rate across Windows (`--verify-persistence`, `--verify-rotator`), Linux (`--verify-persistence`), and macOS (`--verify-persistence`).
+- [x] Synchronize documentation (`ReadMe.md`, `ReleaseNotes.md`, `ToDos.md`, `KnownIssues.md`, `.task_memory/task_log.json`).

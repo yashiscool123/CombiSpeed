@@ -34,6 +34,15 @@
         <SolidColorBrush x:Key="ToolTipBg" Color="#0B1120"/>
         <SolidColorBrush x:Key="ToolTipBorder" Color="#00F0FF"/>
         <SolidColorBrush x:Key="ToolTipFg" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="TitleBarBg" Color="#060910"/>
+        <SolidColorBrush x:Key="StatusBarBg" Color="#060910"/>
+        <SolidColorBrush x:Key="DataGridBg" Color="#080C14"/>
+        <SolidColorBrush x:Key="DataGridAltRow" Color="#0B1120"/>
+        <SolidColorBrush x:Key="BadgeBg" Color="#1E293B"/>
+        <SolidColorBrush x:Key="BadgeFg" Color="#38BDF8"/>
+        <SolidColorBrush x:Key="ProgressBarBg" Color="#1E293B"/>
+        <SolidColorBrush x:Key="InputBg" Color="#080C14"/>
+        <SolidColorBrush x:Key="InputFg" Color="#FFFFFF"/>
 
         <!-- Universal Contrasting & Accessible ToolTip Style -->
         <Style TargetType="{x:Type ToolTip}">
@@ -92,13 +101,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ScrollBar}">
-                        <Grid x:Name="Bg" SnapsToDevicePixels="true" Background="#0A0F1D">
+                        <Grid x:Name="Bg" SnapsToDevicePixels="true" Background="{DynamicResource CyberBg}">
                             <Track x:Name="PART_Track" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsMouseOver}">
                                 <Track.Thumb>
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Border Background="#1E293B" CornerRadius="4" BorderBrush="#38BDF8" BorderThickness="0.5"/>
+                                                <Border Background="{DynamicResource CyberCard}" CornerRadius="4" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0.5"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -485,10 +494,10 @@
         <!-- Global TextBox Style -->
         <Style TargetType="{x:Type TextBox}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
-            <Setter Property="Background" Value="#080C14"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-            <Setter Property="CaretBrush" Value="#00F0FF"/>
-            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Background" Value="{DynamicResource InputBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource InputFg}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource CyberCyan}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CyberBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="FontSize" Value="12"/>

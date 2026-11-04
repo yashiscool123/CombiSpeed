@@ -20,6 +20,7 @@ public class LinuxProxyEngine
     public long TotalBytesUploaded;
     public int ActiveConnections;
     public List<AuditLogModel> RecentLogs { get; } = new();
+    public void ClearAuditLogs() { lock (RecentLogs) { RecentLogs.Clear(); } }
     public LinuxRotatingProxyRouter? RotatingRouter { get; set; }
 
     public LinuxProxyEngine(ProxyConfigModel config, LinuxLoadBalancer loadBalancer, LinuxBandwidthThrottler throttler)
@@ -159,7 +160,10 @@ public class LinuxProxyEngine
                     targetPort = parts.Length > 1 && int.TryParse(parts[1], out int p) ? p : 443;
 
                     string clientEp = client.Client.RemoteEndPoint?.ToString() ?? "";
-                    bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
+                    bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true 
+                                      && RotatingRouter != null 
+                                      && RotatingRouter.IsLiveConnected 
+                                      && RotatingRouter.ActiveTimedProxy != null;
 
                     if (viaRotator)
                     {
@@ -319,7 +323,10 @@ public class LinuxProxyEngine
                 if (adapter == null) return;
 
                 string clientEp = client.Client.RemoteEndPoint?.ToString() ?? "";
-                bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
+                bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true 
+                                  && RotatingRouter != null 
+                                  && RotatingRouter.IsLiveConnected 
+                                  && RotatingRouter.ActiveTimedProxy != null;
 
                 if (viaRotator)
                 {

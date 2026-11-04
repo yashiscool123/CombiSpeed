@@ -9,9 +9,20 @@ public class VirtualBridgeManager : IDisposable
     private readonly VirtualBridgeModel _model;
     private readonly string _connectionName;
     private VirtualBridgeServer? _bridgeServer;
+    private bool _enableAuditLogging = true;
 
     public VirtualBridgeModel Model => _model;
     public VirtualBridgeServer? Server => _bridgeServer;
+
+    public bool EnableAuditLogging
+    {
+        get => _enableAuditLogging;
+        set
+        {
+            _enableAuditLogging = value;
+            if (_bridgeServer != null) _bridgeServer.EnableAuditLogging = value;
+        }
+    }
 
     public event Action<AuditLogModel>? OnAuditLog;
 
@@ -38,7 +49,10 @@ public class VirtualBridgeManager : IDisposable
 
         try
         {
-            _bridgeServer = new VirtualBridgeServer(lb, getAdapters, _model, throttler);
+            _bridgeServer = new VirtualBridgeServer(lb, getAdapters, _model, throttler)
+            {
+                EnableAuditLogging = _enableAuditLogging
+            };
             _bridgeServer.OnAuditLog += log => OnAuditLog?.Invoke(log);
             await _bridgeServer.StartAsync(port);
 

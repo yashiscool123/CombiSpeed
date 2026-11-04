@@ -686,6 +686,30 @@
                     "progress": "All requirements implemented and verified successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-036",
+            "userQuery": "1) If Enable Connection Audit Logging is unchecked / disabled then the application should instantly save the setting persistently and stop doing the audit. 2) Light Mode Theme does not work correctly as expected. It leaves a few text / label backgrounds to be dark rather than maintaining a proper contrast. 3) Ensure that the proxy rotation actually works at the set Intervals. 4) Also, allow to disable rotation of the proxy server while remaining connected to the current proxy server selected. 5) Also, allow to disconnect from the proxy server urls while still combining the speeds of the connection adapters. 6) Also, allow to connect and use only proxy server urls while not combining speeds of the connection adapters.",
+            "status": "completed",
+            "createdAt": "2026-11-04T20:30:00+05:30",
+            "updatedAt": "2026-11-04T21:28:00+05:30",
+            "progress": "Delivered Milestone 35: 1) Instant persistence of Enable Connection Audit Logging directly to disk and real-time termination of audit event generation with queue clearance; 2) Comprehensive Light Mode Theme contrast overhaul across WPF and Linux/macOS dashboards using dynamic theme brushes and WCAG 2.1 AA compliant styling; 3) Fixed proxy rotation engine by eliminating mid-stream candidate swaps, ensuring strict timed interval firing; 4) Added Pause/Resume Auto-Rotation toggle allowing users to stay connected to active proxy indefinitely; 5) Added 1-click Proxy Disconnect button returning traffic to direct Multi-WAN bonded adapters; 6) Decoupled proxy-only mode and multi-WAN bonding via 'Combine Adapters with Proxy' checkbox; verified 100% pass across Windows, Linux, and macOS; incremented to v2.2.7 (Build 34).",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3601",
+                    "timestamp": "2026-11-04T20:31:00+05:30",
+                    "inputs": "Analysis of all 6 user requirements across Windows WPF, Linux, and macOS platforms.",
+                    "outputs": "Planned changes to ProxyEngine, VirtualBridgeManager, RotatingProxyRouter, MainViewModel, App.xaml, MainWindow.xaml, SettingsWindow.xaml, CyberpunkSpa.cs, and test harnesses.",
+                    "progress": "Architecture and design completed."
+                },
+                {
+                    "checkpointId": "CP-3602",
+                    "timestamp": "2026-11-04T21:28:00+05:30",
+                    "inputs": "Implementation, cross-platform compilation, test verification, package creation, and documentation synchronization.",
+                    "outputs": "Implemented all 6 features across all 3 operating systems; 100% test pass on --verify-rotator and --verify-persistence; published release packages; updated ReadMe.md, ReleaseNotes.md, ToDos.md, and KnownIssues.md.",
+                    "progress": "All requirements implemented and verified successfully."
+                }
+            ]
         }
     ]
 }

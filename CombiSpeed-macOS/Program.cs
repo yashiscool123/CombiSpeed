@@ -166,6 +166,13 @@ public class Program
                 if (deadResult) throw new Exception("Dead proxy unexpectedly passed internet test!");
                 Console.WriteLine("[PASS] macOS 10s internet accessibility check and dead candidate rejection verified.");
 
+                // Test EnableAuditLogging instant persistence
+                config.EnableAuditLogging = false;
+                storage.Save(scannedAdapters, config);
+                var reloadedAuditCfg = storage.Load().Config;
+                if (reloadedAuditCfg.EnableAuditLogging != false) throw new Exception("macOS EnableAuditLogging instant persistence failed!");
+                Console.WriteLine("[PASS] macOS EnableAuditLogging instant persistence verified: EnableAuditLogging=False saved & loaded.");
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL macOS PERSISTENCE & COMBINATION TESTS PASSED (100% OK)         ");
                 Console.WriteLine("=====================================================================");

@@ -26,6 +26,7 @@ public partial class SettingsWindow : Window
         ChkAutoVirtualBridge.IsChecked = config.EnableVirtualBridge;
         ChkAutoWindowsProxy.IsChecked = config.EnableWindowsProxy;
         ChkEnablePac.IsChecked = config.EnablePac;
+        ChkEnableAuditLogging.IsChecked = config.EnableAuditLogging;
         ChkEnableThrottling.IsChecked = config.EnableBandwidthThrottling;
         ChkCombineSpeeds.IsChecked = config.CombineSpeedsMode;
 
@@ -94,6 +95,8 @@ public partial class SettingsWindow : Window
         ChkAutoWindowsProxy.Unchecked += (s, e) => OnSettingInputChanged();
         ChkEnablePac.Checked += (s, e) => OnSettingInputChanged();
         ChkEnablePac.Unchecked += (s, e) => OnSettingInputChanged();
+        ChkEnableAuditLogging.Checked += (s, e) => OnSettingInputChanged();
+        ChkEnableAuditLogging.Unchecked += (s, e) => OnSettingInputChanged();
         ChkEnableThrottling.Checked += (s, e) => OnSettingInputChanged();
         ChkEnableThrottling.Unchecked += (s, e) => OnSettingInputChanged();
         ChkCombineSpeeds.Checked += (s, e) => OnSettingInputChanged();
@@ -218,6 +221,7 @@ public partial class SettingsWindow : Window
 
         _config.EnableVirtualBridge = ChkAutoVirtualBridge.IsChecked == true;
         _config.EnableWindowsProxy = ChkAutoWindowsProxy.IsChecked == true;
+        _config.EnableAuditLogging = ChkEnableAuditLogging.IsChecked == true;
 
         bool pacEnabled = ChkEnablePac.IsChecked == true;
         if (_config.EnablePac != pacEnabled)

@@ -1,5 +1,29 @@
 # Release Notes
 
+## [2.2.7] - 2026-11-04 - Timely Proxy Rotation, Pause Rotation, Proxy Disconnect, Proxy-Only Mode & Light Theme Contrast Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🛑 Instant Persistence & Real-Time Audit Halting**:
+  - **Zero-Latency Persistence**: Unchecking "Enable Connection Audit Logging" immediately persists the setting to disk (`proxy_config.json`, `combispeed_config.json`) without requiring a restart or manual save action.
+  - **Immediate Logging Termination**: Gated all audit entry collection points across `ProxyEngine`, `VirtualBridgeServer`, and protocol listeners. When disabled, no audit items are generated, internal queues are flushed via `ClearAuditLogs()`, and UI displays an immediate "Auditing Stopped" indicator, saving CPU and RAM.
+- **🎨 Complete Soothing Light Theme Contrast Overhaul**:
+  - **Eliminated Dark Patches in Light Mode**: Systematically eradicated all hardcoded dark hex backgrounds (`#060910`, `#080C14`, `#131D33`, `#1E293B`, `#0D1527`) across WPF XAML and Web dashboards.
+  - **WCAG 2.1 AA Dynamic Brushes**: Introduced dynamic brushes for `TitleBarBg`, `StatusBarBg`, `DataGridBg`, `DataGridAltRow`, `BadgeBg`, `BadgeFg`, `ProgressBarBg`, `InputBg`, and `InputFg`. In Light Theme, backgrounds switch to soft `#FFFFFF`, `#F8FAFC`, `#F1F5F9`, and text switches to high-contrast slate `#0F172A` and `#1E293B`.
+- **⏱️ Reliable Interval Rotation Engine**:
+  - **Eliminated Mid-Stream Rotation Races**: Fixed `SelectUpstreamProxy` which previously triggered premature candidate swaps on client requests. Active verified live proxies are preserved throughout streaming sessions while `CheckAutoRotationAsync` strictly manages timed rotations at the exact user-stipulated intervals.
+- **⏸️ Pause Auto-Rotation While Remaining Connected**:
+  - **Independent Rotation Lock**: Added `AutoRotateEnabled` toggle button ("⏸ Pause Rotation" / "▶ Resume Rotation") across Windows, Linux, and macOS.
+  - **Continuous Session Retention**: Allows users to freeze automatic rotation while staying actively connected to the current proxy server indefinitely. Countdown badge clearly displays `⏸ Auto-Rotation Paused (Connected to {ActiveTimedProxy.Endpoint})`.
+- **🔌 Explicit Proxy Disconnect**:
+  - **One-Click Proxy Disconnect**: Added "Disconnect" button (`DisconnectProxyCommand`) to gracefully terminate the upstream proxy tunnel and revert traffic to direct Multi-WAN adapter aggregation.
+- **⚡ Decoupled Operational Modes (Proxy-Only vs. Multi-WAN Bonded)**:
+  - **Direct Multi-WAN Bonding without Proxy**: Users can disconnect proxy servers and enjoy high-speed multi-adapter bonding across Wi-Fi, Ethernet, and cellular.
+  - **Proxy-Only Mode without Adapter Bonding**: Added "Combine Adapters with Proxy" checkbox (`CombineAdaptersWithProxy`). When unchecked, routes proxy traffic through a single primary adapter without combining adapter speeds, giving users total control over their network architecture.
+- **🧪 Universal Triple-OS Verification**:
+  - Automated tests verified across Windows (`--verify-persistence`, `--verify-rotator`), Linux (`--verify-persistence`), and macOS (`--verify-persistence`) with **100% PASS**.
+
+---
+
 ## [2.2.6] - 2026-11-04 - 10-Second Proxy Internet Accessibility Verification & Active Rotation Release
 
 ### 🚀 Highlights & Engineering Advancements

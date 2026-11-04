@@ -38,10 +38,25 @@ public class RotatingProxyRouter
         {
             if (_config.Strategy != RotationStrategy.TimeBasedInterval) return 0;
             if (!_isLiveConnected || _activeTimedProxy == null) return -1;
+            if (!_config.AutoRotateEnabled) return -2; // -2: Paused while keeping connection active
             int intervalSec = Math.Clamp(_config.RotationIntervalSeconds, 5, 7200);
             var elapsed = (DateTime.UtcNow - _lastTimedRotation).TotalSeconds;
             return Math.Max(0, (int)(intervalSec - elapsed));
         }
+    }
+
+    /// <summary>
+    /// Disconnects from the proxy server, switching all traffic back to direct multi-WAN adapter bonding.
+    /// </summary>
+    public void DisconnectProxy()
+    {
+        lock (_timeRotationLock)
+        {
+            _activeTimedProxy = null;
+            _isLiveConnected = false;
+        }
+        OnTimedRotation?.Invoke(null);
+        OnLog?.Invoke("[Router] Disconnected from proxy server. Routing traffic directly through combined Multi-WAN network adapters.");
     }
 
     public long TotalRotatedRequests;
@@ -99,6 +114,7 @@ public class RotatingProxyRouter
     public async Task CheckAutoRotationAsync(CancellationToken ct = default)
     {
         if (_config.Strategy != RotationStrategy.TimeBasedInterval) return;
+        if (!_config.AutoRotateEnabled) return; // Rotation is paused while remaining connected to active proxy
         if (!_isLiveConnected || _activeTimedProxy == null || _isAutoRotating) return;
 
         if (SecondsUntilNextRotation == 0)
@@ -448,18 +464,20 @@ public class RotatingProxyRouter
         // 0. Time-Based Interval Strategy (Timely rotation every X seconds)
         if (_config.Strategy == RotationStrategy.TimeBasedInterval)
         {
-            var now = DateTime.UtcNow;
-            int intervalSec = Math.Max(5, _config.RotationIntervalSeconds);
             lock (_timeRotationLock)
             {
-                if (_activeTimedProxy == null || !_activeTimedProxy.IsHealthy || (now - _lastTimedRotation) >= TimeSpan.FromSeconds(intervalSec) || !candidates.Contains(_activeTimedProxy))
+                if (_activeTimedProxy != null && _activeTimedProxy.IsHealthy && candidates.Contains(_activeTimedProxy))
                 {
-                    _activeTimedProxy = PickRoundRobin(candidates);
-                    _lastTimedRotation = now;
-                    OnTimedRotation?.Invoke(_activeTimedProxy);
-                    OnLog?.Invoke($"[Router] Timely rotation: Switched active proxy to {_activeTimedProxy?.Endpoint} ({_activeTimedProxy?.CountryCode} {_activeTimedProxy?.FlagEmoji}) - interval {intervalSec}s.");
+                    return _activeTimedProxy;
                 }
-                return _activeTimedProxy ?? PickRoundRobin(candidates);
+
+                _activeTimedProxy = PickRoundRobin(candidates);
+                _lastTimedRotation = DateTime.UtcNow;
+                if (_activeTimedProxy != null)
+                {
+                    OnTimedRotation?.Invoke(_activeTimedProxy);
+                }
+                return _activeTimedProxy;
             }
         }
 

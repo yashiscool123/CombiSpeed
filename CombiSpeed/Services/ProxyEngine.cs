@@ -116,13 +116,16 @@ public class ProxyEngine : IDisposable
         if (activeHttp == null && activeSocks == null)
         {
             IsRunning = false;
-            OnAuditLog?.Invoke(new AuditLogModel
+            if (CurrentConfig?.EnableAuditLogging != false)
             {
-                Protocol = "ENGINE",
-                TargetHost = "0.0.0.0",
-                Status = $"Listener bind failed: ports {httpPort} and {socksPort} unavailable.",
-                Timestamp = DateTime.Now
-            });
+                OnAuditLog?.Invoke(new AuditLogModel
+                {
+                    Protocol = "ENGINE",
+                    TargetHost = "0.0.0.0",
+                    Status = $"Listener bind failed: ports {httpPort} and {socksPort} unavailable.",
+                    Timestamp = DateTime.Now
+                });
+            }
             return;
         }
 
@@ -132,7 +135,7 @@ public class ProxyEngine : IDisposable
         _socksListener = activeSocks;
         IsRunning = true;
 
-        if (curHttpPort != httpPort)
+        if (curHttpPort != httpPort && CurrentConfig?.EnableAuditLogging != false)
         {
             OnAuditLog?.Invoke(new AuditLogModel
             {
@@ -142,7 +145,7 @@ public class ProxyEngine : IDisposable
                 Timestamp = DateTime.Now
             });
         }
-        if (curSocksPort != socksPort)
+        if (curSocksPort != socksPort && CurrentConfig?.EnableAuditLogging != false)
         {
             OnAuditLog?.Invoke(new AuditLogModel
             {
@@ -267,7 +270,8 @@ public class ProxyEngine : IDisposable
 
                 // Select target adapter
                 var adapters = _getAdapters();
-                chosenAdapter = _loadBalancer.GetNextAdapter(adapters);
+                bool combineAdapters = CurrentConfig?.CombineSpeedsMode != false && CurrentConfig?.RotatingProxy?.CombineAdaptersWithProxy != false;
+                chosenAdapter = combineAdapters ? _loadBalancer.GetNextAdapter(adapters) : (adapters.FirstOrDefault(a => a.IsEnabled) ?? adapters.FirstOrDefault());
                 if (chosenAdapter == null || !IPAddress.TryParse(chosenAdapter.Address, out var localIp))
                 {
                     byte[] badGw = Encoding.ASCII.GetBytes("HTTP/1.1 502 Bad Gateway\r\n\r\nCombiSpeed: No Network Adapters");
@@ -286,7 +290,10 @@ public class ProxyEngine : IDisposable
 
                     ArrayPool<byte>.Shared.Return(buffer);
 
-                    bool viaRotator = CurrentConfig?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
+                    bool viaRotator = CurrentConfig?.RotatingProxy?.RouteBondedTrafficThroughRotator == true 
+                                      && RotatingRouter != null 
+                                      && RotatingRouter.IsLiveConnected 
+                                      && RotatingRouter.ActiveTimedProxy != null;
                     if (viaRotator)
                     {
                         // Rotate through proxy servers until a live connection is found and connected
@@ -361,7 +368,7 @@ public class ProxyEngine : IDisposable
                     var activeAdapters = adapters.Where(a => a.IsEnabled && a.Status != AdapterStatus.Down && !string.IsNullOrWhiteSpace(a.Address)).ToList();
 
                     // Multi-NIC Parallel Range Chunk Speed Combiner: combine adapter speeds for single downloads
-                    if (method == "GET" && activeAdapters.Count >= 2 && !headerText.Contains("Range:", StringComparison.OrdinalIgnoreCase))
+                    if (combineAdapters && method == "GET" && activeAdapters.Count >= 2 && !headerText.Contains("Range:", StringComparison.OrdinalIgnoreCase))
                     {
                         var (combinedSuccess, transferred) = await TryCombinedRangeDownloadAsync(clientStream, uri, targetHost, targetPort, headerText, activeAdapters, token);
                         if (combinedSuccess)
@@ -396,7 +403,7 @@ public class ProxyEngine : IDisposable
             sw.Stop();
             Interlocked.Decrement(ref _activeConnections);
 
-            if (chosenAdapter != null && !string.IsNullOrEmpty(targetHost))
+            if (CurrentConfig?.EnableAuditLogging != false && chosenAdapter != null && !string.IsNullOrEmpty(targetHost))
             {
                 var log = new AuditLogModel
                 {
@@ -689,14 +696,18 @@ public class ProxyEngine : IDisposable
 
                 // Select target adapter
                 var adapters = _getAdapters();
-                chosenAdapter = _loadBalancer.GetNextAdapter(adapters);
+                bool combineAdapters = CurrentConfig?.CombineSpeedsMode != false && CurrentConfig?.RotatingProxy?.CombineAdaptersWithProxy != false;
+                chosenAdapter = combineAdapters ? _loadBalancer.GetNextAdapter(adapters) : (adapters.FirstOrDefault(a => a.IsEnabled) ?? adapters.FirstOrDefault());
                 if (chosenAdapter == null || !IPAddress.TryParse(chosenAdapter.Address, out var localIp))
                 {
                     await clientStream.WriteAsync(new byte[] { 0x05, 0x01, 0x00, 0x01, 0, 0, 0, 0, 0, 0 }, token);
                     return;
                 }
 
-                bool viaRotator = CurrentConfig?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
+                bool viaRotator = CurrentConfig?.RotatingProxy?.RouteBondedTrafficThroughRotator == true 
+                                  && RotatingRouter != null 
+                                  && RotatingRouter.IsLiveConnected 
+                                  && RotatingRouter.ActiveTimedProxy != null;
                 if (viaRotator)
                 {
                     int maxAttempts = Math.Min(12, Math.Max(3, RotatingRouter?.GetCandidatePool().Count ?? 1));
@@ -766,7 +777,7 @@ public class ProxyEngine : IDisposable
             sw.Stop();
             Interlocked.Decrement(ref _activeConnections);
 
-            if (chosenAdapter != null && !string.IsNullOrEmpty(targetHost))
+            if (CurrentConfig?.EnableAuditLogging != false && chosenAdapter != null && !string.IsNullOrEmpty(targetHost))
             {
                 var log = new AuditLogModel
                 {
@@ -891,8 +902,11 @@ public class ProxyEngine : IDisposable
         }
     }
 
+    public void ClearAuditLogs() => _auditLogs.Clear();
+
     private void AddAuditLog(AuditLogModel log)
     {
+        if (CurrentConfig?.EnableAuditLogging == false) return;
         _auditLogs.Enqueue(log);
         while (_auditLogs.Count > _maxLogs && _auditLogs.TryDequeue(out _)) { }
         OnAuditLog?.Invoke(log);

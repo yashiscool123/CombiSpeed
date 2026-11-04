@@ -77,6 +77,8 @@ public class RotatingProxyConfigModel
         set => _rotationIntervalSeconds = Math.Clamp(value, 5, 7200);
     }
     public bool RouteBondedTrafficThroughRotator { get; set; } = false;
+    public bool AutoRotateEnabled { get; set; } = true;
+    public bool CombineAdaptersWithProxy { get; set; } = true;
     public RotationStrategy Strategy { get; set; } = RotationStrategy.RoundRobin;
     public int StickySessionMinutes { get; set; } = 5;
     public bool StrictAnonymity { get; set; } = false;

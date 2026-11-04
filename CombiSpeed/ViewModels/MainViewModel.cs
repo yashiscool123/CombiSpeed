@@ -354,6 +354,8 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand ForceConnectSelectedOrNextCommand { get; }
     public ICommand RefreshGeoIpCommand { get; }
     public ICommand ToggleThemeCommand { get; }
+    public ICommand DisconnectProxyCommand { get; }
+    public ICommand ToggleAutoRotateCommand { get; }
 
     public SpeedTester SpeedTesterService => _speedTester;
     public LoadBalancerEngine LoadBalancerService => _loadBalancer;
@@ -390,6 +392,8 @@ public class MainViewModel : INotifyPropertyChanged
         ForceConnectSelectedOrNextCommand = new RelayCommand<HarvestedProxyModel>(async (proxy) => await ForceConnectSelectedOrNextAsync(proxy));
         RefreshGeoIpCommand = new RelayCommand(async () => await ResolveGeoIpAsync(forceRefresh: true));
         ToggleThemeCommand = new RelayCommand(() => SelectedTheme = SelectedTheme.Equals("Light", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light");
+        DisconnectProxyCommand = new RelayCommand(DisconnectCurrentProxy);
+        ToggleAutoRotateCommand = new RelayCommand(() => AutoRotateEnabled = !AutoRotateEnabled);
 
         _rotatingRouter = new RotatingProxyRouter(_proxyValidator, Config.RotatingProxy, _loadBalancer);
         _proxyEngine.RotatingRouter = _rotatingRouter;
@@ -417,6 +421,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         _rotatingProxyServer.OnLog += log =>
         {
+            if (!Config.EnableAuditLogging) return;
             Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 AuditLogs.Insert(0, new AuditLogModel { Protocol = "ROTATOR", TargetHost = log, Status = "OK", Timestamp = DateTime.Now });
@@ -536,6 +541,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         _proxyEngine.OnAuditLog += log =>
         {
+            if (!Config.EnableAuditLogging) return;
             Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 AuditLogs.Insert(0, log);
@@ -545,6 +551,7 @@ public class MainViewModel : INotifyPropertyChanged
 
         _virtualBridgeManager.OnAuditLog += log =>
         {
+            if (!Config.EnableAuditLogging) return;
             Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 AuditLogs.Insert(0, log);
@@ -697,15 +704,18 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CombinableAdaptersCountText));
         OnPropertyChanged(nameof(HasNoAdapters));
 
-        int enabledCount = Adapters.Count(a => a.IsEnabled);
-        AuditLogs.Insert(0, new AuditLogModel
+        if (Config.EnableAuditLogging)
         {
-            Protocol = "NIC-SCAN",
-            TargetHost = "All Adapters",
-            Status = $"{Adapters.Count} detected ({enabledCount} combined)",
-            Timestamp = DateTime.Now
-        });
-        while (AuditLogs.Count > 100) AuditLogs.RemoveAt(AuditLogs.Count - 1);
+            int enabledCount = Adapters.Count(a => a.IsEnabled);
+            AuditLogs.Insert(0, new AuditLogModel
+            {
+                Protocol = "NIC-SCAN",
+                TargetHost = "All Adapters",
+                Status = $"{Adapters.Count} detected ({enabledCount} combined)",
+                Timestamp = DateTime.Now
+            });
+            while (AuditLogs.Count > 100) AuditLogs.RemoveAt(AuditLogs.Count - 1);
+        }
     }
 
     private void OnAdapterWeightChanged()
@@ -937,13 +947,16 @@ public class MainViewModel : INotifyPropertyChanged
             }
             catch (Exception ex)
             {
-                AuditLogs.Insert(0, new AuditLogModel
+                if (Config.EnableAuditLogging)
                 {
-                    Protocol = "ENGINE",
-                    TargetHost = "PowerToggle",
-                    Status = $"Start Error: {ex.Message}",
-                    Timestamp = DateTime.Now
-                });
+                    AuditLogs.Insert(0, new AuditLogModel
+                    {
+                        Protocol = "ENGINE",
+                        TargetHost = "PowerToggle",
+                        Status = $"Start Error: {ex.Message}",
+                        Timestamp = DateTime.Now
+                    });
+                }
                 IsEngineRunning = _proxyEngine.IsRunning;
             }
         }
@@ -965,13 +978,16 @@ public class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            AuditLogs.Insert(0, new AuditLogModel
+            if (Config.EnableAuditLogging)
             {
-                Protocol = "BRIDGE",
-                TargetHost = $"Port {Config.VirtualBridgePort}",
-                Status = $"Toggle Error: {ex.Message}",
-                Timestamp = DateTime.Now
-            });
+                AuditLogs.Insert(0, new AuditLogModel
+                {
+                    Protocol = "BRIDGE",
+                    TargetHost = $"Port {Config.VirtualBridgePort}",
+                    Status = $"Toggle Error: {ex.Message}",
+                    Timestamp = DateTime.Now
+                });
+            }
         }
     }
 
@@ -1051,7 +1067,11 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 if (!_rotatingRouter.IsLiveConnected || _rotatingRouter.ActiveTimedProxy == null)
                 {
-                    RotationCountdownText = "⏳ Waiting for live proxy connection...";
+                    RotationCountdownText = "⏳ Waiting for live proxy connection (Direct Multi-WAN)...";
+                }
+                else if (!AutoRotateEnabled)
+                {
+                    RotationCountdownText = $"⏸ Auto-Rotation Paused (Connected to {_rotatingRouter.ActiveTimedProxy.Endpoint})";
                 }
                 else
                 {
@@ -1060,10 +1080,18 @@ public class MainViewModel : INotifyPropertyChanged
                     {
                         RotationCountdownText = $"Next rotation in {FormatRemainingTime(remaining)}";
                     }
-                    else
+                    else if (remaining == 0)
                     {
                         RotationCountdownText = "🔄 Rotating to next live proxy...";
                         _ = _rotatingRouter.CheckAutoRotationAsync();
+                    }
+                    else if (remaining == -2)
+                    {
+                        RotationCountdownText = $"⏸ Auto-Rotation Paused (Connected to {_rotatingRouter.ActiveTimedProxy.Endpoint})";
+                    }
+                    else
+                    {
+                        RotationCountdownText = "⏳ Waiting for live proxy connection...";
                     }
                 }
             }
@@ -1165,6 +1193,15 @@ public class MainViewModel : INotifyPropertyChanged
             res["ToolTipBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
             res["CyberCyan"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
             res["CyberCyanHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0369A1"));
+            res["TitleBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["StatusBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["DataGridBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["DataGridAltRow"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
+            res["BadgeBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EDF2F7"));
+            res["BadgeFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["ProgressBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E2E8F0"));
+            res["InputBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["InputFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
         }
         else
         {
@@ -1182,6 +1219,15 @@ public class MainViewModel : INotifyPropertyChanged
             res["ToolTipBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
             res["CyberCyan"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
             res["CyberCyanHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["TitleBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#060910"));
+            res["StatusBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#060910"));
+            res["DataGridBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#080C14"));
+            res["DataGridAltRow"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0B1120"));
+            res["BadgeBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
+            res["BadgeFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["ProgressBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
+            res["InputBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#080C14"));
+            res["InputFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
         }
     }
 
@@ -1214,9 +1260,86 @@ public class MainViewModel : INotifyPropertyChanged
             {
                 Config.EnableAuditLogging = value;
                 OnPropertyChanged();
-                _configStore.RequestAutoSave(Adapters, Config, ActiveProfileName);
+                OnPropertyChanged(nameof(AuditLoggingDisabledVisibility));
+
+                if (_proxyEngine.CurrentConfig != null)
+                {
+                    _proxyEngine.CurrentConfig.EnableAuditLogging = value;
+                }
+                if (_virtualBridgeManager != null)
+                {
+                    _virtualBridgeManager.EnableAuditLogging = value;
+                }
+
+                // Instantly save persistently with zero debounce
+                SaveCurrentCombinationImmediate();
+                AutoSaveStatusText = $"Audit Logging {(value ? "Enabled" : "Disabled")} (Saved)";
+
+                // When disabled, immediately stop doing the audit and clear any recorded audit logs
+                if (!value)
+                {
+                    _proxyEngine.ClearAuditLogs();
+                    AuditLogs.Clear();
+                }
             }
         }
+    }
+
+    public Visibility AuditLoggingDisabledVisibility => EnableAuditLogging ? Visibility.Collapsed : Visibility.Visible;
+
+    public bool AutoRotateEnabled
+    {
+        get => Config.RotatingProxy.AutoRotateEnabled;
+        set
+        {
+            if (Config.RotatingProxy.AutoRotateEnabled != value)
+            {
+                Config.RotatingProxy.AutoRotateEnabled = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AutoRotateToggleText));
+                OnPropertyChanged(nameof(AutoRotateToggleIcon));
+                SaveCurrentCombinationImmediate();
+                if (!value && _rotatingRouter?.ActiveTimedProxy != null)
+                {
+                    RotationCountdownText = $"⏸ Auto-Rotation Paused (Connected to {_rotatingRouter.ActiveTimedProxy.Endpoint})";
+                }
+                else if (value && _rotatingRouter?.ActiveTimedProxy != null)
+                {
+                    RotationCountdownText = $"Next rotation in {FormatRemainingTime(_rotatingRouter.SecondsUntilNextRotation)}";
+                }
+            }
+        }
+    }
+
+    public string AutoRotateToggleText => AutoRotateEnabled ? "Pause Rotation" : "Resume Rotation";
+    public string AutoRotateToggleIcon => AutoRotateEnabled ? "⏸" : "▶";
+
+    public bool CombineAdaptersWithProxy
+    {
+        get => Config.RotatingProxy.CombineAdaptersWithProxy;
+        set
+        {
+            if (Config.RotatingProxy.CombineAdaptersWithProxy != value)
+            {
+                Config.RotatingProxy.CombineAdaptersWithProxy = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ProxyModeDescription));
+                SaveCurrentCombinationImmediate();
+            }
+        }
+    }
+
+    public string ProxyModeDescription => CombineAdaptersWithProxy 
+        ? "Bonded Multi-WAN + Proxy (Speed aggregation active)" 
+        : "Proxy Only (Single Primary Adapter, Bonding bypassed)";
+
+    public void DisconnectCurrentProxy()
+    {
+        _rotatingRouter?.DisconnectProxy();
+        ActiveProxyDisplay = "None (Direct Multi-WAN Active)";
+        RotationCountdownText = "Direct Multi-WAN (Adapters Combined, No Proxy)";
+        HarvestStatusText = "Disconnected from proxy server. Routing directly through combined network adapters.";
+        _ = ResolveGeoIpAsync(forceRefresh: true);
     }
 
     public void OpenAccessibilityDialog()

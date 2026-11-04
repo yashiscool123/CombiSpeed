@@ -22,6 +22,7 @@ public class VirtualBridgeServer : IDisposable
     public bool IsRunning { get; private set; }
     public VirtualBridgeModel Model => _model;
     public BandwidthThrottler Throttler => _throttler;
+    public bool EnableAuditLogging { get; set; } = true;
 
     public event Action<AuditLogModel>? OnAuditLog;
 
@@ -283,7 +284,7 @@ public class VirtualBridgeServer : IDisposable
             Interlocked.Decrement(ref _activeStreams);
             _model.ActiveStreams = _activeStreams;
 
-            if (chosenAdapter != null && !string.IsNullOrEmpty(targetHost))
+            if (EnableAuditLogging && chosenAdapter != null && !string.IsNullOrEmpty(targetHost))
             {
                 var log = new AuditLogModel
                 {

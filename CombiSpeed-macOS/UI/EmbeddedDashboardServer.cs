@@ -208,6 +208,8 @@ public class EmbeddedDashboardServer
                     chainPhysicalAdapters = _config.RotatingProxy.ChainPhysicalAdapters,
                     strictAnonymity = _config.RotatingProxy.StrictAnonymity,
                     routeBondedTrafficThroughRotator = _config.RotatingProxy.RouteBondedTrafficThroughRotator,
+                    combineAdaptersWithProxy = _config.RotatingProxy.CombineAdaptersWithProxy,
+                    autoRotateEnabled = _config.RotatingProxy.AutoRotateEnabled,
                     rotationIntervalSeconds = _config.RotatingProxy.RotationIntervalSeconds,
                     activeTimedProxy = _rotatingServer?.Router?.ActiveTimedProxy?.Endpoint,
                     isLiveConnected = _rotatingServer?.Router?.IsLiveConnected ?? false,
@@ -367,6 +369,41 @@ public class EmbeddedDashboardServer
                 res.ContentType = "application/json";
                 res.ContentLength64 = bytes.Length;
                 await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/toggle-auto-rotate" && req.HttpMethod == "POST")
+            {
+                _config.RotatingProxy.AutoRotateEnabled = !_config.RotatingProxy.AutoRotateEnabled;
+                _storage.Save(_adapters, _config);
+                string json = JsonSerializer.Serialize(new { autoRotateEnabled = _config.RotatingProxy.AutoRotateEnabled });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/disconnect" && req.HttpMethod == "POST")
+            {
+                _rotatingServer?.Router?.DisconnectProxy();
+                string json = JsonSerializer.Serialize(new { status = "Disconnected", active = (string?)null });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/combine-with-proxy" && req.HttpMethod == "POST")
+            {
+                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
+                string body = await reader.ReadToEndAsync();
+                try
+                {
+                    var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("combine", out var cProp))
+                    {
+                        _config.RotatingProxy.CombineAdaptersWithProxy = cProp.GetBoolean();
+                        _storage.Save(_adapters, _config);
+                    }
+                }
+                catch { }
+                res.StatusCode = 200;
             }
             else if (path == "/api/rotating-proxy/pool")
             {
@@ -681,6 +718,10 @@ public class EmbeddedDashboardServer
                     if (doc.RootElement.TryGetProperty("enabled", out var enProp))
                     {
                         _config.EnableAuditLogging = enProp.GetBoolean();
+                        if (!_config.EnableAuditLogging)
+                        {
+                            _engine.ClearAuditLogs();
+                        }
                         _storage.Save(_adapters, _config);
                     }
                 }

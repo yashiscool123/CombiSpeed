@@ -5,13 +5,13 @@
         Icon="pack://application:,,,/Assets/app.ico"
         Height="680" Width="640"
         WindowStartupLocation="CenterOwner"
-        Background="#080C14"
-        Foreground="#FFFFFF"
+        Background="{DynamicResource CyberBg}"
+        Foreground="{DynamicResource TextPrimary}"
         WindowStyle="None"
         AllowsTransparency="True"
-        BorderBrush="#1E293B"
+        BorderBrush="{DynamicResource CyberBorder}"
         BorderThickness="1">
-    <Border Background="#0B1120" CornerRadius="16" BorderBrush="#1E293B" BorderThickness="1" Margin="2">
+    <Border Background="{DynamicResource CyberSurface}" CornerRadius="16" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Margin="2">
         <Grid Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -22,12 +22,12 @@
             <!-- Header -->
             <Grid Grid.Row="0" Margin="0,0,0,16">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="36" Height="36" CornerRadius="8" Background="#131D33" BorderBrush="#00F0FF" BorderThickness="1" Margin="0,0,12,0">
-                        <TextBlock Text="⚙" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00F0FF"/>
+                    <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource BadgeBg}" BorderBrush="{DynamicResource CyberCyan}" BorderThickness="1" Margin="0,0,12,0">
+                        <TextBlock Text="⚙" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource CyberCyan}"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="CombiSpeed Bonding Configuration" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
-                        <TextBlock Text="Network ports, load balancing algorithms, QoS shaper &amp; accessibility" FontSize="11" Foreground="#CBD5E1"/>
+                        <TextBlock Text="CombiSpeed Bonding Configuration" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Network ports, load balancing algorithms, QoS shaper &amp; accessibility" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
                     </StackPanel>
                 </StackPanel>
                 <Button Content="✕" Width="30" Height="30" HorizontalAlignment="Right" Click="CloseButton_Click" Style="{StaticResource CyberButton}" Padding="0" AutomationProperties.Name="Close Settings"/>
@@ -77,6 +77,11 @@
                         <TextBox x:Name="TxtBridgePort" Text="8443" Background="#080C14" Foreground="#00F0FF" BorderBrush="#334155" Padding="8,6" FontSize="12" FontFamily="Consolas" AutomationProperties.Name="Virtual Bridge Tunnel Port"/>
                         <TextBlock Text="Default: 8443 (Local virtual tunnel gateway listener)" FontSize="11" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,3,0,0"/>
                     </StackPanel>
+
+                    <!-- Connection Audit Logging -->
+                    <TextBlock Text="CONNECTION AUDIT LOGGING" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>
+                    <CheckBox x:Name="ChkEnableAuditLogging" Content="Enable Connection Audit Logging (records live socket requests and latency)" Foreground="#FFFFFF" FontSize="12" Margin="0,0,0,6" AutomationProperties.Name="Enable Connection Audit Logging Toggle"/>
+                    <TextBlock Text="Uncheck to immediately stop doing connection audits and save CPU/RAM." FontSize="11" Foreground="#CBD5E1" Margin="20,0,0,16"/>
 
                     <!-- Accessibility & Display Preferences -->
                     <TextBlock Text="ACCESSIBILITY &amp; DISPLAY (WCAG 2.1 AA)" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,0,8"/>

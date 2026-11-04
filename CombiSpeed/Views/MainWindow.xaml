@@ -51,20 +51,20 @@
             </Grid.RowDefinitions>
 
             <!-- Custom Accessible TitleBar -->
-            <Border Grid.Row="0" Background="#060910" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0,0,0,1" MouseDown="TitleBar_MouseDown" CornerRadius="12,12,0,0">
+            <Border Grid.Row="0" Background="{DynamicResource TitleBarBg}" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0,0,0,1" MouseDown="TitleBar_MouseDown" CornerRadius="12,12,0,0">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Neon Brand Logo -->
                         <Border Width="26" Height="26" CornerRadius="7" Background="#00F0FF" Margin="0,0,10,0">
                             <TextBlock Text="⚡" FontSize="15" Foreground="#040810" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock Text="COMBISPEED" FontWeight="Black" FontSize="14" Foreground="#00F0FF" VerticalAlignment="Center"/>
+                        <TextBlock Text="COMBISPEED" FontWeight="Black" FontSize="14" Foreground="{DynamicResource CyberCyan}" VerticalAlignment="Center"/>
 
                         <!-- Version Badge -->
-                        <Border Margin="10,0,0,0" Padding="6,2" CornerRadius="4" Background="#131D33" BorderBrush="#00F0FF" BorderThickness="0.5" VerticalAlignment="Center" ToolTip="Installed Release Version &amp; Build Code">
-                            <TextBlock Text="{Binding AppVersion}" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" FontFamily="Consolas"/>
+                        <Border Margin="10,0,0,0" Padding="6,2" CornerRadius="4" Background="{DynamicResource BadgeBg}" BorderBrush="{DynamicResource CyberCyan}" BorderThickness="0.5" VerticalAlignment="Center" ToolTip="Installed Release Version &amp; Build Code">
+                            <TextBlock Text="{Binding AppVersion}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource CyberCyan}" FontFamily="Consolas"/>
                         </Border>
-                        <Border Width="1" Height="14" Background="#1E293B" Margin="10,0"/>
+                        <Border Width="1" Height="14" Background="{DynamicResource CyberBorder}" Margin="10,0"/>
 
                         <!-- Engine State Indicator with Icon & Accessible Color -->
                         <Ellipse Width="9" Height="9" Margin="0,0,6,0">
@@ -109,10 +109,10 @@
                         </Border>
 
                         <!-- High Contrast Tag -->
-                        <Border Margin="6,0,0,0" Padding="6,2" CornerRadius="4" Background="#1E293B" BorderBrush="#00F0FF" BorderThickness="0.5"
+                        <Border Margin="6,0,0,0" Padding="6,2" CornerRadius="4" Background="{DynamicResource BadgeBg}" BorderBrush="{DynamicResource CyberCyan}" BorderThickness="0.5"
                                 ToolTip="High Contrast accessible color palette is active"
                                 Visibility="{Binding IsHighContrast, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Text="♿ HC: ON" FontSize="9" FontWeight="Bold" Foreground="#00F0FF"/>
+                            <TextBlock Text="♿ HC: ON" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CyberCyan}"/>
                         </Border>
                     </StackPanel>
 
@@ -196,8 +196,8 @@
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                             <TextBlock Text="MULTI-WAN CHANNEL BONDING ENGINE" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,8,0"/>
-                                            <Border Background="#1E293B" CornerRadius="4" Padding="6,1">
-                                                <TextBlock Text="{Binding Config.RoutingMode, StringFormat='{}Mode: {0}'}" FontSize="10" Foreground="#CBD5E1" FontFamily="Consolas"/>
+                                            <Border Background="{DynamicResource BadgeBg}" CornerRadius="4" Padding="6,1">
+                                                <TextBlock Text="{Binding Config.RoutingMode, StringFormat='{}Mode: {0}'}" FontSize="10" Foreground="{DynamicResource TextSecondary}" FontFamily="Consolas"/>
                                             </Border>
                                         </StackPanel>
                                         <TextBlock FontSize="22" FontWeight="Black" Foreground="{DynamicResource TextPrimary}">
@@ -274,7 +274,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Flag Icon Box -->
-                                    <Border Grid.Column="0" Width="48" Height="48" Background="#1E293B" CornerRadius="12" BorderBrush="#38BDF8" BorderThickness="1" Margin="0,0,16,0" VerticalAlignment="Center">
+                                    <Border Grid.Column="0" Width="48" Height="48" Background="{DynamicResource BadgeBg}" CornerRadius="12" BorderBrush="{DynamicResource CyberCyan}" BorderThickness="1" Margin="0,0,16,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding CurrentFlagEmoji}" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
 
@@ -704,9 +704,12 @@
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="CONNECTION AUDIT STREAM" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource CyberCyan}"/>
                                             <TextBlock Text=" (Live Network Requests, Proxy Routing &amp; Physical NIC Telemetry)" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="6,0,0,0"/>
+                                            <Border Visibility="{Binding AuditLoggingDisabledVisibility}" Background="#33EF4444" CornerRadius="4" Padding="6,2" Margin="10,0,0,0">
+                                                <TextBlock Text="AUDITING STOPPED" FontSize="10" FontWeight="Bold" Foreground="#EF4444"/>
+                                            </Border>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                            <CheckBox Content="Enable Connection Audit Logging" IsChecked="{Binding EnableAuditLogging}" Style="{StaticResource CyberCheckBox}" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Toggle live connection audit event recording to optimize memory and CPU performance" AutomationProperties.Name="Toggle Connection Audit Logging"/>
+                                            <CheckBox Content="Enable Connection Audit Logging" IsChecked="{Binding EnableAuditLogging}" Style="{StaticResource CyberCheckBox}" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Toggle live connection audit event recording to optimize memory and CPU performance. When unchecked, connection auditing stops immediately and setting is saved instantly." AutomationProperties.Name="Toggle Connection Audit Logging"/>
                                             <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}" Style="{StaticResource CyberButton}" Padding="12,4" FontSize="11" ToolTip="Clear all recorded connection audit events from the table" AutomationProperties.Name="Clear Connection Audit Logs"/>
                                         </StackPanel>
                                     </Grid>
@@ -748,12 +751,12 @@
                                     <StackPanel Grid.Column="0">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                             <TextBlock Text="AUTOMATED ROTATING PROXY HARVESTER &amp; DISPATCHER" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,8,0"/>
-                                            <Border Background="#1E293B" CornerRadius="4" Padding="6,1" ToolTip="Local listening port for client applications">
-                                                <TextBlock Text="{Binding RotatingProxyPort, StringFormat='{}Port: {0}'}" FontSize="10" Foreground="#38BDF8" FontFamily="Consolas"/>
+                                            <Border Background="{DynamicResource BadgeBg}" CornerRadius="4" Padding="6,1" ToolTip="Local listening port for client applications">
+                                                <TextBlock Text="{Binding RotatingProxyPort, StringFormat='{}Port: {0}'}" FontSize="10" Foreground="{DynamicResource BadgeFg}" FontFamily="Consolas"/>
                                             </Border>
                                         </StackPanel>
                                         <TextBlock Text="Double-Layer Multi-NIC Egress &amp; Open-Source Harvester" FontSize="20" FontWeight="Black" Foreground="{DynamicResource TextPrimary}"/>
-                                        <TextBlock Text="Harvests live proxies from curated open-source feeds &amp; custom URLs, validates health &amp; anonymity, and rotates upstream requests across local physical network adapters." FontSize="12" Foreground="#CBD5E1" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Harvests live proxies from curated open-source feeds &amp; custom URLs, validates health &amp; anonymity, and rotates upstream requests across local physical network adapters." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
                                     </StackPanel>
 
                                     <!-- Action Buttons -->
@@ -838,8 +841,8 @@
 
                                     <!-- Status message / Progress -->
                                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="10,0">
-                                        <TextBlock Text="{Binding HarvestStatusText}" FontSize="11" Foreground="#38BDF8" TextTrimming="CharacterEllipsis"/>
-                                        <ProgressBar Value="{Binding HarvestProgress}" Maximum="100" Height="4" Margin="0,4,0,0" Background="#1E293B" Foreground="#00F0FF" Visibility="{Binding IsHarvestingOrValidating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="{Binding HarvestStatusText}" FontSize="11" Foreground="{DynamicResource CyberCyan}" TextTrimming="CharacterEllipsis"/>
+                                        <ProgressBar Value="{Binding HarvestProgress}" Maximum="100" Height="4" Margin="0,4,0,0" Background="{DynamicResource ProgressBarBg}" Foreground="{DynamicResource CyberCyan}" Visibility="{Binding IsHarvestingOrValidating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     </StackPanel>
 
                                     <!-- Toggles: Multi-NIC Chaining, Strict Anonymity & Periodic Auto Timers -->
@@ -937,43 +940,57 @@
                                     </Border>
 
                                     <!-- Proxy Selection & Timely Rotation Action Bar -->
-                                    <Border Background="#0D1527" CornerRadius="8" BorderBrush="#00F0FF" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
+                                    <Border Background="{DynamicResource CyberCard}" CornerRadius="8" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="10,8" Margin="0,0,0,10">
                                         <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
 
-                                            <!-- Selection & Force Connect Buttons -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="☑ SELECTION:" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <Button Content="Select All" Command="{Binding SelectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Select all proxies in view to participate in rotation"/>
-                                                <Button Content="Deselect All" Command="{Binding DeselectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Uncheck all proxies so none are flagged for rotation"/>
-                                                <Button Content="Select Fast (≤300ms)" Command="{Binding SelectFastProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Automatically select all healthy proxies with response times under 300ms"/>
-                                                <Button Content="⚡ Rotate Now" Command="{Binding ForceRotateCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Immediately rotates to the next proxy server in the pool, tests internet accessibility with a 10s threshold, and waits for configured interval once verified"/>
-                                                <Button Content="🎯 Force Connect" Command="{Binding ForceConnectSelectedOrNextCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="8,4" FontSize="11" ToolTip="Forcefully connects immediately to the selected or next proxy, tests internet accessibility (10s threshold), and auto-rotates if internet is unreachable"/>
-                                            </StackPanel>
+                                            <!-- Top Row: Selection, Action Buttons, Interval -->
+                                            <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,8">
+                                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                                    <TextBlock Text="☑ SELECTION:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource CyberCyan}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                    <Button Content="Select All" Command="{Binding SelectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Select all proxies in view to participate in rotation"/>
+                                                    <Button Content="Deselect All" Command="{Binding DeselectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Uncheck all proxies so none are flagged for rotation"/>
+                                                    <Button Content="Select Fast (≤300ms)" Command="{Binding SelectFastProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Automatically select all healthy proxies with response times under 300ms"/>
+                                                    <Button Content="⚡ Rotate Now" Command="{Binding ForceRotateCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Immediately rotates to the next proxy server in the pool, tests internet accessibility with a 10s threshold, and waits for configured interval once verified"/>
+                                                    <Button Content="🎯 Force Connect" Command="{Binding ForceConnectSelectedOrNextCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Forcefully connects immediately to the selected or next proxy, tests internet accessibility (10s threshold), and auto-rotates if internet is unreachable"/>
+                                                    <Button Command="{Binding ToggleAutoRotateCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Pause or resume automatic interval rotation while remaining connected to the currently selected proxy server" AutomationProperties.Name="Toggle Auto-Rotation">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding AutoRotateToggleIcon}" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="{Binding AutoRotateToggleText}" FontWeight="SemiBold"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Content="🔌 Disconnect Proxy" Command="{Binding DisconnectProxyCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" Foreground="{DynamicResource CyberRose}" BorderBrush="{DynamicResource CyberRose}" ToolTip="Disconnect from proxy server and route traffic directly through combined Multi-WAN network adapters" AutomationProperties.Name="Disconnect Proxy"/>
+                                                </StackPanel>
 
-                                            <!-- Current Selection Summary & Countdown -->
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" ToolTip="Count of healthy proxies selected to participate in rotation">
-                                                    <TextBlock Text="{Binding SelectedProxiesCountText}" FontSize="11" FontWeight="Bold" Foreground="#10B981"/>
-                                                </Border>
-                                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2" ToolTip="Time remaining until the next automatic proxy server rotation">
-                                                    <TextBlock Text="{Binding RotationCountdownText}" FontSize="11" FontFamily="Consolas" Foreground="#F59E0B"/>
-                                                </Border>
-                                            </StackPanel>
+                                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                                                    <TextBlock Text="⏱ Interval:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                    <ComboBox ItemsSource="{Binding RotationIntervalOptions}" SelectedValue="{Binding RotationIntervalSeconds}" SelectedValuePath="Seconds" DisplayMemberPath="Label" Width="82" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Timed rotation interval (up to 2 hours): automatically switches to the next live proxy when expired"/>
+                                                </StackPanel>
+                                            </DockPanel>
 
-                                            <!-- Interval Selector -->
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="⏱ Interval:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <ComboBox ItemsSource="{Binding RotationIntervalOptions}" SelectedValue="{Binding RotationIntervalSeconds}" SelectedValuePath="Seconds" DisplayMemberPath="Label" Width="82" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Timed rotation interval (up to 2 hours): automatically switches to the next live proxy when expired"/>
-                                            </StackPanel>
+                                            <!-- Bottom Row: Bonding vs Proxy Only toggle & Live Status badges -->
+                                            <DockPanel Grid.Row="1" LastChildFill="False">
+                                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                                    <CheckBox Content="Combine Adapters with Proxy" IsChecked="{Binding CombineAdaptersWithProxy}" Style="{StaticResource CyberCheckBox}" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="When checked, multiplexes proxy connections across all combined network adapters. When unchecked, routes proxy traffic through a single physical adapter without combining adapter speeds." AutomationProperties.Name="Combine Adapters with Proxy Toggle"/>
+                                                    <TextBlock Text="{Binding ProxyModeDescription}" FontSize="11" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+
+                                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                                                    <Border Background="{DynamicResource BadgeBg}" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" ToolTip="Count of healthy proxies selected to participate in rotation">
+                                                        <TextBlock Text="{Binding SelectedProxiesCountText}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource CyberEmerald}"/>
+                                                    </Border>
+                                                    <Border Background="{DynamicResource BadgeBg}" CornerRadius="4" Padding="6,2" ToolTip="Time remaining until the next automatic proxy server rotation">
+                                                        <TextBlock Text="{Binding RotationCountdownText}" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource CyberAmber}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </DockPanel>
                                         </Grid>
                                     </Border>
 
-                                    <DataGrid ItemsSource="{Binding HarvestedProxies}" SelectedItem="{Binding SelectedProxyRow, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="False" CanUserSortColumns="True" Height="360" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" ToolTip="Harvested and validated proxy servers. Select rows and click Connect or Rotate Now to dispatch traffic." AutomationProperties.Name="Harvested Proxies Table">
+                                    <DataGrid ItemsSource="{Binding HarvestedProxies}" SelectedItem="{Binding SelectedProxyRow, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="False" CanUserSortColumns="True" Height="360" Background="{DynamicResource DataGridBg}" BorderBrush="{DynamicResource CyberBorder}" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="{DynamicResource DataGridAltRow}" Foreground="{DynamicResource TextPrimary}" HeadersVisibility="Column" ToolTip="Harvested and validated proxy servers. Select rows and click Connect or Rotate Now to dispatch traffic." AutomationProperties.Name="Harvested Proxies Table">
                                         <DataGrid.Columns>
                                             <DataGridTemplateColumn Header="USE" Width="45">
                                                 <DataGridTemplateColumn.CellTemplate>
@@ -1016,24 +1033,24 @@
             </TabControl>
 
             <!-- Pinned Accessible Glass Footer Status Bar -->
-            <Border Grid.Row="2" Background="#060910" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0,1,0,0" CornerRadius="0,0,12,12" Padding="16,0">
+            <Border Grid.Row="2" Background="{DynamicResource StatusBarBg}" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0,1,0,0" CornerRadius="0,0,12,12" Padding="16,0">
                 <Grid VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="⚡ COMBISPEED" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" FontFamily="Consolas"/>
-                        <TextBlock Text="  •  " FontSize="10" Foreground="#38BDF8"/>
-                        <Border Padding="6,1" CornerRadius="3" Background="#131D33" BorderBrush="#00F0FF" BorderThickness="0.5" Margin="0,0,10,0" ToolTip="Current Version &amp; Build">
-                            <TextBlock Text="{Binding AppVersionFull}" FontSize="9" FontWeight="Bold" Foreground="#38BDF8" FontFamily="Consolas"/>
+                        <TextBlock Text="⚡ COMBISPEED" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource CyberCyan}" FontFamily="Consolas"/>
+                        <TextBlock Text="  •  " FontSize="10" Foreground="{DynamicResource CyberCyanHover}"/>
+                        <Border Padding="6,1" CornerRadius="3" Background="{DynamicResource BadgeBg}" BorderBrush="{DynamicResource CyberCyan}" BorderThickness="0.5" Margin="0,0,10,0" ToolTip="Current Version &amp; Build">
+                            <TextBlock Text="{Binding AppVersionFull}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CyberCyanHover}" FontFamily="Consolas"/>
                         </Border>
-                        <TextBlock Text="Multi-WAN Channel Bonding &amp; Bandwidth Aggregation Engine" FontSize="10" Foreground="#F1F5F9"/>
+                        <TextBlock Text="Multi-WAN Channel Bonding &amp; Bandwidth Aggregation Engine" FontSize="10" Foreground="{DynamicResource TextSecondary}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <!-- Accessibility Status Pill -->
-                        <Border Margin="0,0,12,0" Padding="6,1" CornerRadius="3" Background="#131D33" BorderBrush="#00F0FF" BorderThickness="0.5" ToolTip="Active Accessibility Scale">
-                            <TextBlock Text="{Binding UiScale, Converter={StaticResource ScaleToPercentStringConverter}, StringFormat='{}♿ Scale: {0}'}" FontSize="9" FontWeight="Bold" Foreground="#00F0FF" FontFamily="Consolas"/>
+                        <Border Margin="0,0,12,0" Padding="6,1" CornerRadius="3" Background="{DynamicResource BadgeBg}" BorderBrush="{DynamicResource CyberCyan}" BorderThickness="0.5" ToolTip="Active Accessibility Scale">
+                            <TextBlock Text="{Binding UiScale, Converter={StaticResource ScaleToPercentStringConverter}, StringFormat='{}♿ Scale: {0}'}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CyberCyan}" FontFamily="Consolas"/>
                         </Border>
 
-                        <TextBlock Text="{Binding AutoSaveStatusText, StringFormat='{}Auto-Sync: {0}'}" FontSize="10" Foreground="#34D399" Margin="0,0,16,0"/>
-                        <TextBlock Text="Windows x64 (.NET 8.0)" FontSize="10" Foreground="#CBD5E1" FontFamily="Consolas"/>
+                        <TextBlock Text="{Binding AutoSaveStatusText, StringFormat='{}Auto-Sync: {0}'}" FontSize="10" Foreground="#10B981" Margin="0,0,16,0"/>
+                        <TextBlock Text="Windows x64 (.NET 8.0)" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="Consolas"/>
                     </StackPanel>
                 </Grid>
             </Border>

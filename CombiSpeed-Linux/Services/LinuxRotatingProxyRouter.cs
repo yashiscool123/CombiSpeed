@@ -33,10 +33,24 @@ public class LinuxRotatingProxyRouter
         {
             if (_config.Strategy != RotationStrategy.TimeBasedInterval) return 0;
             if (!_isLiveConnected || _activeTimedProxy == null) return -1;
+            if (!_config.AutoRotateEnabled) return -2; // -2: Paused while keeping connection active
             int intervalSec = Math.Clamp(_config.RotationIntervalSeconds, 5, 7200);
             var elapsed = (DateTime.UtcNow - _lastTimedRotation).TotalSeconds;
             return Math.Max(0, (int)(intervalSec - elapsed));
         }
+    }
+
+    /// <summary>
+    /// Disconnects from the proxy server, switching all traffic back to direct multi-WAN adapter bonding.
+    /// </summary>
+    public void DisconnectProxy()
+    {
+        lock (_timeRotationLock)
+        {
+            _activeTimedProxy = null;
+            _isLiveConnected = false;
+        }
+        OnTimedRotation?.Invoke(null);
     }
 
     public long TotalRotatedRequests;
@@ -79,6 +93,7 @@ public class LinuxRotatingProxyRouter
     public async Task CheckAutoRotationAsync(CancellationToken ct = default)
     {
         if (_config.Strategy != RotationStrategy.TimeBasedInterval) return;
+        if (!_config.AutoRotateEnabled) return; // Rotation paused
         if (!_isLiveConnected || _activeTimedProxy == null || _isAutoRotating) return;
 
         if (SecondsUntilNextRotation == 0)
@@ -389,17 +404,19 @@ public class LinuxRotatingProxyRouter
 
         if (_config.Strategy == RotationStrategy.TimeBasedInterval)
         {
-            var now = DateTime.UtcNow;
-            int intervalSec = Math.Max(5, _config.RotationIntervalSeconds);
             lock (_timeRotationLock)
             {
-                if (_activeTimedProxy == null || !_activeTimedProxy.IsHealthy || (now - _lastTimedRotation) >= TimeSpan.FromSeconds(intervalSec) || !pool.Contains(_activeTimedProxy))
+                if (_activeTimedProxy != null && _activeTimedProxy.IsHealthy && pool.Contains(_activeTimedProxy))
                 {
-                    _activeTimedProxy = PickRoundRobin(pool);
-                    _lastTimedRotation = now;
+                    return _activeTimedProxy;
+                }
+                _activeTimedProxy = PickRoundRobin(pool);
+                _lastTimedRotation = DateTime.UtcNow;
+                if (_activeTimedProxy != null)
+                {
                     OnTimedRotation?.Invoke(_activeTimedProxy);
                 }
-                return _activeTimedProxy ?? PickRoundRobin(pool);
+                return _activeTimedProxy;
             }
         }
 

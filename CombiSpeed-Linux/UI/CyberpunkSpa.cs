@@ -38,42 +38,107 @@ public static class CyberpunkSpa
 
         body.light-theme {
             --bg-dark: #F1F5F9;
+            --surface: #FFFFFF;
             --card-bg: #FFFFFF;
             --card-border: #CBD5E1;
+            --border: #CBD5E1;
             --cyan: #0284C7;
             --purple: #7C3AED;
             --emerald: #059669;
+            --green: #059669;
             --amber: #D97706;
             --red: #DC2626;
             --text-high: #0F172A;
-            --text-mid: #334155;
-            --text-muted: #64748B;
+            --text-mid: #1E293B;
+            --text-muted: #475569;
         }
         body.light-theme header {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
+            border-bottom: 1px solid #CBD5E1;
         }
         body.light-theme .shaper-card,
         body.light-theme .metric-card,
         body.light-theme .adapter-card,
         body.light-theme .bridge-card,
         body.light-theme .modal-card {
+            background: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
         }
+        body.light-theme .btn-cyber {
+            background: #FFFFFF !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
+        }
+        body.light-theme .btn-cyber:hover {
+            background: #F1F5F9 !important;
+            border-color: #0284C7 !important;
+            color: #0284C7 !important;
+        }
+        body.light-theme .tab-btn {
+            background: #E2E8F0 !important;
+            color: #334155 !important;
+            border-color: #CBD5E1 !important;
+        }
+        body.light-theme .tab-btn.active {
+            background: #FFFFFF !important;
+            color: #0284C7 !important;
+            border-color: #0284C7 !important;
+        }
+        body.light-theme .chart-container {
+            background: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+        }
+        body.light-theme .speedometer {
+            background: #F8FAFC !important;
+            border-color: #CBD5E1 !important;
+        }
+        body.light-theme .adapter-header,
+        body.light-theme .adapter-body {
+            background: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+        }
+        body.light-theme .audit-table {
+            background: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+        }
         body.light-theme .audit-table th {
-            background: #E2E8F0;
-            color: #0284C7;
+            background: #F1F5F9 !important;
+            color: #0284C7 !important;
+            border-bottom: 2px solid #CBD5E1 !important;
         }
         body.light-theme .audit-table td {
-            border-bottom: 1px solid #E2E8F0;
+            background: transparent;
+            color: #0F172A !important;
+            border-bottom: 1px solid #E2E8F0 !important;
         }
         body.light-theme .audit-table tr:hover {
-            background: #F8FAFC;
+            background: #F8FAFC !important;
         }
         body.light-theme .select-dark,
         body.light-theme .select-cyber {
             background: #FFFFFF !important;
             color: #0F172A !important;
             border-color: #CBD5E1 !important;
+        }
+        body.light-theme input[type="text"],
+        body.light-theme input[type="number"] {
+            background: #FFFFFF !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
+        }
+        body.light-theme .badge {
+            background: #EDF2F7 !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
+        }
+        body.light-theme [style*="background: rgba(0,0,0"],
+        body.light-theme [style*="background: #0b1120"],
+        body.light-theme [style*="background: #080C14"],
+        body.light-theme [style*="background: #131D33"] {
+            background: #F8FAFC !important;
+            border-color: #CBD5E1 !important;
+            color: #0F172A !important;
         }
 
         body.reduce-motion * {
@@ -708,7 +773,7 @@ public static class CyberpunkSpa
                     <span style="font-size: 13px; font-weight: 700; color: var(--cyan);">LIVE CONNECTION AUDIT STREAM</span>
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: var(--text-mid);">
-                            <input type="checkbox" id="chkEnableAudit" checked onchange="toggleAuditLogging(this.checked)"> Enable Connection Audit Logging
+                            <input type="checkbox" id="chkEnableAudit" checked onchange="toggleAuditLogging(this.checked)" title="Toggle live connection audit event recording to optimize memory and CPU performance. When unchecked, connection auditing stops immediately and setting is saved instantly."> Enable Connection Audit Logging
                         </label>
                         <button class="btn-cyber" onclick="clearAudit()">Clear Log</button>
                     </div>
@@ -851,6 +916,9 @@ public static class CyberpunkSpa
                     <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="selectFastProxies()" title="Automatically select all healthy proxies with response times under 300ms">Select Fast (≤300ms)</button>
                     <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="forceRotateNow()" title="Immediately rotates to next proxy server, tests internet accessibility with a 10s threshold, and waits for configured interval once verified">⚡ Rotate Now</button>
                     <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="forceConnectSelectedOrNext()" title="Forcefully connects to the selected or next proxy, tests internet accessibility (10s threshold), and auto-rotates if internet is unreachable">🎯 Force Connect</button>
+                    <button id="btnToggleAutoRotate" class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="toggleAutoRotate()" title="Pause or resume automatic interval rotation while remaining connected to the currently selected proxy server">⏸ Pause Rotation</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px; border-color: var(--red); color: var(--red);" onclick="disconnectProxy()" title="Disconnect from proxy server and route traffic directly through combined Multi-WAN network adapters">🔌 Disconnect</button>
+                    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-mid); cursor: pointer;"><input type="checkbox" id="chkCombineWithProxy" checked onchange="toggleCombineWithProxy(this.checked)" title="When checked, multiplexes proxy connections across all combined network adapters. When unchecked, routes proxy traffic through single adapter without combining adapter speeds."> Combine Adapters with Proxy</label>
 
                     <span id="selectionSummaryPill" class="badge" style="background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green); margin-left: auto;" title="Count of healthy proxies selected to participate in rotation">Selected: 0 healthy</span>
                     <span id="rotationCountdownBadge" class="badge" style="background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber);" title="Time remaining until the next automatic proxy server rotation">⏳ Waiting for live proxy connection...</span>
@@ -1078,6 +1146,10 @@ public static class CyberpunkSpa
 
         function toggleAuditLogging(val) {
             fetch('/api/settings/audit-logging', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ enabled: val }) });
+            if (!val) {
+                const tbody = document.getElementById('auditRows');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: var(--red); padding: 24px; font-weight: 600;">● Connection audit logging is disabled (Auditing stopped)</td></tr>';
+            }
         }
 
         async function togglePower() {
@@ -1315,7 +1387,14 @@ public static class CyberpunkSpa
         }
 
         function renderAudit(logs) {
+            const chk = document.getElementById('chkEnableAudit');
+            if (chk && !chk.checked) return;
             const tbody = document.getElementById('auditRows');
+            if (!tbody) return;
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: var(--text-muted); padding: 20px;">No audit events recorded</td></tr>';
+                return;
+            }
             let html = '';
             logs.slice(0, 25).forEach(l => {
                 const isOk = l.IsSuccess !== false && (!l.Status || l.Status === 'Completed' || l.Status === 'OK');
@@ -1425,14 +1504,29 @@ public static class CyberpunkSpa
                 if (document.getElementById('selectionSummaryPill')) {
                     document.getElementById('selectionSummaryPill').innerText = 'Selected: ' + (st.selectedCount || 0) + ' healthy';
                 }
+                if (st.autoRotateEnabled !== undefined) {
+                    currentAutoRotateEnabled = !!st.autoRotateEnabled;
+                    const btnToggle = document.getElementById('btnToggleAutoRotate');
+                    if (btnToggle) btnToggle.innerText = currentAutoRotateEnabled ? '⏸ Pause Rotation' : '▶ Resume Rotation';
+                }
+                if (st.combineAdaptersWithProxy !== undefined) {
+                    const chkCombine = document.getElementById('chkCombineWithProxy');
+                    if (chkCombine) chkCombine.checked = !!st.combineAdaptersWithProxy;
+                }
+                currentActiveProxy = st.activeProxy || '';
+
                 if (document.getElementById('rotationCountdownBadge')) {
                     const badge = document.getElementById('rotationCountdownBadge');
                     currentIsLiveConnected = !!st.isLiveConnected;
                     currentSecondsRemaining = st.secondsUntilNextRotation !== undefined ? st.secondsUntilNextRotation : -1;
-                    if (!currentIsLiveConnected || currentSecondsRemaining < 0) {
+                    if (!currentIsLiveConnected) {
                         badge.innerText = '⏳ Waiting for live proxy connection...';
                         badge.style.color = 'var(--text-muted)';
                         badge.style.borderColor = 'var(--text-muted)';
+                    } else if (currentSecondsRemaining === -2 || !currentAutoRotateEnabled) {
+                        badge.innerText = '⏸ Auto-Rotation Paused (Connected to ' + (currentActiveProxy || 'Proxy') + ')';
+                        badge.style.color = 'var(--cyan)';
+                        badge.style.borderColor = 'var(--cyan)';
                     } else if (currentSecondsRemaining > 0) {
                         badge.innerText = 'Next rotation in ' + formatRemainingTime(currentSecondsRemaining);
                         badge.style.color = 'var(--amber)';
@@ -1676,6 +1770,34 @@ public static class CyberpunkSpa
             fetchRotator();
         }
 
+        async function toggleAutoRotate() {
+            try {
+                const res = await fetch('/api/rotating-proxy/toggle-auto-rotate', { method: 'POST' });
+                const data = await res.json();
+                fetchRotator();
+            } catch(e) {}
+        }
+
+        async function disconnectProxy() {
+            try {
+                const res = await fetch('/api/rotating-proxy/disconnect', { method: 'POST' });
+                const data = await res.json();
+                fetchRotator();
+                fetchGeoIp(true);
+            } catch(e) {}
+        }
+
+        async function toggleCombineWithProxy(val) {
+            try {
+                await fetch('/api/rotating-proxy/combine-with-proxy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: val })
+                });
+                fetchRotator();
+            } catch(e) {}
+        }
+
         async function fetchGeoIp(force = false) {
             try {
                 const res = await fetch('/api/geoip');
@@ -1782,10 +1904,14 @@ public static class CyberpunkSpa
             setInterval(() => {
                 const badge = document.getElementById('rotationCountdownBadge');
                 if (badge) {
-                    if (!currentIsLiveConnected || currentSecondsRemaining < 0) {
+                    if (!currentIsLiveConnected) {
                         badge.innerText = '⏳ Waiting for live proxy connection...';
                         badge.style.color = 'var(--text-muted)';
                         badge.style.borderColor = 'var(--text-muted)';
+                    } else if (currentSecondsRemaining === -2 || !currentAutoRotateEnabled) {
+                        badge.innerText = '⏸ Auto-Rotation Paused (Connected to ' + (currentActiveProxy || 'Proxy') + ')';
+                        badge.style.color = 'var(--cyan)';
+                        badge.style.borderColor = 'var(--cyan)';
                     } else if (currentSecondsRemaining > 0) {
                         currentSecondsRemaining--;
                         badge.innerText = 'Next rotation in ' + formatRemainingTime(currentSecondsRemaining);
@@ -1803,6 +1929,8 @@ public static class CyberpunkSpa
 
         let currentIsLiveConnected = false;
         let currentSecondsRemaining = -1;
+        let currentAutoRotateEnabled = true;
+        let currentActiveProxy = '';
 
         function formatRemainingTime(totalSeconds) {
             if (totalSeconds < 0) return '⏳ Waiting for live proxy connection...';

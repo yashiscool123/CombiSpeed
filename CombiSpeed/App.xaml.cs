@@ -176,7 +176,18 @@ public partial class App : Application
                 if (System.IO.File.Exists(tempPac)) System.IO.File.Delete(tempPac);
                 Console.WriteLine("[PASS] PAC file generation and export verification passed (FindProxyForURL verified).");
 
-                // Test 7: Combined Adapters Rescan & Discovery Verification
+                // Test 7: Audit Logging Instant Persistence & Halting Verification
+                config.EnableAuditLogging = false;
+                store2.SaveImmediate(freshAdapters, config, "Audit Off Profile");
+                var store4 = new ConfigurationStore();
+                var loaded4 = store4.Load();
+                if (loaded4.Config.EnableAuditLogging != false)
+                {
+                    throw new Exception("EnableAuditLogging false persistence verification failed!");
+                }
+                Console.WriteLine("[PASS] EnableAuditLogging instant persistence verified: EnableAuditLogging=False saved & loaded.");
+
+                // Test 8: Combined Adapters Rescan & Discovery Verification
                 Exception? vmEx = null;
                 var staThreadVm = new Thread(() =>
                 {
@@ -193,6 +204,13 @@ public partial class App : Application
                             throw new Exception("CombinableAdaptersCountText was not populated during RefreshAdapters.");
                         }
                         Console.WriteLine($"[PASS] Combined Adapters Rescan verified: '{vm.CombinableAdaptersCountText}' (HasNoAdapters={vm.HasNoAdapters}).");
+
+                        vm.EnableAuditLogging = false;
+                        if (vm.AuditLoggingDisabledVisibility != Visibility.Visible || vm.AuditLogs.Count != 0)
+                        {
+                            throw new Exception("Disabling EnableAuditLogging should set AuditLoggingDisabledVisibility=Visible and clear AuditLogs!");
+                        }
+                        Console.WriteLine("[PASS] ViewModel EnableAuditLogging disabling instantly halts audit, updates visibility badge and clears logs.");
                     }
                     catch (Exception ex)
                     {
