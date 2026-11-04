@@ -542,6 +542,30 @@
                     "progress": "Milestone 29 completed successfully with 100% verification and clean packaging."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-030",
+            "userQuery": "1) Upon Rotating the Proxy Server URL, the application should continue to rotate proxy servers until it find a live connection and successfully connects to it.\n2) Apart from the timely rotation of the proxy server connections, create another button that will forcefully connect to a specific selected proxy server or the next proxy server in the list.\n3) Create a tooltip for each key button / label explaining what they do and how they function.",
+            "status": "completed",
+            "createdAt": "2026-11-04T12:33:30+05:30",
+            "updatedAt": "2026-11-04T13:16:00+05:30",
+            "progress": "Delivered Milestone 30: Live Connection Auto-Rotation Retry, Force Connect to Selected/Next Proxy, and comprehensive explanatory tooltips across Windows, Linux, and macOS. Implemented ProbeLiveConnectionAsync with sub-second TCP SYN probing and deterministic cleanup; implemented auto-advancing live retry loops in ProxyEngine, LinuxProxyEngine, and MacProxyEngine for HTTP CONNECT and SOCKS5 tunnels with automatic eviction of dead nodes. Implemented ForceConnectToLiveProxyAsync in RotatingProxyRouter and exposed via 🎯 Force Connect toolbar button and per-row Connect actions in Windows WPF DataGrid and Linux/macOS Web SPAs (/api/rotating-proxy/force-connect). Added rich, accessible, descriptive ToolTip attributes to all key buttons, labels, sliders, cards, checkboxes, and toggles across MainWindow.xaml and CyberpunkSpa.cs. Verified all 11 phases of --verify-rotator, --verify-persistence, and --verify-throttling with 100% pass rate. Published standalone v2.2.2 release packages across Windows, Linux, and macOS.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3001",
+                    "timestamp": "2026-11-04T12:34:00+05:30",
+                    "inputs": "User requested: 1) continue rotating proxy servers until a live connection is found and connected; 2) forceful connect button for a specific selected proxy or next in list; 3) tooltips for all key buttons and labels.",
+                    "outputs": "Planning live probe retry rotation in RotatingProxyRouter and ProxyEngine, ForceConnectSelectedOrNext command and UI button, and rich accessible tooltips across MainWindow.xaml and CyberpunkSpa.cs.",
+                    "progress": "Architecture and design planning completed."
+                },
+                {
+                    "checkpointId": "CP-3002",
+                    "timestamp": "2026-11-04T13:16:00+05:30",
+                    "inputs": "Implementation, cross-platform testing, release packaging, and documentation synchronization.",
+                    "outputs": "Implemented ProbeLiveConnectionAsync, ForceConnectToLiveProxyAsync, live retry loops in ProxyEngine, ForceConnectSelectedOrNextCommand in MainViewModel, SelectedProxyRow binding and Connect column in DataGrid, CyberpunkSpa toolbar and per-row Connect buttons with REST endpoints, comprehensive tooltips on all controls, verified --verify-rotator (11/11 tests PASS), published v2.2.2 binaries and archives, updated ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md.",
+                    "progress": "Milestone 30 completed successfully with 100% verification and clean packaging."
+                }
+            ]
         }
     ]
 }

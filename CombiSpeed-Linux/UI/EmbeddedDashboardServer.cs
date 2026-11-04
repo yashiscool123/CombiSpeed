@@ -308,9 +308,47 @@ public class EmbeddedDashboardServer
             }
             else if (path == "/api/rotating-proxy/rotate-now" && req.HttpMethod == "POST")
             {
-                _rotatingServer?.Router?.ForceRotate();
-                var active = _rotatingServer?.Router?.ActiveTimedProxy;
-                string json = JsonSerializer.Serialize(new { status = "Rotated", active = active?.Endpoint, country = active?.CountryCode });
+                var live = await (_rotatingServer?.Router?.ForceConnectToLiveProxyAsync(null) ?? Task.FromResult<HarvestedProxyModel?>(null));
+                string json = JsonSerializer.Serialize(new { status = live != null ? "Rotated & Connected" : "Rotated (No live response)", active = live?.Endpoint, country = live?.CountryCode, flag = live?.FlagEmoji });
+                byte[] bytes = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json";
+                res.ContentLength64 = bytes.Length;
+                await res.OutputStream.WriteAsync(bytes);
+            }
+            else if (path == "/api/rotating-proxy/force-connect" && req.HttpMethod == "POST")
+            {
+                HarvestedProxyModel? preferred = null;
+                using var reader = new StreamReader(req.InputStream, req.ContentEncoding);
+                string body = await reader.ReadToEndAsync();
+                if (!string.IsNullOrWhiteSpace(body))
+                {
+                    try
+                    {
+                        var doc = JsonDocument.Parse(body);
+                        if (doc.RootElement.TryGetProperty("endpoint", out var epProp))
+                        {
+                            string ep = epProp.GetString() ?? "";
+                            preferred = _validator?.AllProxies.FirstOrDefault(p => p.Endpoint.Equals(ep, StringComparison.OrdinalIgnoreCase));
+                        }
+                    }
+                    catch { }
+                }
+
+                var live = await (_rotatingServer?.Router?.ForceConnectToLiveProxyAsync(preferred) ?? Task.FromResult<HarvestedProxyModel?>(null));
+                if (live != null)
+                {
+                    _config.RotatingProxy.RouteBondedTrafficThroughRotator = true;
+                    _storage.Save(_adapters, _config);
+                }
+
+                string json = JsonSerializer.Serialize(new
+                {
+                    success = live != null,
+                    status = live != null ? $"Connected to {live.Endpoint}" : "Failed to establish live connection",
+                    active = live?.Endpoint,
+                    country = live?.CountryCode,
+                    flag = live?.FlagEmoji
+                });
                 byte[] bytes = Encoding.UTF8.GetBytes(json);
                 res.ContentType = "application/json";
                 res.ContentLength64 = bytes.Length;

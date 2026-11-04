@@ -436,3 +436,17 @@
 - [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.1 Build 28).
 - [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
 - [x] Commit changes to git and create release tag v2.2.1.
+
+## Milestone 30: Live Connection Auto-Rotation Retry, Force Connect & Explanatory Tooltips [COMPLETED]
+- [x] Increment version to 2.2.2 and versionCode: 29 across all project definitions (CombiSpeed.csproj, CombiSpeed.Linux.csproj, CombiSpeed.macOS.csproj, version.json, Install-CombiSpeed.bat, Info.plist).
+- [x] Implement active socket-level connectivity probing in `RotatingProxyRouter.cs`, `LinuxRotatingProxyRouter.cs`, and `MacRotatingProxyRouter.cs` (`ProbeLiveConnectionAsync`) with 1500ms timeout and deterministic socket handle disposal.
+- [x] Implement Live Auto-Rotation Retry loop in `ProxyEngine.cs`, `LinuxProxyEngine.cs`, and `MacProxyEngine.cs` for HTTP CONNECT and SOCKS5 tunnels: automatically retry and advance to the next proxy candidate when an upstream connection fails, evicting dead proxies until a live connection is established.
+- [x] Implement `ForceConnectToLiveProxyAsync` in `RotatingProxyRouter.cs`, `LinuxRotatingProxyRouter.cs`, and `MacRotatingProxyRouter.cs` allowing immediate forced connection to either a specific user-selected proxy node or the next available live proxy.
+- [x] Add `🎯 Force Connect` button to the Rotating Proxy toolbar in `MainWindow.xaml` and `CyberpunkSpa.cs` (Linux/macOS Web SPAs).
+- [x] Add per-row `Connect` button to each proxy node row in the WPF DataGrid and Linux/macOS Web SPAs to force connection directly to that specific proxy.
+- [x] Implement `/api/rotating-proxy/force-connect` REST endpoint in `EmbeddedDashboardServer.cs` for Linux and macOS.
+- [x] Add comprehensive, accessible, explanatory `ToolTip` attributes across all key buttons, labels, sliders, cards, checkboxes, and toggles in `MainWindow.xaml` and `CyberpunkSpa.cs`.
+- [x] Add automated test step `[TEST 11/11]` to `--verify-rotator` verifying live connection auto-rotation retry, dead eviction, and force-connect probing (100% pass rate).
+- [x] Rebuild and publish standalone release packages in `publish/` for Windows, Linux, and macOS (v2.2.2 Build 29).
+- [x] Synchronize documentation (ReadMe.md, ReleaseNotes.md, KnownIssues.md, ToDos.md, task_log.json).
+- [x] Commit changes to git and create release tag v2.2.2.

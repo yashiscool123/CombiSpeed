@@ -455,8 +455,8 @@ public partial class App : Application
         {
             AttachConsole(-1);
             var ver = typeof(App).Assembly.GetName().Version;
-            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.1";
-            Console.WriteLine($"CombiSpeed {verStr} (Build 28)");
+            string verStr = ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.2.2";
+            Console.WriteLine($"CombiSpeed {verStr} (Build 29)");
             Console.WriteLine("Multi-WAN Channel Bonding & Bandwidth Aggregator Engine");
             Console.WriteLine("Platform: Windows x64 (.NET 8.0)");
             Environment.Exit(0);
@@ -1073,6 +1073,83 @@ public partial class App : Application
                 {
                     try { if (System.IO.File.Exists(tempStateFile)) System.IO.File.Delete(tempStateFile); } catch { }
                     try { if (System.IO.File.Exists(tempStateFile + ".tmp")) System.IO.File.Delete(tempStateFile + ".tmp"); } catch { }
+                }
+
+                // 11. Test Live Connection Auto-Rotation Retry, Dead Eviction & Force-Connect Probing
+                Log("[TEST 11/11] Testing Live Connection Auto-Rotation Retry, Dead Eviction & Force-Connect Probing...");
+                var mockListener = new TcpListener(IPAddress.Loopback, 18090);
+                mockListener.Start();
+                using var listenerCts = new CancellationTokenSource();
+                _ = Task.Run(async () =>
+                {
+                    while (!listenerCts.Token.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            var sock = await mockListener.AcceptSocketAsync(listenerCts.Token);
+                            try { sock.Close(); } catch { }
+                        }
+                        catch { break; }
+                    }
+                });
+
+                try
+                {
+                    Task.Run(async () =>
+                    {
+                        using var probeVal = new ProxyValidatorEngine();
+                        var pDead1 = new HarvestedProxyModel { Host = "127.0.0.1", Port = 18091, IsHealthy = true, IsSelected = true, LatencyMs = 100, CountryCode = "US" };
+                        var pDead2 = new HarvestedProxyModel { Host = "127.0.0.1", Port = 18092, IsHealthy = true, IsSelected = true, LatencyMs = 120, CountryCode = "DE" };
+                        var pLive = new HarvestedProxyModel { Host = "127.0.0.1", Port = 18090, IsHealthy = true, IsSelected = true, LatencyMs = 10, CountryCode = "SG" };
+
+                        probeVal.AddCandidates(new[] { pDead1, pDead2, pLive });
+
+                        var probeConfig = new RotatingProxyConfigModel
+                        {
+                            Strategy = RotationStrategy.RoundRobin,
+                            RotationIntervalSeconds = 15
+                        };
+                        var probeRouter = new RotatingProxyRouter(probeVal, probeConfig, new LoadBalancerEngine());
+
+                        // Test individual TCP probing
+                        bool deadLive = await RotatingProxyRouter.ProbeLiveConnectionAsync(pDead1, 500);
+                        bool liveLive = await RotatingProxyRouter.ProbeLiveConnectionAsync(pLive, 500);
+                        if (deadLive) throw new Exception("ProbeLiveConnectionAsync reported dead port 18091 as live!");
+                        if (!liveLive) throw new Exception("ProbeLiveConnectionAsync failed to connect to live listener on port 18090!");
+                        Log(" [PASS] ProbeLiveConnectionAsync accurately discerned live vs dead sockets.");
+
+                        // Test ForceConnect with preferred = dead proxy: must auto-rotate until reaching live proxy!
+                        var connectedProxy = await probeRouter.ForceConnectToLiveProxyAsync(pDead1);
+                        if (connectedProxy == null || connectedProxy.Endpoint != "127.0.0.1:18090")
+                        {
+                            throw new Exception($"ForceConnect failed auto-rotation! Expected 127.0.0.1:18090, got {connectedProxy?.Endpoint ?? "null"}");
+                        }
+                        if (probeRouter.ActiveTimedProxy?.Endpoint != "127.0.0.1:18090")
+                        {
+                            throw new Exception("ActiveTimedProxy was not locked onto the live proxy!");
+                        }
+                        Log($" [PASS] ForceConnect successfully bypassed dead candidates and locked onto live proxy: {connectedProxy.Endpoint}.");
+
+                        // Verify that dead candidates were evicted from the validator pool
+                        if (probeVal.AllProxies.Any(p => p.Endpoint == "127.0.0.1:18091" && p.IsHealthy))
+                        {
+                            throw new Exception("Dead proxy 18091 was not marked unavailable or evicted during live auto-rotation!");
+                        }
+                        Log(" [PASS] Dead candidate proxies evicted automatically during live probing rotation.");
+
+                        // Test direct force-connect to live proxy
+                        var directLive = await probeRouter.ForceConnectToLiveProxyAsync(pLive);
+                        if (directLive == null || directLive.Endpoint != "127.0.0.1:18090")
+                        {
+                            throw new Exception("Direct connection to live preferred proxy failed!");
+                        }
+                        Log(" [PASS] Direct force-connect to specific live proxy confirmed.");
+                    }).GetAwaiter().GetResult();
+                }
+                finally
+                {
+                    listenerCts.Cancel();
+                    try { mockListener.Stop(); } catch { }
                 }
 
                 Log("\n[ALL PASS] Rotating Proxy & Harvester Engine self-test PASSED with 100% SUCCESS!");

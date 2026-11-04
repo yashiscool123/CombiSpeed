@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.2.1%20(Build%2028)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.2.2%20(Build%2029)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 
@@ -37,34 +37,45 @@ CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-s
 2. **Parallel HTTP Range Chunk Combining**:
    Splits large file transfers ($\ge 512\text{ KB}$) into concurrent byte ranges dispatched simultaneously across different physical network adapters, combining multiple physical wire speeds into a single accelerated download stream.
 
-3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (NEW in v2.2.0)**:
+3. **Two-Stage Multi-Adapter Bonding & Timely Rotating Proxy Pipeline (Enhanced in v2.2.2)**:
    A decoupled two-stage networking architecture: CombiSpeed first binds and load-balances outbound client sockets across physical network adapters for aggregate bandwidth and multi-NIC fault tolerance. Then, it tunnels all requests upstream through a user-selected, filtered rotating proxy server that dynamically rotates on a timely basis (configurable interval in seconds, e.g., 10s, 30s, 60s, 120s, 300s).
 
-4. **Live Intranet & Internet Geo-Location Identity Resolution (NEW in v2.2.0)**:
+4. **Live Connection Auto-Rotation Retry & Probing (NEW in v2.2.2)**:
+   Active socket-level connectivity probing and automatic retry loops ensure that proxy rotation never gets stuck on dead or unresponsive endpoints. Upon rotating, the engine continually advances to subsequent candidates until a verified live connection is established, evicting dead nodes on the fly.
+
+5. **Direct Force Connect & Selection Controls (NEW in v2.2.2)**:
+   Allows instant manual lock-on via the `🎯 Force Connect` toolbar button or per-row `Connect` buttons to immediately switch to a specific chosen proxy or advance to the next live node without waiting for timer expiration.
+
+6. **Comprehensive Explanatory Tooltips (NEW in v2.2.2)**:
+   Every key button, input field, slider, checkbox, toggle, and telemetry card features rich, informative tooltips describing its purpose, underlying behavior, and recommended usage for an accessible, transparent user experience.
+
+7. **Live Intranet & Internet Geo-Location Identity Resolution (v2.2.0)**:
    Continuously monitors and resolves real-time network identity with dual-provider fast fallback (`http://ip-api.com/json/`, `https://ipwho.is/`, `https://api.ipify.org?format=text`), displaying local intranet IP aggregation, public Internet WAN IP, city, region, country, ISP/ASN, and dynamic Unicode country flag emojis (e.g. 🇮🇳, 🇺🇸, 🇩🇪, 🇬🇧, 🇯🇵).
 
-5. **Automated Idempotent Rotating Proxy Harvester & State Persistence (NEW in v2.2.1)**:
+8. **Automated Idempotent Rotating Proxy Harvester & State Persistence (v2.2.1)**:
    Scrapes, parses, and validates thousands of proxy candidate nodes from 255+ curated open-source feeds across HTTP, HTTPS, SOCKS4, and SOCKS5 in **strict Idempotence mode** ($f(f(x)) = f(x)$). Eliminates duplicate insertions, preserves user checkbox selections (`IsSelected`) and verified benchmarks across repeated harvests. Automatically persists all harvested candidates, user selections, and active UI filters & sorting configurations (`proxy_state.json`), restoring the exact interface state seamlessly upon application restart.
 
-6. **Dynamic QoS Traffic Shaping**:
+9. **Dynamic QoS Traffic Shaping**:
    Three specialized adaptive shaping modes:
    - `Maximum Bandwidth`: Aggressive TCP window scaling (150ms burst window) optimized for multi-gigabit downloads.
    - `Lowest Latency`: Anti-bufferbloat pacing (20ms burst window) prioritizing low-ping fiber over high-latency cellular for lag-free gaming and VoIP.
    - `Balanced Dynamic`: Real-time health monitoring that dynamically shifts allocation away from jittery or degraded adapters.
 
-7. **Cross-Platform Standalone Native Codebases**:
-   - **`CombiSpeed/`**: Windows 10/11 WPF application with hardware-accelerated DirectX rendering, WinINet registry automation, and Virtual Bonded Bridge support.
-   - **`CombiSpeed-Linux/`**: Linux daemon with `SO_BINDTODEVICE` binding, GNOME `gsettings` integration, shell environment generation, and responsive Cyberpunk Web UI.
-   - **`CombiSpeed-macOS/`**: macOS application bundle with `IP_BOUND_IF` socket binding, `networksetup` proxy control, and matching Cyberpunk Web UI.
+10. **Cross-Platform Standalone Native Codebases**:
+    - **`CombiSpeed/`**: Windows 10/11 WPF application with hardware-accelerated DirectX rendering, WinINet registry automation, and Virtual Bonded Bridge support.
+    - **`CombiSpeed-Linux/`**: Linux daemon with `SO_BINDTODEVICE` binding, GNOME `gsettings` integration, shell environment generation, and responsive Cyberpunk Web UI.
+    - **`CombiSpeed-macOS/`**: macOS application bundle with `IP_BOUND_IF` socket binding, `networksetup` proxy control, and matching Cyberpunk Web UI.
 
 ---
 
 ## 🚀 Key Features
 
-1. **Two-Stage Bonding & Timely Rotating Proxy Pipeline (NEW in v2.2.0)**:
-   - **Decoupled Two-Stage Routing**: First multiplexes concurrent connections across local physical network adapters (Ethernet, Wi-Fi, 4G/5G, Thunderbolt), and second tunnels traffic through user-selected proxy servers that rotate on a timely basis.
+1. **Two-Stage Bonding & Timely Rotating Proxy Pipeline with Live Auto-Rotation Retry (Enhanced in v2.2.2)**:
+   - **Live Connection Auto-Rotation Retry**: Automatically retries and advances to the next candidate when an upstream connection fails, evicting dead proxies until a live connection is established.
+   - **Force Connect to Selected or Next**: 1-click `🎯 Force Connect` button in the toolbar and per-row `Connect` buttons to immediately lock onto a chosen proxy node.
    - **Timely Automatic Rotation Interval**: User-selectable rotation intervals (10s, 15s, 30s, 45s, 60s, 120s, 300s) with live countdown display and manual `⚡ Rotate Now` override.
    - **Per-Proxy Selection Checkboxes**: Interactive checkboxes in the proxy data grid allowing users to handpick or bulk-select (`Select All`, `Deselect All`, `Select Fast ≤300ms`) which healthy proxies participate in rotation.
+   - **Explanatory Tooltips**: Descriptive, accessible tooltips across all interactive controls explaining functions, behaviors, and keyboard shortcuts.
    - **Pipeline Toggle**: Quick `⚡ Bond-then-Rotate` checkbox toggle in UI and REST APIs to enable or disable proxy tunneling on the bonded connection.
 
 2. **Live Intranet & Internet Geo-Location Identity (NEW in v2.2.0)**:
@@ -223,9 +234,12 @@ CombiSpeed operates as an asynchronous, multi-threaded aggregation and traffic-s
 
 ## 🛡️ MOATs (Defensible Competitive Advantages)
 
-| Dimension | CombiSpeed (Native C# .NET v1.4.1) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
+| Dimension | CombiSpeed (Native C# .NET v2.2.2) | RezaRafia/Speedy (Reference) | Standard Windows Routing |
 |---|---|---|---|
-| **UI/UX & Accessibility** | **Custom dark high-contrast ComboBox, anti-fallback text styles, Segmented Tabbed Navigation, WCAG 2.1 AA High Contrast, UI Scaling (100%-130%), Reduce Motion, Screen Reader support, & Hotkeys** | Cramped single-scroll Electron page | Native OS Control Panel / Settings |
+| **UI/UX & Accessibility** | **Custom dark high-contrast ComboBox, anti-fallback text styles, Segmented Tabbed Navigation, WCAG 2.1 AA High Contrast, UI Scaling (100%-130%), Reduce Motion, Screen Reader support, Explanatory Tooltips across all controls & Hotkeys** | Cramped single-scroll Electron page | Native OS Control Panel / Settings |
+| **Two-Stage Multi-NIC Bonding & Proxy Routing** | **Physical multi-adapter socket binding aggregated first, then forwarded through selective timely rotating proxies with live retry & dead eviction** | None (Single adapter loopback proxy) | Rigid single physical adapter binding |
+| **Live Proxy Auto-Rotation Retry & Probing** | **Sub-second socket connectivity probing (`ProbeLiveConnectionAsync`), live auto-advance retry loops, and 1-click `🎯 Force Connect`** | None | N/A |
+| **Proxy State Persistence & Idempotence** | **Strict idempotence ($f(f(x)) = f(x)$), complete state persistence (`proxy_state.json`), preserving user selections, latency benchmarks, filters, and multi-criteria sorting** | None (Lost on restart) | N/A |
 | **Real-Time Bandwidth Throttling** | **Token Bucket rate limiter with dynamic cross-connection shaping, 500 Mbps cap, & anti-bufferbloat latency modes** | None (Unrestricted, no rate limiting) | None (Line rate only) |
 | **Adapter Settings & Profiles** | **Durable Persistence (`adapter_settings.json`), MAC binding, debounced auto-save & presets** | None (Lost on restart) | None (Default metric reset) |
 | **Virtual Bridge / Adapter Connection** | **Native Windows VPN & Virtual Adapter (`CombiSpeed Bonded Bridge`)** in `ncpa.cpl` & Windows Settings | None (Speedy is purely an isolated local SOCKS proxy) | Rigid single physical adapter binding |
@@ -331,9 +345,9 @@ dotnet publish CombiSpeed-macOS/CombiSpeed.macOS.csproj -c Release -r osx-x64 --
 ```
 
 ### Published Packages
-- **Windows**: `publish/windows/CombiSpeed-v2.2.0-win-x64.zip` and `publish/CombiSpeed-v2.2.0-win-x64.zip`
-- **Linux**: `publish/linux/CombiSpeed-v2.2.0-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.0-linux-x64.zip`
-- **macOS**: `publish/macos/CombiSpeed-v2.2.0-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.0-macos-x64.zip`
+- **Windows**: `publish/windows/CombiSpeed-v2.2.2-win-x64.zip` and `publish/CombiSpeed-v2.2.2-win-x64.zip`
+- **Linux**: `publish/linux/CombiSpeed-v2.2.2-linux-x64.tar.gz` and `publish/linux/CombiSpeed-v2.2.2-linux-x64.zip`
+- **macOS**: `publish/macos/CombiSpeed-v2.2.2-macos-x64.tar.gz` and `publish/macos/CombiSpeed-v2.2.2-macos-x64.zip`
 
 ---
 

@@ -1,8 +1,8 @@
 {
   "$schema": "./version.schema.json",
-  "version": "2.2.1",
-  "versionCode": 28,
-  "releaseName": "CombiSpeed v2.2.1 - Idempotent Proxy Harvesting & Complete State Persistence Release",
+  "version": "2.2.2",
+  "versionCode": 29,
+  "releaseName": "CombiSpeed v2.2.2 - Live Connection Auto-Rotation, Force Connect & Comprehensive Tooltips Release",
   "minWindowsVersion": "10.0.17763.0",
   "dotnetVersion": "8.0",
   "releaseDate": "2026-11-04"

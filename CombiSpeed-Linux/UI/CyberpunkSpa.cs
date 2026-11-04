@@ -692,29 +692,29 @@ public static class CyberpunkSpa
                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Harvests open-source proxies, evaluates anonymity &amp; latency, and rotates requests across physical adapters.</div>
                     </div>
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn-cyber btn-cyber-primary" id="btnToggleRotator" onclick="toggleRotator()">▶ Start Rotator</button>
-                        <button class="btn-cyber" onclick="triggerHarvest()">⚡ Harvest Proxies</button>
-                        <button class="btn-cyber" onclick="triggerValidate()">🔍 Validate Pool</button>
-                        <button class="btn-cyber" onclick="openSourcesModal()">🌐 Sources...</button>
+                        <button class="btn-cyber btn-cyber-primary" id="btnToggleRotator" onclick="toggleRotator()" title="Start or stop the local Rotating Proxy HTTP/SOCKS5 server on port 8081">▶ Start Rotator</button>
+                        <button class="btn-cyber" onclick="triggerHarvest()" title="Fetch latest public proxy lists from configured GitHub, API, and URL sources in idempotence mode">⚡ Harvest Proxies</button>
+                        <button class="btn-cyber" onclick="triggerValidate()" title="Test all harvested proxies for connectivity, protocol compatibility, response time, and anonymity">🔍 Validate Pool</button>
+                        <button class="btn-cyber" onclick="openSourcesModal()" title="Bulk add, edit, or customize proxy repository URLs &amp; APIs">🌐 Sources...</button>
                     </div>
                 </div>
                 <div class="metrics-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 14px;">
-                    <div class="metric-card cyan">
+                    <div class="metric-card cyan" title="Total unique proxy servers discovered and stored in local database">
                         <div class="metric-title">Total Candidates</div>
                         <div class="metric-value" id="rotatorPoolCount">0</div>
                         <div class="metric-sub">In database</div>
                     </div>
-                    <div class="metric-card emerald">
+                    <div class="metric-card emerald" title="Number of healthy proxies that passed connectivity and anonymity validation">
                         <div class="metric-title">Verified Active</div>
                         <div class="metric-value" id="rotatorHealthyCount">0</div>
                         <div class="metric-sub">Ready to rotate</div>
                     </div>
-                    <div class="metric-card purple">
+                    <div class="metric-card purple" title="Local proxy listener address (127.0.0.1:8081). Point applications here.">
                         <div class="metric-title">Rotator Endpoint</div>
                         <div class="metric-value" style="font-size: 18px;" id="rotatorEndpoint">127.0.0.1:8081</div>
                         <div class="metric-sub" id="rotatorStatusPill">STOPPED</div>
                     </div>
-                    <div class="metric-card amber">
+                    <div class="metric-card amber" title="Active rotation dispatching strategy">
                         <div class="metric-title">Rotation Strategy</div>
                         <div class="metric-value" style="font-size: 18px;" id="rotatorStrategy">Round Robin</div>
                         <div class="metric-sub">Multi-NIC Bound</div>
@@ -722,7 +722,7 @@ public static class CyberpunkSpa
                 </div>
                 <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">
                     <span style="font-size: 12px; font-weight: bold; color: var(--cyan);">🌍 Country:</span>
-                    <select id="rotatorCountryFilter" class="select-cyber" style="padding: 4px 8px; font-size: 11px; background: #0b1120; color: #fff; border: 1px solid var(--border);" onchange="updateRotatorConfig()">
+                    <select id="rotatorCountryFilter" class="select-cyber" style="padding: 4px 8px; font-size: 11px; background: #0b1120; color: #fff; border: 1px solid var(--border);" onchange="updateRotatorConfig()" title="Filter rotation strictly to proxies located in a specific country, or ALL">
                         <option value="ALL">All Countries</option>
                         <option value="US">🇺🇸 United States (US)</option>
                         <option value="DE">🇩🇪 Germany (DE)</option>
@@ -734,41 +734,41 @@ public static class CyberpunkSpa
                         <option value="SG">🇸🇬 Singapore (SG)</option>
                         <option value="IN">🇮🇳 India (IN)</option>
                     </select>
-                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;">
+                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;" title="Background auto-harvest fresh proxies every 30 minutes in idempotence mode">
                         <input type="checkbox" id="chkAutoHarvest" onchange="updateRotatorConfig()"> 🔄 Auto-Harvest (30m)
                     </label>
-                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;">
+                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;" title="Continuous background health checks and dead pruning every 5 minutes">
                         <input type="checkbox" id="chkAutoValidate" onchange="updateRotatorConfig()"> 🩺 Auto-Check (5m)
                     </label>
-                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;">
+                    <label style="font-size: 11px; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-left: 8px;" title="Dispatches outgoing proxy connections across all enabled physical adapters simultaneously">
                         <input type="checkbox" id="chkChainNic" onchange="updateRotatorConfig()"> ⚡ Multi-NIC Chaining
                     </label>
-                    <label style="font-size: 11px; color: var(--cyan); display: flex; align-items: center; gap: 4px; margin-left: 8px; font-weight: bold;">
+                    <label style="font-size: 11px; color: var(--cyan); display: flex; align-items: center; gap: 4px; margin-left: 8px; font-weight: bold;" title="Bond-then-Rotate Two-Stage Pipeline: First combines all physical adapters for aggregate bandwidth, then routes outbound traffic through the active rotating proxy">
                         <input type="checkbox" id="chkBondRotate" onchange="updateRotatorConfig()"> ⚡ Bond-then-Rotate
                     </label>
                 </div>
 
                 <!-- Sorting & Multi-Faceted Filtering Bar -->
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
-                    <input type="text" id="filterSearch" placeholder="🔍 Search IP, port, source..." class="select-dark" style="width: 170px; padding: 4px 8px; font-size: 11px;" oninput="applyTableFilters()">
-                    <select id="filterLatency" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                    <input type="text" id="filterSearch" placeholder="🔍 Search IP, port, source..." class="select-dark" style="width: 170px; padding: 4px 8px; font-size: 11px;" oninput="applyTableFilters()" title="Search proxies by IP address, port number, country code, or repository source">
+                    <select id="filterLatency" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()" title="Filter visible proxies by maximum round-trip latency threshold">
                         <option value="0">All Latencies</option>
                         <option value="150">&lt; 150 ms (Ultra-Fast)</option>
                         <option value="300">&lt; 300 ms (Fast)</option>
                         <option value="500">&lt; 500 ms (Normal)</option>
                         <option value="1000">&lt; 1000 ms</option>
                     </select>
-                    <select id="filterSource" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                    <select id="filterSource" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()" title="Filter proxies harvested from a specific repository or API feed">
                         <option value="ALL">All Sources</option>
                     </select>
-                    <select id="filterProtocol" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                    <select id="filterProtocol" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()" title="Filter proxies by supported protocol (HTTP, HTTPS, SOCKS4, SOCKS5)">
                         <option value="ALL">All Protocols</option>
                         <option value="HTTP">HTTP</option>
                         <option value="HTTPS">HTTPS</option>
                         <option value="SOCKS4">SOCKS4</option>
                         <option value="SOCKS5">SOCKS5</option>
                     </select>
-                    <select id="filterSort" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()">
+                    <select id="filterSort" class="select-dark" style="padding: 4px 8px; font-size: 11px;" onchange="applyTableFilters()" title="Sort the proxy list dynamically">
                         <option value="latency_asc">Lowest Latency (Fastest)</option>
                         <option value="latency_desc">Highest Latency</option>
                         <option value="health_first">Status / Working First</option>
@@ -781,16 +781,17 @@ public static class CyberpunkSpa
                 <!-- Selection & Timely Rotation Action Bar -->
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; background: rgba(0,240,255,0.06); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--cyan);">
                     <span style="font-size: 11px; font-weight: bold; color: var(--cyan);">☑ POOL SELECTION:</span>
-                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="selectAllProxies()">Select All</button>
-                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="deselectAllProxies()">Deselect All</button>
-                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="selectFastProxies()">Select Fast (≤300ms)</button>
-                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="forceRotateNow()">⚡ Rotate Now</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="selectAllProxies()" title="Select all proxies in view to participate in rotation">Select All</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="deselectAllProxies()" title="Uncheck all proxies so none are flagged for rotation">Deselect All</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="selectFastProxies()" title="Automatically select all healthy proxies with response times under 300ms">Select Fast (≤300ms)</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="forceRotateNow()" title="Immediately rotate to next proxy in pool, testing candidates until a live connection is established">⚡ Rotate Now</button>
+                    <button class="btn-cyber" style="padding: 4px 10px; font-size: 11px;" onclick="forceConnectSelectedOrNext()" title="Forcefully connects immediately to the next live responsive proxy in the candidate pool, probing until connected">🎯 Force Connect</button>
 
-                    <span id="selectionSummaryPill" class="badge" style="background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green); margin-left: auto;">Selected: 0 healthy</span>
-                    <span id="rotationCountdownBadge" class="badge" style="background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber);">Next rotation: 30s</span>
+                    <span id="selectionSummaryPill" class="badge" style="background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green); margin-left: auto;" title="Count of healthy proxies selected to participate in rotation">Selected: 0 healthy</span>
+                    <span id="rotationCountdownBadge" class="badge" style="background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber);" title="Time remaining until the next automatic proxy server rotation">Next rotation: 30s</span>
 
                     <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">Interval:</span>
-                    <select id="rotatorIntervalSelect" class="select-dark" style="padding: 3px 6px; font-size: 11px; width: 65px;" onchange="updateRotatorConfig()">
+                    <select id="rotatorIntervalSelect" class="select-dark" style="padding: 3px 6px; font-size: 11px; width: 65px;" onchange="updateRotatorConfig()" title="Timed rotation interval in seconds">
                         <option value="10">10s</option>
                         <option value="15">15s</option>
                         <option value="30">30s</option>
@@ -804,19 +805,20 @@ public static class CyberpunkSpa
                 <table class="audit-table">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">USE</th>
+                            <th style="width: 40px;" title="Select for rotation pool">USE</th>
+                            <th style="width: 65px;" title="Forcefully connect to proxy">ACTION</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('status')" title="Click to sort by status">STATUS ⇅</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('geo')" title="Click to sort by country">GEO ⇅</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('endpoint')" title="Click to sort by endpoint">ENDPOINT ⇅</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('protocol')" title="Click to sort by protocol">PROTOCOL ⇅</th>
-                            <th>ANONYMITY</th>
+                            <th title="Anonymity level">ANONYMITY</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('latency')" title="Click to sort by latency">LATENCY ⇅</th>
-                            <th>FAILURES</th>
+                            <th title="Connection failures count">FAILURES</th>
                             <th style="cursor: pointer;" onclick="toggleTableSort('source')" title="Click to sort by source">SOURCE ⇅</th>
                         </tr>
                     </thead>
                     <tbody id="rotatorRows">
-                        <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No proxies harvested yet. Click "⚡ Harvest Proxies" to populate.</td></tr>
+                        <tr><td colspan="10" style="text-align: center; color: var(--text-muted);">No proxies harvested yet. Click "⚡ Harvest Proxies" to populate.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1470,8 +1472,9 @@ public static class CyberpunkSpa
 
             document.getElementById('rotatorRows').innerHTML = filtered.map(p => `
                 <tr>
-                    <td style="text-align: center;"><input type="checkbox" ${p.IsSelected ? 'checked' : ''} onchange="toggleSelectProxy('${p.Endpoint}')"></td>
-                    <td><span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${p.IsHealthy ? 'var(--emerald)' : 'var(--red)'}; color: #000;">${p.IsHealthy ? p.LatencyMs + 'ms' : 'FAIL'}</span></td>
+                    <td style="text-align: center;"><input type="checkbox" ${p.IsSelected ? 'checked' : ''} onchange="toggleSelectProxy('${p.Endpoint}')" title="Include ${p.Endpoint} in rotation pool"></td>
+                    <td style="text-align: center;"><button class="btn-cyber" style="padding: 2px 6px; font-size: 10px;" onclick="forceConnectSelectedOrNext('${p.Endpoint}')" title="Forcefully connect to this specific proxy server">Connect</button></td>
+                    <td><span style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: ${p.IsHealthy ? 'var(--emerald)' : 'var(--red)'}; color: #000;" title="${p.IsHealthy ? 'Healthy / Live' : 'Failed'}">${p.IsHealthy ? p.LatencyMs + 'ms' : 'FAIL'}</span></td>
                     <td style="font-weight: bold; color: var(--cyan);">${p.CountryCode || 'UN'}</td>
                     <td style="font-family: Consolas;">${p.Endpoint}</td>
                     <td>${p.FormattedProtocol}</td>
@@ -1525,7 +1528,19 @@ public static class CyberpunkSpa
         async function forceRotateNow() {
             const res = await fetch('/api/rotating-proxy/rotate-now', { method: 'POST' });
             const data = await res.json();
-            alert(`Rotated to: ${data.active || 'Next proxy'} (${data.country || 'Global'})`);
+            alert(data.status || `Rotated to: ${data.active || 'Next proxy'} (${data.country || 'Global'})`);
+            fetchRotator();
+        }
+
+        async function forceConnectSelectedOrNext(endpoint = null) {
+            const body = endpoint ? JSON.stringify({ endpoint }) : "{}";
+            const res = await fetch('/api/rotating-proxy/force-connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            });
+            const data = await res.json();
+            alert(data.status || (data.success ? 'Connected!' : 'Connection failed'));
             fetchRotator();
         }
 

@@ -96,18 +96,21 @@
 
                         <!-- System Proxy Tag -->
                         <Border Margin="10,0,0,0" Padding="6,2" CornerRadius="4" Background="#064E3B" BorderBrush="#10B981" BorderThickness="0.5"
+                                ToolTip="Windows System Proxy is active on 127.0.0.1:8080"
                                 Visibility="{Binding IsWindowsProxyActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="🛡️ SYS PROXY ON" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
                         </Border>
 
                         <!-- Virtual Bridge Tag -->
                         <Border Margin="6,0,0,0" Padding="6,2" CornerRadius="4" Background="#064E3B" BorderBrush="#10B981" BorderThickness="0.5"
+                                ToolTip="Virtual Network Bridge adapter is bonded and routing packets across physical NICs"
                                 Visibility="{Binding VirtualBridge.IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="🌉 BRIDGE BONDED" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
                         </Border>
 
                         <!-- High Contrast Tag -->
                         <Border Margin="6,0,0,0" Padding="6,2" CornerRadius="4" Background="#1E293B" BorderBrush="#00F0FF" BorderThickness="0.5"
+                                ToolTip="High Contrast accessible color palette is active"
                                 Visibility="{Binding IsHighContrast, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="♿ HC: ON" FontSize="9" FontWeight="Bold" Foreground="#00F0FF"/>
                         </Border>
@@ -116,19 +119,19 @@
                     <!-- TitleBar Action Controls -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <!-- Quick Accessibility Button -->
-                        <Button Click="OpenAccessibility_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="10,4" FontSize="11" ToolTip="Accessibility Options &amp; Shortcuts (Alt+A)" AutomationProperties.Name="Open Accessibility Options">
+                        <Button Click="OpenAccessibility_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="10,4" FontSize="11" ToolTip="Configure accessibility features, UI scaling, screen reader settings, and view keyboard shortcuts (Alt+A)" AutomationProperties.Name="Open Accessibility Options">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="♿" FontSize="13" Margin="0,0,5,0"/>
                                 <TextBlock Text="Accessibility" FontWeight="SemiBold"/>
                             </StackPanel>
                         </Button>
 
-                        <Button Content="⚙" Click="OpenSettings_Click" Style="{StaticResource CyberButton}" Margin="0,0,10,0" Padding="8,4" FontSize="12" ToolTip="Configuration Settings (Alt+S)" AutomationProperties.Name="Open Settings"/>
+                        <Button Content="⚙" Click="OpenSettings_Click" Style="{StaticResource CyberButton}" Margin="0,0,10,0" Padding="8,4" FontSize="12" ToolTip="Open application settings, port bindings, default timeouts, and logging configuration (Alt+S)" AutomationProperties.Name="Open Settings"/>
 
                         <!-- Window Control Buttons -->
-                        <Button Content="—" Width="30" Height="26" Click="MinimizeButton_Click" Style="{StaticResource CyberButton}" Padding="0" Margin="0,0,4,0" AutomationProperties.Name="Minimize Window"/>
-                        <Button Content="▢" Width="30" Height="26" Click="MaximizeButton_Click" Style="{StaticResource CyberButton}" Padding="0" Margin="0,0,4,0" AutomationProperties.Name="Maximize Window"/>
-                        <Button Content="✕" Width="30" Height="26" Click="CloseButton_Click" Style="{StaticResource CyberButton}" Padding="0" AutomationProperties.Name="Close Window"/>
+                        <Button Content="—" Width="30" Height="26" Click="MinimizeButton_Click" Style="{StaticResource CyberButton}" Padding="0" Margin="0,0,4,0" ToolTip="Minimize window to taskbar" AutomationProperties.Name="Minimize Window"/>
+                        <Button Content="▢" Width="30" Height="26" Click="MaximizeButton_Click" Style="{StaticResource CyberButton}" Padding="0" Margin="0,0,4,0" ToolTip="Maximize or restore window size" AutomationProperties.Name="Maximize Window"/>
+                        <Button Content="✕" Width="30" Height="26" Click="CloseButton_Click" Style="{StaticResource CyberButton}" Padding="0" ToolTip="Close CombiSpeed application" AutomationProperties.Name="Close Window"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -138,7 +141,7 @@
                 <!-- ========================================== -->
                 <!-- TAB 0: OVERVIEW & DASHBOARD                -->
                 <!-- ========================================== -->
-                <TabItem Header="⚡ Overview &amp; Dashboard" Style="{StaticResource SegmentedTabItem}" AutomationProperties.Name="Overview and Dashboard Tab">
+                <TabItem Header="⚡ Overview &amp; Dashboard" Style="{StaticResource SegmentedTabItem}" ToolTip="Real-time multi-WAN bonding dashboard, throughput monitors, network identity, and virtual bridge status (Ctrl+1)" AutomationProperties.Name="Overview and Dashboard Tab">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                         <StackPanel>
                             <!-- Master Hero Control Card -->
@@ -208,7 +211,7 @@
                                     <!-- Hero Action Bar -->
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                         <!-- Windows System Proxy Toggle -->
-                                        <Button Command="{Binding ToggleWindowsProxyCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" AutomationProperties.Name="Toggle Windows System Proxy">
+                                        <Button Command="{Binding ToggleWindowsProxyCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" ToolTip="Windows System Proxy: Automatically registers 127.0.0.1:8080 in WinINet so browsers and desktop applications route through the bonded channel (Alt+W)" AutomationProperties.Name="Toggle Windows System Proxy">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="🛡" FontSize="13" Margin="0,0,6,0"/>
                                                 <TextBlock Text="{Binding IsWindowsProxyActive, StringFormat='{}Win Proxy: {0}'}">
@@ -228,7 +231,7 @@
                                         </Button>
 
                                         <!-- Virtual Bridge Toggle -->
-                                        <Button Command="{Binding ToggleVirtualBridgeCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" AutomationProperties.Name="Toggle Virtual Bonded Bridge">
+                                        <Button Command="{Binding ToggleVirtualBridgeCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" ToolTip="Virtual Bonded Bridge: Activates the virtual network adapter bridge merging all physical NICs with proportional bandwidth allocation for zero-configuration application support (Alt+B)" AutomationProperties.Name="Toggle Virtual Bonded Bridge">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="🌉" FontSize="13" Margin="0,0,6,0"/>
                                                 <TextBlock Text="{Binding VirtualBridge.IsConnected, StringFormat='{}Bridge: {0}'}">
@@ -247,8 +250,8 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <Button Content="📊 Benchmark Speed" Click="OpenSpeedTest_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" AutomationProperties.Name="Open Speed Benchmark"/>
-                                        <Button Content="⟳" Command="{Binding RefreshAdaptersCommand}" Style="{StaticResource CyberButton}" ToolTip="Rescan Network Adapters (Alt+R)" AutomationProperties.Name="Rescan Adapters"/>
+                                        <Button Content="📊 Benchmark Speed" Click="OpenSpeedTest_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" ToolTip="Speed Benchmark: Run an integrated multi-threaded upload, download, and latency test measuring true aggregated bonding performance" AutomationProperties.Name="Open Speed Benchmark"/>
+                                        <Button Content="⟳" Command="{Binding RefreshAdaptersCommand}" Style="{StaticResource CyberButton}" ToolTip="Rescan Network Adapters: Re-probes all connected physical Ethernet, Wi-Fi, USB cellular, and hotspot interfaces (Alt+R)" AutomationProperties.Name="Rescan Adapters"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -304,7 +307,7 @@
                                     </StackPanel>
 
                                     <!-- Refresh Action -->
-                                    <Button Grid.Column="2" Command="{Binding RefreshGeoIpCommand}" Style="{StaticResource CyberButton}" Content="⟳ Refresh Identity" VerticalAlignment="Center" Margin="12,0,0,0" Padding="12,8" ToolTip="Re-query Intranet and Internet Geo-Location Identity"/>
+                                    <Button Grid.Column="2" Command="{Binding RefreshGeoIpCommand}" Style="{StaticResource CyberButton}" Content="⟳ Refresh Identity" VerticalAlignment="Center" Margin="12,0,0,0" Padding="12,8" ToolTip="Re-query Intranet and Internet Geo-Location Identity: Probes GeoIP services to detect latest public IP, city, country, and ISP changes"/>
                                 </Grid>
                             </Border>
 
@@ -321,7 +324,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Download Speed Card -->
-                                <Border Grid.Column="0" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16">
+                                <Border Grid.Column="0" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16" ToolTip="Real-time aggregated incoming bandwidth across all active physical network adapters">
                                     <StackPanel>
                                         <TextBlock Text="BONDED DOWNLOAD" FontSize="11" FontWeight="Bold" Foreground="#38BDF8"/>
                                         <TextBlock Text="{Binding BondedDownloadSpeed}" FontSize="26" FontWeight="Black" Foreground="#00F0FF" FontFamily="Consolas" Margin="0,4,0,0"/>
@@ -330,7 +333,7 @@
                                 </Border>
 
                                 <!-- Upload Speed Card -->
-                                <Border Grid.Column="2" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16">
+                                <Border Grid.Column="2" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16" ToolTip="Real-time aggregated outbound transmission bandwidth across all active physical network adapters">
                                     <StackPanel>
                                         <TextBlock Text="BONDED UPLOAD" FontSize="11" FontWeight="Bold" Foreground="#38BDF8"/>
                                         <TextBlock Text="{Binding BondedUploadSpeed}" FontSize="26" FontWeight="Black" Foreground="#8B5CF6" FontFamily="Consolas" Margin="0,4,0,0"/>
@@ -339,7 +342,7 @@
                                 </Border>
 
                                 <!-- Concurrency Card -->
-                                <Border Grid.Column="4" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16">
+                                <Border Grid.Column="4" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16" ToolTip="Active simultaneous network streams currently multiplexed across the load balancer">
                                     <StackPanel>
                                         <TextBlock Text="ACTIVE CONCURRENCY" FontSize="11" FontWeight="Bold" Foreground="#38BDF8"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -351,7 +354,7 @@
                                 </Border>
 
                                 <!-- Volume & Uptime Card -->
-                                <Border Grid.Column="6" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16">
+                                <Border Grid.Column="6" Background="{DynamicResource CyberSurface}" CornerRadius="14" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16" ToolTip="Total data transferred (upload + download) and engine uptime since bonding was activated">
                                     <StackPanel>
                                         <TextBlock Text="SESSION VOLUME &amp; UPTIME" FontSize="11" FontWeight="Bold" Foreground="#38BDF8"/>
                                         <TextBlock Text="{Binding SessionVolume}" FontSize="26" FontWeight="Black" Foreground="#F59E0B" FontFamily="Consolas" Margin="0,4,0,0"/>
@@ -361,7 +364,7 @@
                             </Grid>
 
                             <!-- Virtual Bonded Bridge Card -->
-                            <Border Background="{DynamicResource CyberSurface}" CornerRadius="16" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="18" Margin="0,0,0,16">
+                            <Border Background="{DynamicResource CyberSurface}" CornerRadius="16" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="18" Margin="0,0,0,16" ToolTip="Virtual Network Bridge merging physical NICs into a unified Windows virtual adapter">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,10">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -380,8 +383,8 @@
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                            <Button Content="View in Windows (ncpa.cpl)" Command="{Binding OpenNetworkConnectionsCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" AutomationProperties.Name="Open Network Connections in Windows"/>
-                                            <Button Content="⟳ Re-provision" Command="{Binding ReprovisionBridgeCommand}" Style="{StaticResource CyberButton}" AutomationProperties.Name="Reprovision Virtual Bridge"/>
+                                            <Button Content="View in Windows (ncpa.cpl)" Command="{Binding OpenNetworkConnectionsCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" ToolTip="Open Windows Network Connections (ncpa.cpl) to view and manage physical and virtual network adapters" AutomationProperties.Name="Open Network Connections in Windows"/>
+                                            <Button Content="⟳ Re-provision" Command="{Binding ReprovisionBridgeCommand}" Style="{StaticResource CyberButton}" ToolTip="Re-provision Virtual Bridge: Re-creates and re-initializes the virtual network bridge adapter with fresh routing table entries" AutomationProperties.Name="Reprovision Virtual Bridge"/>
                                         </StackPanel>
                                     </Grid>
 
@@ -476,7 +479,7 @@
                 <!-- ========================================== -->
                 <!-- TAB 1: COMBINED ADAPTERS & ALLOCATION      -->
                 <!-- ========================================== -->
-                <TabItem Header="🖧 Combined Adapters" Style="{StaticResource SegmentedTabItem}" AutomationProperties.Name="Combined Adapters Tab">
+                <TabItem Header="🖧 Combined Adapters" Style="{StaticResource SegmentedTabItem}" ToolTip="Manage network adapters, toggle interfaces, assign bandwidth share weights, and manage profiles (Ctrl+2)" AutomationProperties.Name="Combined Adapters Tab">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                         <StackPanel>
                             <!-- Profiles Header Card -->
@@ -493,10 +496,10 @@
 
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <TextBlock Text="Profile:" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <ComboBox ItemsSource="{Binding SavedProfiles}" SelectedItem="{Binding ActiveProfileName}" Width="200" Height="32" Margin="0,0,8,0" FontSize="11" VerticalAlignment="Center" AutomationProperties.Name="Active Combination Profile Selector"/>
-                                        <Button Content="💾 Save" Command="{Binding SaveCurrentSettingsCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="10,4" FontSize="11" ToolTip="Persist current adapter combination &amp; weights" AutomationProperties.Name="Save Combination Settings"/>
-                                        <Button Content="+ New Profile" Click="NewProfile_Click" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="10,4" FontSize="11" ToolTip="Save current settings under a new profile name" AutomationProperties.Name="Create New Profile"/>
-                                        <Button Content="✕" Command="{Binding DeleteProfileCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" ToolTip="Delete selected profile" AutomationProperties.Name="Delete Active Profile"/>
+                                        <ComboBox ItemsSource="{Binding SavedProfiles}" SelectedItem="{Binding ActiveProfileName}" Width="200" Height="32" Margin="0,0,8,0" FontSize="11" VerticalAlignment="Center" ToolTip="Switch between saved adapter combination configurations and allocation presets" AutomationProperties.Name="Active Combination Profile Selector"/>
+                                        <Button Content="💾 Save" Command="{Binding SaveCurrentSettingsCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="10,4" FontSize="11" ToolTip="Persist current adapter combination &amp; weights to active profile" AutomationProperties.Name="Save Combination Settings"/>
+                                        <Button Content="+ New Profile" Click="NewProfile_Click" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="10,4" FontSize="11" ToolTip="Save current settings under a new custom profile name" AutomationProperties.Name="Create New Profile"/>
+                                        <Button Content="✕" Command="{Binding DeleteProfileCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" ToolTip="Delete selected profile from disk" AutomationProperties.Name="Delete Active Profile"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -535,10 +538,10 @@
                                                         </StackPanel>
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                        <Border Background="#080C14" CornerRadius="10" Padding="8,3" Margin="0,0,10,0">
+                                                        <Border Background="#080C14" CornerRadius="10" Padding="8,3" Margin="0,0,10,0" ToolTip="Round-trip gateway and DNS ping latency for this adapter">
                                                             <TextBlock Text="{Binding PingMs, StringFormat='{}{0} ms'}" FontSize="11" FontFamily="Consolas" FontWeight="Bold" Foreground="{Binding PingMs, Converter={StaticResource PingToBrushConverter}}"/>
                                                         </Border>
-                                                        <CheckBox IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name, StringFormat='{}Enable {0}'}"/>
+                                                        <CheckBox IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" ToolTip="Enable or disable this network adapter in the aggregated bonding pool" AutomationProperties.Name="{Binding Name, StringFormat='{}Enable {0}'}"/>
                                                     </StackPanel>
                                                 </Grid>
 
@@ -550,7 +553,7 @@
                                                     </Grid.ColumnDefinitions>
                                                     <StackPanel Grid.Column="0">
                                                         <TextBlock Text="BOUND LOCAL IP" FontSize="9" FontWeight="Bold" Foreground="#38BDF8"/>
-                                                        <TextBlock Text="{Binding Address}" FontSize="12" FontFamily="Consolas" Foreground="#FFFFFF"/>
+                                                        <TextBlock Text="{Binding Address}" FontSize="12" FontFamily="Consolas" Foreground="#FFFFFF" ToolTip="Local interface IP address used for socket binding"/>
                                                     </StackPanel>
                                                     <StackPanel Grid.Column="1">
                                                         <TextBlock Text="PUBLIC WAN &amp; LOCATION" FontSize="9" FontWeight="Bold" Foreground="#38BDF8"/>
@@ -559,7 +562,7 @@
                                                 </Grid>
 
                                                 <!-- Live Speeds -->
-                                                <Border Background="#080C14" CornerRadius="8" Padding="12,8" Margin="0,0,0,10">
+                                                <Border Background="#080C14" CornerRadius="8" Padding="12,8" Margin="0,0,0,10" ToolTip="Current download and upload throughput passing through this interface">
                                                     <Grid>
                                                         <StackPanel Orientation="Horizontal">
                                                             <TextBlock Text="↓ " Foreground="#00F0FF" FontWeight="Bold" FontSize="13"/>
@@ -583,7 +586,7 @@
                                                         <TextBlock Text="{Binding Weight, StringFormat='{}Weight: {0}%'}" FontSize="11" Foreground="#F1F5F9" FontFamily="Consolas"/>
                                                     </StackPanel>
                                                 </Grid>
-                                                <Slider Minimum="0" Maximum="100" Value="{Binding Weight}" SmallChange="5" LargeChange="10" Margin="0,4,0,0" IsEnabled="{Binding IsEnabled}" AutomationProperties.Name="{Binding Name, StringFormat='{}Bandwidth Weight for {0}'}"/>
+                                                <Slider Minimum="0" Maximum="100" Value="{Binding Weight}" SmallChange="5" LargeChange="10" Margin="0,4,0,0" IsEnabled="{Binding IsEnabled}" ToolTip="Adjust bandwidth allocation weight (0-100%) for this network adapter" AutomationProperties.Name="{Binding Name, StringFormat='{}Bandwidth Weight for {0}'}"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -596,7 +599,7 @@
                 <!-- ========================================== -->
                 <!-- TAB 2: SPEED SHAPER & QOS                  -->
                 <!-- ========================================== -->
-                <TabItem Header="🚀 Speed Shaper &amp; QoS" Style="{StaticResource SegmentedTabItem}" AutomationProperties.Name="Speed Shaper and QoS Tab">
+                <TabItem Header="🚀 Speed Shaper &amp; QoS" Style="{StaticResource SegmentedTabItem}" ToolTip="Configure dynamic speed shaping, Token Bucket QoS algorithms, bandwidth throttling limits, and anti-bufferbloat (Ctrl+3)" AutomationProperties.Name="Speed Shaper and QoS Tab">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                         <StackPanel>
                             <!-- Speed Shaper Banner -->
@@ -610,7 +613,7 @@
                                     <StackPanel Grid.Column="0">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                             <TextBlock Text="⚡ DYNAMIC SPEED SHAPER &amp; QOS CONTROL" FontSize="12" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,8,0"/>
-                                            <Border Background="#131D33" CornerRadius="4" Padding="6,2" BorderBrush="#00F0FF" BorderThickness="0.5">
+                                            <Border Background="#131D33" CornerRadius="4" Padding="6,2" BorderBrush="#00F0FF" BorderThickness="0.5" ToolTip="Active Token Bucket throttling and dynamic speed cap status">
                                                 <TextBlock Text="{Binding ThrottleStatusText}" FontSize="10" Foreground="#38BDF8" FontFamily="Consolas"/>
                                             </Border>
                                         </StackPanel>
@@ -626,19 +629,19 @@
 
                                             <StackPanel Grid.Column="0">
                                                 <TextBlock Text="Optimization Mode:" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
-                                                <ComboBox ItemsSource="{Binding ShaperModes}" SelectedItem="{Binding SelectedShaperMode}" Height="34" FontSize="11" AutomationProperties.Name="Speed Shaper Optimization Mode"/>
+                                                <ComboBox ItemsSource="{Binding ShaperModes}" SelectedItem="{Binding SelectedShaperMode}" Height="34" FontSize="11" ToolTip="Select traffic shaping algorithm: Maximum Bandwidth (highest throughput), Lowest Latency (gaming &amp; voice calls), Balanced QoS, Streaming Optimized, or Gaming Priority" AutomationProperties.Name="Speed Shaper Optimization Mode"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="2">
                                                 <TextBlock Text="Global Bandwidth Cap:" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
-                                                <ComboBox ItemsSource="{Binding ThrottlePresets}" SelectedItem="{Binding SelectedThrottlePreset}" Height="34" FontSize="11" AutomationProperties.Name="Global Speed Throttle Cap Preset"/>
+                                                <ComboBox ItemsSource="{Binding ThrottlePresets}" SelectedItem="{Binding SelectedThrottlePreset}" Height="34" FontSize="11" ToolTip="Select an overall download and upload speed limit across all combined interfaces, or choose Unlimited" AutomationProperties.Name="Global Speed Throttle Cap Preset"/>
                                             </StackPanel>
                                         </Grid>
 
                                         <!-- Quick Actions -->
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="⚙ Custom Throttling Parameters (Mbps / Burst / Per-NIC)..." Click="CustomThrottle_Click" Style="{StaticResource PrimaryCyanButton}" Margin="0,0,10,0" AutomationProperties.Name="Open Custom Throttling Dialog"/>
-                                            <CheckBox IsChecked="{Binding Config.EnableDynamicShaping}" Content="Enable Real-Time Dynamic Adaptation across connections" Foreground="#FFFFFF" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Enable Dynamic Adaptation"/>
+                                            <Button Content="⚙ Custom Throttling Parameters (Mbps / Burst / Per-NIC)..." Click="CustomThrottle_Click" Style="{StaticResource PrimaryCyanButton}" Margin="0,0,10,0" ToolTip="Open advanced QoS parameters: configure precise Mbps upload/download limits, Token Bucket burst sizes (ms), and per-NIC bandwidth caps" AutomationProperties.Name="Open Custom Throttling Dialog"/>
+                                            <CheckBox IsChecked="{Binding Config.EnableDynamicShaping}" Content="Enable Real-Time Dynamic Adaptation across connections" Foreground="#FFFFFF" FontWeight="SemiBold" VerticalAlignment="Center" ToolTip="Enable Real-Time Dynamic Adaptation: automatically redistributes traffic when an adapter experiences packet drops or latency spikes" AutomationProperties.Name="Enable Dynamic Adaptation"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -684,7 +687,7 @@
                 <!-- ========================================== -->
                 <!-- TAB 3: CONNECTION AUDIT                    -->
                 <!-- ========================================== -->
-                <TabItem Header="📜 Connection Audit" Style="{StaticResource SegmentedTabItem}" AutomationProperties.Name="Connection Audit Tab">
+                <TabItem Header="📜 Connection Audit" Style="{StaticResource SegmentedTabItem}" ToolTip="Inspect live network socket requests, dispatched adapters, byte volumes, and transfer latency (Ctrl+4)" AutomationProperties.Name="Connection Audit Tab">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                         <StackPanel>
                             <Border Background="{DynamicResource CyberSurface}" CornerRadius="16" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="16">
@@ -694,10 +697,10 @@
                                             <TextBlock Text="CONNECTION AUDIT STREAM" FontSize="12" FontWeight="Bold" Foreground="#00F0FF"/>
                                             <TextBlock Text=" (Live Network Requests &amp; Physical NIC Routing)" FontSize="11" Foreground="#CBD5E1" Margin="6,0,0,0"/>
                                         </StackPanel>
-                                        <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}" Style="{StaticResource CyberButton}" HorizontalAlignment="Right" Padding="12,4" FontSize="11" AutomationProperties.Name="Clear Connection Audit Logs"/>
+                                        <Button Content="Clear Logs" Command="{Binding ClearLogsCommand}" Style="{StaticResource CyberButton}" HorizontalAlignment="Right" Padding="12,4" FontSize="11" ToolTip="Clear all recorded connection audit events from the table" AutomationProperties.Name="Clear Connection Audit Logs"/>
                                     </Grid>
 
-                                    <DataGrid ItemsSource="{Binding AuditLogs}" AutoGenerateColumns="False" IsReadOnly="True" Height="480" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" AutomationProperties.Name="Connection Audit Logs Table">
+                                    <DataGrid ItemsSource="{Binding AuditLogs}" AutoGenerateColumns="False" IsReadOnly="True" Height="480" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" ToolTip="Historical log of outbound socket connections, showing protocol, target destination, selected physical adapter, transferred bytes, and latency" AutomationProperties.Name="Connection Audit Logs Table">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="TIME" Binding="{Binding TimeFormatted}" Width="80"/>
                                             <DataGridTextColumn Header="PROTOCOL" Binding="{Binding Protocol}" Width="95"/>
@@ -717,7 +720,7 @@
                 <!-- ========================================== -->
                 <!-- TAB 4: ROTATING PROXY & HARVESTER          -->
                 <!-- ========================================== -->
-                <TabItem Header="🔄 Rotating Proxy &amp; Harvester" Style="{StaticResource SegmentedTabItem}" AutomationProperties.Name="Rotating Proxy and Harvester Tab">
+                <TabItem Header="🔄 Rotating Proxy &amp; Harvester" Style="{StaticResource SegmentedTabItem}" ToolTip="Automated rotating proxy server, proxy scraper/harvester, health validator, and multi-NIC rotation dispatch (Ctrl+5)" AutomationProperties.Name="Rotating Proxy and Harvester Tab">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
                         <StackPanel>
                             <!-- Rotating Proxy Hero Card -->
@@ -730,7 +733,7 @@
                                     <StackPanel Grid.Column="0">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                             <TextBlock Text="AUTOMATED ROTATING PROXY HARVESTER &amp; DISPATCHER" FontSize="11" FontWeight="Bold" Foreground="#00F0FF" Margin="0,0,8,0"/>
-                                            <Border Background="#1E293B" CornerRadius="4" Padding="6,1">
+                                            <Border Background="#1E293B" CornerRadius="4" Padding="6,1" ToolTip="Local listening port for client applications">
                                                 <TextBlock Text="{Binding RotatingProxyPort, StringFormat='{}Port: {0}'}" FontSize="10" Foreground="#38BDF8" FontFamily="Consolas"/>
                                             </Border>
                                         </StackPanel>
@@ -740,12 +743,12 @@
 
                                     <!-- Action Buttons -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Button Content="{Binding IsRotatingProxyRunning, Converter={StaticResource BoolToRotatorStatusConverter}}" Command="{Binding ToggleRotatingProxyCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold"/>
-                                        <Button Content="⚡ Harvest Proxies" Command="{Binding HarvestProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold"/>
-                                        <Button Content="🔍 Validate Pool" Command="{Binding ValidatePoolCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8"/>
+                                        <Button Content="{Binding IsRotatingProxyRunning, Converter={StaticResource BoolToRotatorStatusConverter}}" Command="{Binding ToggleRotatingProxyCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold" ToolTip="Start or stop the local Rotating Proxy HTTP/SOCKS5 server on port 8081"/>
+                                        <Button Content="⚡ Harvest Proxies" Command="{Binding HarvestProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="14,8" FontWeight="Bold" ToolTip="Fetch latest public proxy lists from configured GitHub, API, and URL sources in idempotence mode"/>
+                                        <Button Content="🔍 Validate Pool" Command="{Binding ValidatePoolCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8" ToolTip="Test all harvested proxies for connectivity, protocol compatibility, response time, and anonymity"/>
                                         <Button Content="🌐 Sources..." Click="OpenProxySources_Click" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8" ToolTip="Bulk add, edit, or customize proxy repository URLs &amp; APIs" AutomationProperties.Name="Bulk Add and Edit Proxy Repository Sources"/>
-                                        <Button Content="💾 Export Working" Command="{Binding ExportWorkingProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8"/>
-                                        <Button Content="📂 Import File" Command="{Binding ImportProxiesFileCommand}" Style="{StaticResource CyberButton}" Padding="12,8"/>
+                                        <Button Content="💾 Export Working" Command="{Binding ExportWorkingProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="12,8" ToolTip="Export all verified healthy proxies to a text file (IP:PORT format)"/>
+                                        <Button Content="📂 Import File" Command="{Binding ImportProxiesFileCommand}" Style="{StaticResource CyberButton}" Padding="12,8" ToolTip="Import custom proxy lists from a local text or CSV file"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -760,7 +763,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Card 1: Total Harvested -->
-                                <Border Grid.Column="0" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="0,0,8,0">
+                                <Border Grid.Column="0" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="0,0,8,0" ToolTip="Total unique proxy servers discovered and stored in local database">
                                     <StackPanel>
                                         <TextBlock Text="TOTAL HARVESTED" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding TotalHarvestedCount}" FontSize="22" FontWeight="Black" Foreground="#00F0FF" Margin="0,4,0,0"/>
@@ -769,7 +772,7 @@
                                 </Border>
 
                                 <!-- Card 2: Verified Healthy -->
-                                <Border Grid.Column="1" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,8,0">
+                                <Border Grid.Column="1" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,8,0" ToolTip="Number of healthy proxies that passed connectivity and anonymity validation">
                                     <StackPanel>
                                         <TextBlock Text="VERIFIED ACTIVE POOL" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding VerifiedHealthyCount}" FontSize="22" FontWeight="Black" Foreground="#10B981" Margin="0,4,0,0"/>
@@ -778,7 +781,7 @@
                                 </Border>
 
                                 <!-- Card 3: Average Latency -->
-                                <Border Grid.Column="2" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,8,0">
+                                <Border Grid.Column="2" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,8,0" ToolTip="Average round-trip response time across all active validated proxies">
                                     <StackPanel>
                                         <TextBlock Text="AVERAGE POOL LATENCY" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding AveragePingMs, StringFormat='{}{0} ms'}" FontSize="22" FontWeight="Black" Foreground="#F59E0B" Margin="0,4,0,0"/>
@@ -787,7 +790,7 @@
                                 </Border>
 
                                 <!-- Card 4: Rotator Port & Status -->
-                                <Border Grid.Column="3" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,0,0">
+                                <Border Grid.Column="3" Background="{DynamicResource CyberCard}" CornerRadius="12" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" Padding="14" Margin="4,0,0,0" ToolTip="Local proxy listener address (127.0.0.1:8081). Point browsers or scrapers here to route through rotating proxies">
                                     <StackPanel>
                                         <TextBlock Text="LISTENING ENDPOINT" FontSize="10" FontWeight="Bold" Foreground="#94A3B8"/>
                                         <TextBlock Text="{Binding RotatingProxyPort, StringFormat='{}127.0.0.1:{0}'}" FontSize="18" FontWeight="Black" Foreground="#38BDF8" Margin="0,6,0,0" FontFamily="Consolas"/>
@@ -809,13 +812,13 @@
                                     <!-- Strategy Selector -->
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
                                         <TextBlock Text="Strategy:" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <ComboBox ItemsSource="{Binding RotationStrategies}" SelectedItem="{Binding SelectedRotationStrategy}" Width="210" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center"/>
+                                        <ComboBox ItemsSource="{Binding RotationStrategies}" SelectedItem="{Binding SelectedRotationStrategy}" Width="210" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Choose rotation strategy: Time-Based Interval (switches periodically), Round-Robin Per Request, Sticky Domain, Sticky Session, or Lowest Latency First"/>
                                     </StackPanel>
 
                                     <!-- Country Filter -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
                                         <TextBlock Text="🌍 Country:" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <ComboBox ItemsSource="{Binding CountryFilters}" SelectedItem="{Binding SelectedCountryFilter}" Width="85" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center"/>
+                                        <ComboBox ItemsSource="{Binding CountryFilters}" SelectedItem="{Binding SelectedCountryFilter}" Width="85" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter rotation strictly to proxies in a specific country (e.g., US, DE, JP, or ALL)"/>
                                     </StackPanel>
 
                                     <!-- Status message / Progress -->
@@ -829,7 +832,7 @@
                                         <CheckBox IsChecked="{Binding RouteBondedTrafficThroughRotator, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,10,0" ToolTip="Combines network adapters first for aggregate throughput, then routes all outbound traffic through the selected rotating proxy server">
                                             <TextBlock Text="⚡ Bond-then-Rotate" Foreground="#00F0FF" FontWeight="Bold" FontSize="11"/>
                                         </CheckBox>
-                                        <CheckBox IsChecked="{Binding AutoHarvestEnabled, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,10,0" ToolTip="Background auto-harvest fresh proxies every 30 minutes">
+                                        <CheckBox IsChecked="{Binding AutoHarvestEnabled, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,10,0" ToolTip="Background auto-harvest fresh proxies every 30 minutes in idempotence mode">
                                             <TextBlock Text="🔄 Auto-Harvest" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
                                         </CheckBox>
                                         <CheckBox IsChecked="{Binding AutoValidateEnabled, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,10,0" ToolTip="Continuous background health checks and dead pruning every 5 minutes">
@@ -841,8 +844,8 @@
                                         <CheckBox IsChecked="{Binding StrictAnonymity, Mode=TwoWay}" Style="{StaticResource CyberCheckBox}" Margin="0,0,12,0" ToolTip="Restricts rotation strictly to Elite and Anonymous proxies">
                                             <TextBlock Text="🛡 Elite Only" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11"/>
                                         </CheckBox>
-                                        <Button Content="🗑 Prune" Command="{Binding PruneDeadProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"/>
-                                        <Button Content="✕ Clear" Command="{Binding ClearProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11"/>
+                                        <Button Content="🗑 Prune" Command="{Binding PruneDeadProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0" ToolTip="Remove all unresponsive, dead, and high-failure proxies from the database"/>
+                                        <Button Content="✕ Clear" Command="{Binding ClearProxiesCommand}" Style="{StaticResource CyberButton}" Padding="8,4" FontSize="11" ToolTip="Delete all harvested proxies from the database"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -870,35 +873,35 @@
                                             <!-- Keyword Search -->
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                                                 <TextBlock Text="🔍" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <TextBox Text="{Binding ProxySearchText, UpdateSourceTrigger=PropertyChanged}" Width="145" Height="26" Padding="6,2" FontSize="11" ToolTip="Search IP, port, country, or source" AutomationProperties.Name="Filter Proxies Search Box"/>
+                                                <TextBox Text="{Binding ProxySearchText, UpdateSourceTrigger=PropertyChanged}" Width="145" Height="26" Padding="6,2" FontSize="11" ToolTip="Search proxies by IP address, port number, country code, or repository source" AutomationProperties.Name="Filter Proxies Search Box"/>
                                             </StackPanel>
 
                                             <!-- Latency Filter -->
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                                                 <TextBlock Text="⚡ Ping:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding LatencyFilters}" SelectedItem="{Binding SelectedLatencyFilter}" Width="140" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter by maximum latency threshold"/>
+                                                <ComboBox ItemsSource="{Binding LatencyFilters}" SelectedItem="{Binding SelectedLatencyFilter}" Width="140" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter visible proxies by maximum round-trip latency threshold (e.g. &lt;= 150ms, &lt;= 300ms)"/>
                                             </StackPanel>
 
                                             <!-- Source Filter -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                                                 <TextBlock Text="📁 Source:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding SourceFilters}" SelectedItem="{Binding SelectedSourceFilter}" Width="125" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter by repository source"/>
+                                                <ComboBox ItemsSource="{Binding SourceFilters}" SelectedItem="{Binding SelectedSourceFilter}" Width="125" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies harvested from a specific GitHub repository or API feed"/>
                                             </StackPanel>
 
                                             <!-- Protocol Filter -->
                                             <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                                                 <TextBlock Text="🔒 Proto:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding ProtocolFilters}" SelectedItem="{Binding SelectedProtocolFilter}" Width="105" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter by protocol"/>
+                                                <ComboBox ItemsSource="{Binding ProtocolFilters}" SelectedItem="{Binding SelectedProtocolFilter}" Width="105" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Filter proxies by supported protocol (HTTP, HTTPS, SOCKS4, SOCKS5)"/>
                                             </StackPanel>
 
                                             <!-- Sort Option -->
                                             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                                                 <TextBlock Text="⇅ Sort:" FontSize="11" FontWeight="SemiBold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Width="160" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Sort proxies"/>
+                                                <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" Width="160" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Sort the proxy list dynamically by Latency, Success Rate, Failures, Country, Protocol, or Endpoint"/>
                                             </StackPanel>
 
                                             <!-- Filtered Count Badge -->
-                                            <TextBlock Grid.Column="5" Text="{Binding FilteredCountText}" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
+                                            <TextBlock Grid.Column="5" Text="{Binding FilteredCountText}" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas" ToolTip="Total proxies matching active search criteria and filters"/>
                                         </Grid>
                                     </Border>
 
@@ -911,21 +914,22 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Selection Buttons -->
+                                            <!-- Selection & Force Connect Buttons -->
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="☑ SELECTION:" FontSize="10" FontWeight="Bold" Foreground="#00F0FF" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                                 <Button Content="Select All" Command="{Binding SelectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Select all proxies in view to participate in rotation"/>
-                                                <Button Content="Deselect All" Command="{Binding DeselectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Uncheck all proxies"/>
-                                                <Button Content="Select Fast (≤300ms)" Command="{Binding SelectFastProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Select only healthy proxies with latency &lt;= 300ms"/>
-                                                <Button Content="⚡ Rotate Now" Command="{Binding ForceRotateCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="8,4" FontSize="11" ToolTip="Immediately rotate to next selected proxy"/>
+                                                <Button Content="Deselect All" Command="{Binding DeselectAllProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Uncheck all proxies so none are flagged for rotation"/>
+                                                <Button Content="Select Fast (≤300ms)" Command="{Binding SelectFastProxiesCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Automatically select all healthy proxies with response times under 300ms"/>
+                                                <Button Content="⚡ Rotate Now" Command="{Binding ForceRotateCommand}" Style="{StaticResource CyberButton}" Margin="0,0,6,0" Padding="8,4" FontSize="11" ToolTip="Immediately rotate to the next proxy server in the pool, continuing to probe candidates until finding a live connection"/>
+                                                <Button Content="🎯 Force Connect" Command="{Binding ForceConnectSelectedOrNextCommand}" Style="{StaticResource CyberButton}" Margin="0,0,8,0" Padding="8,4" FontSize="11" ToolTip="Forcefully connects immediately to the proxy selected in the table, or auto-probes and connects to the next live responsive proxy in the candidate pool"/>
                                             </StackPanel>
 
                                             <!-- Current Selection Summary & Countdown -->
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" ToolTip="Count of healthy proxies selected to participate in rotation">
                                                     <TextBlock Text="{Binding SelectedProxiesCountText}" FontSize="11" FontWeight="Bold" Foreground="#10B981"/>
                                                 </Border>
-                                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2">
+                                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2" ToolTip="Time remaining until the next automatic proxy server rotation">
                                                     <TextBlock Text="{Binding RotationCountdownText}" FontSize="11" FontFamily="Consolas" Foreground="#F59E0B"/>
                                                 </Border>
                                             </StackPanel>
@@ -933,25 +937,32 @@
                                             <!-- Interval Selector -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="⏱ Interval:" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <ComboBox ItemsSource="{Binding RotationIntervalOptions}" SelectedItem="{Binding RotationIntervalSeconds}" Width="65" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Timed rotation interval in seconds"/>
+                                                <ComboBox ItemsSource="{Binding RotationIntervalOptions}" SelectedItem="{Binding RotationIntervalSeconds}" Width="65" Height="26" FontSize="11" Style="{StaticResource CyberComboBox}" VerticalAlignment="Center" ToolTip="Timed rotation interval in seconds: automatically switches to the next live proxy when expired"/>
                                                 <TextBlock Text="s" FontSize="11" Foreground="#94A3B8" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                             </StackPanel>
                                         </Grid>
                                     </Border>
 
-                                    <DataGrid ItemsSource="{Binding HarvestedProxies}" AutoGenerateColumns="False" IsReadOnly="False" CanUserSortColumns="True" Height="360" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" AutomationProperties.Name="Harvested Proxies Table">
+                                    <DataGrid ItemsSource="{Binding HarvestedProxies}" SelectedItem="{Binding SelectedProxyRow, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="False" CanUserSortColumns="True" Height="360" Background="#080C14" BorderBrush="#1E293B" GridLinesVisibility="None" RowBackground="Transparent" AlternatingRowBackground="#0B1120" Foreground="#FFFFFF" HeadersVisibility="Column" ToolTip="Harvested and validated proxy servers. Select rows and click Connect or Rotate Now to dispatch traffic." AutomationProperties.Name="Harvested Proxies Table">
                                         <DataGrid.Columns>
                                             <DataGridTemplateColumn Header="USE" Width="45">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
-                                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.Name="{Binding Endpoint, StringFormat='{}Select {0} for rotation'}"/>
+                                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="Check to include this proxy in the active rotation pool" AutomationProperties.Name="{Binding Endpoint, StringFormat='{}Select {0} for rotation'}"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="ACTION" Width="75">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="Connect" Command="{Binding DataContext.ForceConnectSelectedOrNextCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource CyberButton}" Padding="4,2" FontSize="10" ToolTip="Forcefully connect to this specific proxy server immediately"/>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
                                             <DataGridTemplateColumn Header="STATUS" Width="90" IsReadOnly="True" SortMemberPath="IsHealthy">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
-                                                        <Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                                                        <Border Background="{Binding StatusColor}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" ToolTip="{Binding StatusBadgeText}">
                                                              <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold" Foreground="#040810"/>
                                                         </Border>
                                                     </DataTemplate>

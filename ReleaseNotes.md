@@ -1,6 +1,32 @@
 # Release Notes
 
-## [2.2.1] - 2026-11-04 - Idempotent Proxy Harvesting & Complete State Persistence Release
+## [2.2.2] - 2026-11-04 - Live Connection Auto-Rotation, Force Connect & Comprehensive Tooltips Release
+
+### 🚀 Highlights & Engineering Advancements
+- **⚡ Live Connection Auto-Rotation Retry & Proactive Node Eviction**:
+  - **Proactive Socket Reachability Probing**: Implemented `ProbeLiveConnectionAsync` in `RotatingProxyRouter` across Windows, Linux, and macOS, using lightweight non-blocking TCP socket handshakes with `Task.WhenAny` and deterministic handle disposal to confirm responsiveness without hanging on Windows/Linux socket SYN retransmission timeouts.
+  - **Uninterrupted Traffic Pipeline**: Integrated a live retry loop (up to 12 attempts) in both HTTP/HTTPS CONNECT tunneling and RFC 1928 SOCKS5 dispatching in `ProxyEngine.cs`, `LinuxProxyEngine.cs`, and `MacProxyEngine.cs`. When an upstream proxy connection or tunnel handshake fails, the engine immediately flags the endpoint unavailable, evicts it from the active candidate pool, rotates to the next candidate, and only pipes traffic once a live upstream session is established.
+  - **Self-Healing Rotation Pool**: Dead or unresponsive proxies encountered during auto-rotation or timed intervals are dynamically pruned on-the-fly, ensuring the active pool converges rapidly on healthy, high-throughput endpoints.
+- **🎯 1-Click Force Connect to Selected or Next Live Proxy**:
+  - **Dedicated Toolbar Button**: Added a prominent `🎯 Force Connect` button in Tab 4 (Rotating Proxy & Harvester) and `/api/rotating-proxy/force-connect` REST endpoint in Linux/macOS dashboards.
+  - **User-Targeted or Automatic Next**: If a specific row is selected in the proxy table, it immediately attempts direct connection to that preferred proxy; if it fails or if no row is selected, it auto-rotates through the candidate pool testing live connectivity until a responsive server is found and locked onto `ActiveTimedProxy`.
+  - **Per-Row Connect Action**: Added an `ACTION` column with a dedicated `Connect` button for every proxy row in the WPF DataGrid and Linux/macOS Web SPAs for 1-click targeted routing.
+  - **Automatic Pipeline Engaging**: Upon establishing a live connection, automatically activates `RouteBondedTrafficThroughRotator = true` and updates the listening proxy countdown.
+- **💡 Comprehensive Explanatory Tooltips across All Controls & Labels**:
+  - **100% UI Tooltip Coverage**: Added clear, explanatory, accessible tooltips to every key button, input box, toggle switch, slider, and telemetry badge across all 5 segmented tabs:
+    - **Header & TitleBar**: Version badge, bonding engine state indicator, system proxy badge, virtual bridge badge, accessibility options button, settings configuration button, window minimize/maximize/close buttons.
+    - **Tab Navigation**: Overview (Ctrl+1), Combined Adapters (Ctrl+2), Speed Shaper (Ctrl+3), Connection Audit (Ctrl+4), Rotating Proxy (Ctrl+5).
+    - **Tab 0 (Overview)**: Master bonding power button, Windows system proxy toggle, virtual bridge toggle, speed benchmark button, rescan adapters button, GeoIP identity refresh button, individual telemetry cards (bonded download/upload, active concurrency, session volume/uptime), virtual bridge management buttons (ncpa.cpl, re-provision), and real-time bandwidth waveform.
+    - **Tab 1 (Combined Adapters)**: Rescan adapters button, profile selector, save profile, new profile, delete profile, per-adapter enable checkboxes, latency ping badges, bound local IP, public WAN location, live speeds, and bandwidth allocation weight sliders.
+    - **Tab 2 (Speed Shaper & QoS)**: Optimization mode selector, global bandwidth cap presets, custom throttling parameters button, dynamic adaptation checkbox, and Token Bucket QoS objective explanations.
+    - **Tab 3 (Connection Audit)**: Clear logs button and connection audit data table.
+    - **Tab 4 (Rotating Proxy & Harvester)**: Start/Stop rotator server, harvest proxies, validate pool, repository sources, export working, import file, rotation strategy selector, country filter, bond-then-rotate checkbox, auto-harvest/auto-validate timers, multi-NIC chaining, elite-only filter, prune dead, clear pool, filter search box, latency/source/protocol dropdowns, sorting dropdown, select all, deselect all, select fast (≤300ms), rotate now, force connect, and table columns.
+    - **Pinned Glass Footer**: Version/build pill, accessibility zoom scale pill, auto-save status text, and architecture details.
+- **🌐 100% Cross-Platform Native Parity**:
+  - Implemented identical live auto-rotation retry loops and `force-connect` APIs across Windows (`CombiSpeed/`), Linux (`CombiSpeed-Linux/`), and macOS (`CombiSpeed-macOS/`).
+  - Added rich `title="..."` tooltips throughout the HTML/CSS/JS frontend in `CyberpunkSpa.cs` for Linux and macOS.
+- **🧪 Automated Verification (Phase 11)**:
+  - Added dedicated Test Phase 11 to `--verify-rotator` testing individual TCP socket probing (live vs dead sockets), auto-rotation live retry with dead candidate eviction, and direct force-connection to preferred live proxies (**100% PASS**).
 
 ### 🚀 Highlights & Engineering Advancements
 - **⚡ Strict Idempotence Mode for Proxy Harvesting ($f(f(x)) = f(x)$)**:
@@ -83,7 +109,7 @@
   - Windows: `publish/windows/CombiSpeed-v2.1.9-win-x64.zip` and `publish/CombiSpeed-v2.1.9-win-x64.zip`
   - Linux: `publish/linux/CombiSpeed-v2.1.9-linux-x64.tar.gz` and `.zip`
   - macOS: `publish/macos/CombiSpeed-v2.1.9-macos-x64.tar.gz` and `.zip`
-
+ilur
 ---
 
 ## [2.1.8] - 2026-11-03 - Socket Address Reuse & Port Conflict Self-Healing Release

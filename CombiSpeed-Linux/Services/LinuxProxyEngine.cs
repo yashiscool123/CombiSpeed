@@ -158,28 +158,55 @@ public class LinuxProxyEngine
                     targetHost = parts[0];
                     targetPort = parts.Length > 1 && int.TryParse(parts[1], out int p) ? p : 443;
 
-                    using var remoteSocket = CreateBoundSocket(adapter);
                     string clientEp = client.Client.RemoteEndPoint?.ToString() ?? "";
                     bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
-                    var proxy = viaRotator ? RotatingRouter?.SelectUpstreamProxy(targetHost, clientEp) : null;
 
-                    if (proxy != null)
+                    if (viaRotator)
                     {
-                        await remoteSocket.ConnectAsync(proxy.Host, proxy.Port, ct);
-                        using var remoteStream = new NetworkStream(remoteSocket, true);
-                        bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, ct);
-                        if (!tunnelOk)
+                        int maxAttempts = Math.Min(12, Math.Max(3, RotatingRouter?.GetCandidatePool().Count ?? 1));
+                        bool connected = false;
+
+                        for (int attempt = 0; attempt < maxAttempts; attempt++)
                         {
-                            RotatingRouter?.MarkUnavailable(proxy.Endpoint);
-                            throw new Exception($"Upstream proxy {proxy.Endpoint} tunnel failed");
+                            var proxy = RotatingRouter?.SelectUpstreamProxy(targetHost, clientEp);
+                            if (proxy == null) break;
+
+                            using var attemptSocket = CreateBoundSocket(adapter);
+                            try
+                            {
+                                using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                                connectCts.CancelAfter(2500);
+                                await attemptSocket.ConnectAsync(proxy.Host, proxy.Port, connectCts.Token);
+                                using var remoteStream = new NetworkStream(attemptSocket, true);
+                                bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, connectCts.Token);
+                                if (tunnelOk)
+                                {
+                                    byte[] ok = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
+                                    await clientStream.WriteAsync(ok, 0, ok.Length, ct);
+                                    AddAuditLog($"HTTPS -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
+                                    await PipeBidirectionalAsync(clientStream, remoteStream, adapter, ct);
+                                    connected = true;
+                                    break;
+                                }
+                                else
+                                {
+                                    RotatingRouter?.MarkUnavailable(proxy.Endpoint);
+                                }
+                            }
+                            catch
+                            {
+                                RotatingRouter?.MarkUnavailable(proxy.Endpoint);
+                            }
                         }
-                        byte[] ok = Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\n\r\n");
-                        await clientStream.WriteAsync(ok, 0, ok.Length, ct);
-                        AddAuditLog($"HTTPS -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
-                        await PipeBidirectionalAsync(clientStream, remoteStream, adapter, ct);
+
+                        if (!connected)
+                        {
+                            throw new Exception("Unable to establish live connection across rotating proxy servers (exhausted live candidates)");
+                        }
                     }
                     else
                     {
+                        using var remoteSocket = CreateBoundSocket(adapter);
                         await remoteSocket.ConnectAsync(targetHost, targetPort, ct);
                         using var remoteStream = new NetworkStream(remoteSocket, true);
 
@@ -290,28 +317,55 @@ public class LinuxProxyEngine
                 var adapter = _loadBalancer.GetNextAdapter();
                 if (adapter == null) return;
 
-                using var remoteSocket = CreateBoundSocket(adapter);
                 string clientEp = client.Client.RemoteEndPoint?.ToString() ?? "";
                 bool viaRotator = _config?.RotatingProxy?.RouteBondedTrafficThroughRotator == true && RotatingRouter != null;
-                var proxy = viaRotator ? RotatingRouter?.SelectUpstreamProxy(targetHost, clientEp) : null;
 
-                if (proxy != null)
+                if (viaRotator)
                 {
-                    await remoteSocket.ConnectAsync(proxy.Host, proxy.Port, ct);
-                    using var remoteStream = new NetworkStream(remoteSocket, true);
-                    bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, ct);
-                    if (!tunnelOk)
+                    int maxAttempts = Math.Min(12, Math.Max(3, RotatingRouter?.GetCandidatePool().Count ?? 1));
+                    bool connected = false;
+
+                    for (int attempt = 0; attempt < maxAttempts; attempt++)
                     {
-                        RotatingRouter?.MarkUnavailable(proxy.Endpoint);
-                        throw new Exception($"Upstream proxy {proxy.Endpoint} tunnel failed");
+                        var proxy = RotatingRouter?.SelectUpstreamProxy(targetHost, clientEp);
+                        if (proxy == null) break;
+
+                        using var attemptSocket = CreateBoundSocket(adapter);
+                        try
+                        {
+                            using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                            connectCts.CancelAfter(2500);
+                            await attemptSocket.ConnectAsync(proxy.Host, proxy.Port, connectCts.Token);
+                            using var remoteStream = new NetworkStream(attemptSocket, true);
+                            bool tunnelOk = await EstablishUpstreamProxyTunnelAsync(remoteStream, proxy, targetHost, targetPort, connectCts.Token);
+                            if (tunnelOk)
+                            {
+                                byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };
+                                await stream.WriteAsync(success, 0, success.Length, ct);
+                                AddAuditLog($"SOCKS5 -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
+                                await PipeBidirectionalAsync(stream, remoteStream, adapter, ct);
+                                connected = true;
+                                break;
+                            }
+                            else
+                            {
+                                RotatingRouter?.MarkUnavailable(proxy.Endpoint);
+                            }
+                        }
+                        catch
+                        {
+                            RotatingRouter?.MarkUnavailable(proxy.Endpoint);
+                        }
                     }
-                    byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };
-                    await stream.WriteAsync(success, 0, success.Length, ct);
-                    AddAuditLog($"SOCKS5 -> {proxy.Endpoint} ({proxy.CountryCode})", targetHost, targetPort, adapter.Name, clientEp);
-                    await PipeBidirectionalAsync(stream, remoteStream, adapter, ct);
+
+                    if (!connected)
+                    {
+                        throw new Exception("Unable to establish live connection across rotating proxy servers (exhausted live candidates)");
+                    }
                 }
                 else
                 {
+                    using var remoteSocket = CreateBoundSocket(adapter);
                     await remoteSocket.ConnectAsync(targetHost, targetPort, ct);
                     // Send SOCKS5 Success response
                     byte[] success = new byte[] { 0x05, 0x00, 0x00, 0x01, 127, 0, 0, 1, 0, 0 };

@@ -68,7 +68,105 @@ public class RotatingProxyRouter
         }
     }
 
-    private List<HarvestedProxyModel> GetCandidatePool()
+    /// <summary>
+    /// Proactively probes a proxy endpoint to verify live TCP/protocol connectivity within a short timeout.
+    /// </summary>
+    public static async Task<bool> ProbeLiveConnectionAsync(HarvestedProxyModel proxy, int timeoutMs = 1500, CancellationToken ct = default)
+    {
+        try
+        {
+            using var client = new TcpClient();
+            var connectTask = client.ConnectAsync(proxy.Host, proxy.Port);
+            var completedTask = await Task.WhenAny(connectTask, Task.Delay(timeoutMs, ct)).ConfigureAwait(false);
+            if (completedTask == connectTask && client.Connected)
+            {
+                return true;
+            }
+            try { client.Close(); } catch { }
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Forces a connection to a specific target proxy (if provided) or rotates through candidates
+    /// until a live, responsive connection is found and connected.
+    /// Guaranteed to continue rotating until finding a live connection or exhausting candidate pool.
+    /// </summary>
+    public async Task<HarvestedProxyModel?> ForceConnectToLiveProxyAsync(HarvestedProxyModel? preferred = null, CancellationToken ct = default)
+    {
+        var pool = GetCandidatePool();
+        if (pool.Count == 0) return null;
+
+        // 1. If user specifically selected a preferred proxy, attempt it first
+        if (preferred != null)
+        {
+            OnLog?.Invoke($"[Router] Attempting direct connection to user-selected proxy {preferred.Endpoint} ({preferred.CountryCode} {preferred.FlagEmoji})...");
+            bool ok = await ProbeLiveConnectionAsync(preferred, 1500, ct).ConfigureAwait(false);
+            if (ok)
+            {
+                lock (_timeRotationLock)
+                {
+                    _activeTimedProxy = preferred;
+                    _lastTimedRotation = DateTime.UtcNow;
+                    preferred.IsHealthy = true;
+                    preferred.Failures = 0;
+                }
+                OnTimedRotation?.Invoke(_activeTimedProxy);
+                OnLog?.Invoke($"[Router] Successfully connected to selected proxy {preferred.Endpoint}!");
+                return _activeTimedProxy;
+            }
+            else
+            {
+                OnLog?.Invoke($"[Router] Selected proxy {preferred.Endpoint} failed live probe. Auto-rotating to find next live connection...");
+                MarkUnavailable(preferred.Endpoint);
+            }
+        }
+
+        // 2. Continue rotating through candidates until finding a live connection
+        var refreshedPool = GetCandidatePool();
+        int maxAttempts = Math.Min(refreshedPool.Count, 15);
+
+        for (int i = 0; i < maxAttempts; i++)
+        {
+            HarvestedProxyModel? candidate;
+            lock (_timeRotationLock)
+            {
+                candidate = PickRoundRobin(refreshedPool);
+            }
+            if (candidate == null) break;
+
+            OnLog?.Invoke($"[Router] Probing candidate {candidate.Endpoint} ({candidate.CountryCode})...");
+            bool isLive = await ProbeLiveConnectionAsync(candidate, 1200, ct).ConfigureAwait(false);
+            if (isLive)
+            {
+                lock (_timeRotationLock)
+                {
+                    _activeTimedProxy = candidate;
+                    _lastTimedRotation = DateTime.UtcNow;
+                    candidate.IsHealthy = true;
+                    candidate.Failures = 0;
+                }
+                OnTimedRotation?.Invoke(_activeTimedProxy);
+                OnLog?.Invoke($"[Router] Live connection confirmed! Locked onto active proxy: {candidate.Endpoint} ({candidate.CountryCode} {candidate.FlagEmoji}).");
+                return _activeTimedProxy;
+            }
+            else
+            {
+                OnLog?.Invoke($"[Router] Proxy {candidate.Endpoint} unresponsive. Evicting and rotating to next...");
+                MarkUnavailable(candidate.Endpoint);
+                refreshedPool = GetCandidatePool();
+                if (refreshedPool.Count == 0) break;
+            }
+        }
+
+        return null;
+    }
+
+    public List<HarvestedProxyModel> GetCandidatePool()
     {
         var healthy = _validator.GetHealthyProxies(_config.StrictAnonymity, _config.Strategy, _config.CountryFilter);
         if (healthy.Count == 0 && !string.IsNullOrWhiteSpace(_config.CountryFilter) && !_config.CountryFilter.Equals("ALL", StringComparison.OrdinalIgnoreCase))

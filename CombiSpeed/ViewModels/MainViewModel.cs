@@ -349,6 +349,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ICommand DeselectAllProxiesCommand { get; }
     public ICommand SelectFastProxiesCommand { get; }
     public ICommand ForceRotateCommand { get; }
+    public ICommand ForceConnectSelectedOrNextCommand { get; }
     public ICommand RefreshGeoIpCommand { get; }
 
     public SpeedTester SpeedTesterService => _speedTester;
@@ -381,7 +382,8 @@ public class MainViewModel : INotifyPropertyChanged
         SelectAllProxiesCommand = new RelayCommand(SelectAllProxies);
         DeselectAllProxiesCommand = new RelayCommand(DeselectAllProxies);
         SelectFastProxiesCommand = new RelayCommand(SelectFastProxies);
-        ForceRotateCommand = new RelayCommand(ForceRotateProxy);
+        ForceRotateCommand = new RelayCommand(async () => await ForceRotateProxyAsync());
+        ForceConnectSelectedOrNextCommand = new RelayCommand<HarvestedProxyModel>(async (proxy) => await ForceConnectSelectedOrNextAsync(proxy));
         RefreshGeoIpCommand = new RelayCommand(async () => await ResolveGeoIpAsync(forceRefresh: true));
 
         _rotatingRouter = new RotatingProxyRouter(_proxyValidator, Config.RotatingProxy, _loadBalancer);
@@ -1706,11 +1708,43 @@ public class MainViewModel : INotifyPropertyChanged
         });
     }
 
+    private HarvestedProxyModel? _selectedProxyRow;
+    public HarvestedProxyModel? SelectedProxyRow
+    {
+        get => _selectedProxyRow;
+        set => SetField(ref _selectedProxyRow, value);
+    }
+
+    public async Task ForceRotateProxyAsync()
+    {
+        await ForceConnectSelectedOrNextAsync(null);
+    }
+
     public void ForceRotateProxy()
     {
-        _rotatingRouter?.ForceRotate();
-        var current = _rotatingRouter?.ActiveTimedProxy;
-        ActiveProxyDisplay = current != null ? $"{current.Endpoint} ({current.CountryCode}) {current.FlagEmoji}" : "Rotated";
+        _ = Task.Run(async () => await ForceRotateProxyAsync());
+    }
+
+    public async Task ForceConnectSelectedOrNextAsync(HarvestedProxyModel? target = null)
+    {
+        if (_rotatingRouter == null) return;
+        var preferred = target ?? SelectedProxyRow;
+        string targetDesc = preferred != null ? $"{preferred.Endpoint} ({preferred.CountryCode})" : "next live candidate";
+        HarvestStatusText = $"Probing and connecting to {targetDesc}...";
+
+        var live = await _rotatingRouter.ForceConnectToLiveProxyAsync(preferred);
+        if (live != null)
+        {
+            ActiveProxyDisplay = $"{live.Endpoint} ({live.CountryCode}) {live.FlagEmoji}";
+            HarvestStatusText = $"Successfully connected to live proxy {live.Endpoint} ({live.CountryCode} {live.FlagEmoji})";
+            RotationCountdownText = $"Next rotation in {Config.RotatingProxy.RotationIntervalSeconds}s";
+            RouteBondedTrafficThroughRotator = true;
+        }
+        else
+        {
+            ActiveProxyDisplay = "Connection failed / No live proxy";
+            HarvestStatusText = $"Failed to establish live connection to {targetDesc}.";
+        }
     }
 
     // GeoIP & Intranet/Internet Location Resolution
