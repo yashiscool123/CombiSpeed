@@ -173,6 +173,14 @@ public class Program
                 if (reloadedAuditCfg.EnableAuditLogging != false) throw new Exception("macOS EnableAuditLogging instant persistence failed!");
                 Console.WriteLine("[PASS] macOS EnableAuditLogging instant persistence verified: EnableAuditLogging=False saved & loaded.");
 
+                // Test Light Theme Button Contrast in CyberpunkSpa
+                var spaHtml = UI.CyberpunkSpa.GetHtml();
+                if (!spaHtml.Contains("body.light-theme button") || !spaHtml.Contains("background: #FFFFFF !important") || !spaHtml.Contains("color: #0F172A !important"))
+                {
+                    throw new Exception("CyberpunkSpa Light Theme button contrast rules missing!");
+                }
+                Console.WriteLine("[PASS] macOS CyberpunkSpa Light Theme Button Contrast Verified: dark font on light background (#FFFFFF).");
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL macOS PERSISTENCE & COMBINATION TESTS PASSED (100% OK)         ");
                 Console.WriteLine("=====================================================================");

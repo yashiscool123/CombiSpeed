@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Media;
 using CombiSpeed.Models;
 using CombiSpeed.Services;
 using CombiSpeed.ViewModels;
@@ -211,6 +212,29 @@ public partial class App : Application
                             throw new Exception("Disabling EnableAuditLogging should set AuditLoggingDisabledVisibility=Visible and clear AuditLogs!");
                         }
                         Console.WriteLine("[PASS] ViewModel EnableAuditLogging disabling instantly halts audit, updates visibility badge and clears logs.");
+
+                        // Test 9: Light Theme Button Contrast Verification (dark font must have light background)
+                        vm.ApplyTheme("Light");
+                        var appRes = Application.Current?.Resources;
+                        var btnBg = appRes?["ButtonBg"] as SolidColorBrush;
+                        var btnFg = appRes?["ButtonFg"] as SolidColorBrush;
+                        var primaryBg = appRes?["PrimaryButtonBg"] as SolidColorBrush;
+                        var primaryFg = appRes?["PrimaryButtonFg"] as SolidColorBrush;
+                        if (btnBg == null || btnFg == null || primaryBg == null || primaryFg == null)
+                        {
+                            throw new Exception("Button theme brushes not registered in Application.Resources.");
+                        }
+
+                        double Lum(Color c) => (0.299 * c.R + 0.587 * c.G + 0.114 * c.B) / 255.0;
+                        if (Lum(btnFg.Color) < 0.5 && Lum(btnBg.Color) <= 0.5)
+                        {
+                            throw new Exception($"Light Theme violation: ButtonFg is dark ({btnFg.Color}) but ButtonBg is not light ({btnBg.Color})!");
+                        }
+                        if (Lum(primaryFg.Color) < 0.5 && Lum(primaryBg.Color) <= 0.5)
+                        {
+                            throw new Exception($"Light Theme violation: PrimaryButtonFg is dark ({primaryFg.Color}) but PrimaryButtonBg is not light ({primaryBg.Color})!");
+                        }
+                        Console.WriteLine($"[PASS] Light Theme Button Contrast Verified: CyberButton (Bg={btnBg.Color}, Fg={btnFg.Color}), PrimaryButton (Bg={primaryBg.Color}, Fg={primaryFg.Color}) - dark font strictly on light background.");
                     }
                     catch (Exception ex)
                     {

@@ -5,9 +5,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>2.2.7</Version>
-    <AssemblyVersion>2.2.7.34</AssemblyVersion>
-    <FileVersion>2.2.7.34</FileVersion>
+    <Version>2.2.8</Version>
+    <AssemblyVersion>2.2.8.35</AssemblyVersion>
+    <FileVersion>2.2.8.35</FileVersion>
     <Product>CombiSpeed Multi-WAN Bandwidth Aggregator for macOS</Product>
     <Company>CombiSpeed</Company>
   </PropertyGroup>

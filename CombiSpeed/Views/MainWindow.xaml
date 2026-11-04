@@ -165,24 +165,24 @@
                                     <Button Grid.Column="0" Command="{Binding TogglePowerCommand}" Width="78" Height="78" Margin="0,0,22,0" Cursor="Hand" ToolTip="Toggle Master Multi-WAN Bonding (Space / Alt+P)" AutomationProperties.Name="Master Bonding Power Button">
                                         <Button.Style>
                                             <Style TargetType="Button">
-                                                <Setter Property="Background" Value="#1E293B"/>
-                                                <Setter Property="BorderBrush" Value="#334155"/>
+                                                <Setter Property="Background" Value="{DynamicResource PowerButtonBg}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource PowerButtonBorder}"/>
                                                 <Setter Property="BorderThickness" Value="1"/>
                                                 <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="Button">
                                                             <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="20">
-                                                                <TextBlock x:Name="btnIcon" Text="⏻" FontSize="36" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                <TextBlock x:Name="btnIcon" Text="⏻" FontSize="36" Foreground="{DynamicResource PowerButtonIconFg}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
                                                             <ControlTemplate.Triggers>
                                                                 <DataTrigger Binding="{Binding IsEngineRunning}" Value="True">
-                                                                    <Setter TargetName="btnBorder" Property="Background" Value="#00F0FF"/>
-                                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#38BDF8"/>
-                                                                    <Setter TargetName="btnIcon" Property="Foreground" Value="#040810"/>
+                                                                    <Setter TargetName="btnBorder" Property="Background" Value="{DynamicResource PowerButtonActiveBg}"/>
+                                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="{DynamicResource PowerButtonActiveBorder}"/>
+                                                                    <Setter TargetName="btnIcon" Property="Foreground" Value="{DynamicResource PowerButtonActiveFg}"/>
                                                                 </DataTrigger>
                                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#00F0FF"/>
+                                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="{DynamicResource CyberCyan}"/>
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>

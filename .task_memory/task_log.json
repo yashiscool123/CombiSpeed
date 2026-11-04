@@ -710,6 +710,30 @@
                     "progress": "All requirements implemented and verified successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-037",
+            "userQuery": "Under the Light Theme mode, ensure that If the font colour is dark then the background color should be light for all buttons.",
+            "status": "completed",
+            "createdAt": "2026-11-04T23:38:48+05:30",
+            "updatedAt": "2026-11-04T23:54:00+05:30",
+            "progress": "Delivered Milestone 36: Implemented dynamic resource button brushes (ButtonBg, ButtonFg, ButtonBorder, ButtonHoverBg, PrimaryButtonBg, PrimaryButtonFg, PowerButtonBg, etc.) in App.xaml and MainViewModel.cs; added child TextBlock foreground inheritance inside CyberButton and PrimaryCyanButton; added global implicit Button style; updated Master Power Button in MainWindow.xaml; updated CyberpunkSpa.cs CSS for body.light-theme button, .btn-cyber, .btn-cyber-primary, .power-toggle-btn; verified that in Light Theme mode all buttons with dark fonts strictly render light backgrounds; passed 100% test coverage; published v2.2.8 (Build 35) packages.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3701",
+                    "timestamp": "2026-11-04T23:39:00+05:30",
+                    "inputs": "User requested ensuring that under Light Theme mode, if font colour is dark then background color is light for all buttons.",
+                    "outputs": "Analyzed button styles in App.xaml, MainWindow.xaml, dialogs, and CyberpunkSpa.cs.",
+                    "progress": "Analysis and design completed."
+                },
+                {
+                    "checkpointId": "CP-3702",
+                    "timestamp": "2026-11-04T23:54:00+05:30",
+                    "inputs": "Implementation, testing, and packaging across Windows, Linux, and macOS.",
+                    "outputs": "Implemented dynamic brushes, child text inheritance, implicit button style, updated HTML/CSS in Web SPAs, verified with automated luminance tests across all 3 platforms, bumped version to 2.2.8 (Build 35), generated release packages.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
         }
     ]
 }

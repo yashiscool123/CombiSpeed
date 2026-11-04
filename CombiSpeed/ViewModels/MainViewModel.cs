@@ -1156,17 +1156,31 @@ public class MainViewModel : INotifyPropertyChanged
             res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
             res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E2E8F0"));
             res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+
+            res["ButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000"));
+            res["ButtonFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["ButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["ButtonHoverBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0A0F1D"));
+            res["ButtonHoverBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["ButtonHoverFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["ButtonPressedBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000"));
+
+            res["PrimaryButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["PrimaryButtonFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000"));
+            res["PrimaryButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["PrimaryButtonHoverBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["PrimaryButtonPressedBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+
+            res["PowerButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000"));
+            res["PowerButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["PowerButtonIconFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["PowerButtonActiveBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["PowerButtonActiveBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["PowerButtonActiveFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000"));
         }
         else
         {
-            res["CyberBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#080C14"));
-            res["CyberSurface"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
-            res["CyberCard"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#131D33"));
-            res["CyberBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
-            res["TextPrimary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
-            res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
-            res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
-            res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            ApplyTheme(_selectedTheme);
         }
     }
 
@@ -1202,6 +1216,28 @@ public class MainViewModel : INotifyPropertyChanged
             res["ProgressBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E2E8F0"));
             res["InputBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
             res["InputFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+
+            // Button Colors under Light Theme: Font is dark (#0F172A / #0369A1 / #0284C7) -> Background is strictly LIGHT (#FFFFFF / #E0F2FE / #F1F5F9)!
+            res["ButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["ButtonFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["ButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+            res["ButtonHoverBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F1F5F9"));
+            res["ButtonHoverBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            res["ButtonHoverFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            res["ButtonPressedBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E2E8F0"));
+
+            res["PrimaryButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0F2FE"));
+            res["PrimaryButtonFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0369A1"));
+            res["PrimaryButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            res["PrimaryButtonHoverBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BAE6FD"));
+            res["PrimaryButtonPressedBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#7DD3FC"));
+
+            res["PowerButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["PowerButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
+            res["PowerButtonIconFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
+            res["PowerButtonActiveBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0F2FE"));
+            res["PowerButtonActiveBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            res["PowerButtonActiveFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
         }
         else
         {
@@ -1228,6 +1264,27 @@ public class MainViewModel : INotifyPropertyChanged
             res["ProgressBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
             res["InputBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#080C14"));
             res["InputFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+
+            res["ButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
+            res["ButtonFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["ButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#334155"));
+            res["ButtonHoverBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#334155"));
+            res["ButtonHoverBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["ButtonHoverFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["ButtonPressedBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+
+            res["PrimaryButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["PrimaryButtonFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#040810"));
+            res["PrimaryButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["PrimaryButtonHoverBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["PrimaryButtonPressedBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+
+            res["PowerButtonBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E293B"));
+            res["PowerButtonBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#334155"));
+            res["PowerButtonIconFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"));
+            res["PowerButtonActiveBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
+            res["PowerButtonActiveBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#38BDF8"));
+            res["PowerButtonActiveFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#040810"));
         }
     }
 

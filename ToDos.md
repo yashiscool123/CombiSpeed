@@ -509,3 +509,15 @@
 - [x] Rebuild Release binaries and package standalone release archives (`CombiSpeed-v2.2.7-win-x64.zip`, `CombiSpeed-v2.2.7-linux-x64.zip`, `CombiSpeed-v2.2.7-macos-x64.zip`) under `publish/`.
 - [x] Verify 100% test pass rate across Windows (`--verify-persistence`, `--verify-rotator`), Linux (`--verify-persistence`), and macOS (`--verify-persistence`).
 - [x] Synchronize documentation (`ReadMe.md`, `ReleaseNotes.md`, `ToDos.md`, `KnownIssues.md`, `.task_memory/task_log.json`).
+
+## Milestone 36: Light Theme Contrast & Universal Light Background Button Styling [COMPLETED]
+- [x] Enforce universal light theme contrast rule: if button font colour is dark, button background must strictly be light.
+- [x] Implement dynamic resource button brushes in `App.xaml` and `MainViewModel.cs` (`ButtonBg`, `ButtonFg`, `ButtonBorder`, `ButtonHoverBg`, `ButtonHoverBorder`, `ButtonHoverFg`, `ButtonPressedBg`, `PrimaryButtonBg`, `PrimaryButtonFg`, `PrimaryButtonBorder`, `PrimaryButtonHoverBg`, `PrimaryButtonPressedBg`, `PowerButtonBg`, `PowerButtonBorder`, `PowerButtonIconFg`, `PowerButtonActiveBg`, `PowerButtonActiveBorder`, `PowerButtonActiveFg`).
+- [x] Add child `TextBlock` foreground inheritance inside `CyberButton` and `PrimaryCyanButton` in `App.xaml` for compound buttons with icons and multi-line content.
+- [x] Add global implicit `<Style TargetType="{x:Type Button}" BasedOn="{StaticResource CyberButton}"/>` ensuring all dialog buttons inherit dynamic theme resources.
+- [x] Update Master Power Button in `MainWindow.xaml` to use dynamic theme resources, displaying light `#FFFFFF` in standby and `#E0F2FE` (light sky blue) with `#0284C7` (dark cyan font) when active in Light Theme mode.
+- [x] Update Linux and macOS `CyberpunkSpa.cs` CSS rules for `body.light-theme button`, `.btn-cyber`, `.btn-cyber-primary`, `.tab-btn`, and `.power-toggle-btn`.
+- [x] Add automated test step in `--verify-persistence` across Windows, Linux, and macOS calculating luminance to verify dark fonts strictly sit on light backgrounds.
+- [x] Increment semantic version to 2.2.8 and versionCode to 35 across all platform project definitions and scripts.
+- [x] Rebuild Release binaries and package standalone distribution archives (`CombiSpeed-v2.2.8-win-x64.zip`, `CombiSpeed-v2.2.8-linux-x64.zip`, `CombiSpeed-v2.2.8-macos-x64.zip`) under `publish/`.
+- [x] Update documentation (`ReadMe.md`, `ReleaseNotes.md`, `ToDos.md`, `KnownIssues.md`, `.task_memory/task_log.json`).

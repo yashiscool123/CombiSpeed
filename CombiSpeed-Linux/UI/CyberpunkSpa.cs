@@ -65,25 +65,51 @@ public static class CyberpunkSpa
             border-color: #CBD5E1 !important;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
         }
-        body.light-theme .btn-cyber {
+        body.light-theme .btn-cyber,
+        body.light-theme button {
             background: #FFFFFF !important;
             color: #0F172A !important;
-            border-color: #CBD5E1 !important;
+            border: 1px solid #CBD5E1 !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
         }
-        body.light-theme .btn-cyber:hover {
+        body.light-theme .btn-cyber:hover,
+        body.light-theme button:hover {
             background: #F1F5F9 !important;
             border-color: #0284C7 !important;
             color: #0284C7 !important;
         }
+        body.light-theme .btn-cyber-primary {
+            background: #E0F2FE !important;
+            color: #0369A1 !important;
+            border: 1px solid #0284C7 !important;
+            box-shadow: 0 1px 2px rgba(2, 132, 199, 0.15) !important;
+        }
+        body.light-theme .btn-cyber-primary:hover {
+            background: #BAE6FD !important;
+            color: #0284C7 !important;
+            border-color: #0284C7 !important;
+        }
+        body.light-theme .power-toggle-btn {
+            background: #FFFFFF !important;
+            border: 2px solid #059669 !important;
+            color: #0F172A !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        body.light-theme .power-toggle-btn.standby {
+            background: #F8FAFC !important;
+            border: 2px solid #CBD5E1 !important;
+            color: #64748B !important;
+        }
         body.light-theme .tab-btn {
             background: #E2E8F0 !important;
             color: #334155 !important;
-            border-color: #CBD5E1 !important;
+            border: 1px solid #CBD5E1 !important;
         }
         body.light-theme .tab-btn.active {
             background: #FFFFFF !important;
             color: #0284C7 !important;
-            border-color: #0284C7 !important;
+            border: 1px solid #0284C7 !important;
+            box-shadow: 0 0 8px rgba(2, 132, 199, 0.2) !important;
         }
         body.light-theme .chart-container {
             background: #FFFFFF !important;

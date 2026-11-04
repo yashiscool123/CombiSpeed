@@ -44,6 +44,28 @@
         <SolidColorBrush x:Key="InputBg" Color="#080C14"/>
         <SolidColorBrush x:Key="InputFg" Color="#FFFFFF"/>
 
+        <!-- Button Palette: If font colour is dark then background is light in Light Theme -->
+        <SolidColorBrush x:Key="ButtonBg" Color="#1E293B"/>
+        <SolidColorBrush x:Key="ButtonFg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="ButtonBorder" Color="#334155"/>
+        <SolidColorBrush x:Key="ButtonHoverBg" Color="#334155"/>
+        <SolidColorBrush x:Key="ButtonHoverBorder" Color="#00F0FF"/>
+        <SolidColorBrush x:Key="ButtonHoverFg" Color="#00F0FF"/>
+        <SolidColorBrush x:Key="ButtonPressedBg" Color="#0F172A"/>
+
+        <SolidColorBrush x:Key="PrimaryButtonBg" Color="#00F0FF"/>
+        <SolidColorBrush x:Key="PrimaryButtonFg" Color="#040810"/>
+        <SolidColorBrush x:Key="PrimaryButtonBorder" Color="#00F0FF"/>
+        <SolidColorBrush x:Key="PrimaryButtonHoverBg" Color="#38BDF8"/>
+        <SolidColorBrush x:Key="PrimaryButtonPressedBg" Color="#0284C7"/>
+
+        <SolidColorBrush x:Key="PowerButtonBg" Color="#1E293B"/>
+        <SolidColorBrush x:Key="PowerButtonBorder" Color="#334155"/>
+        <SolidColorBrush x:Key="PowerButtonIconFg" Color="#94A3B8"/>
+        <SolidColorBrush x:Key="PowerButtonActiveBg" Color="#00F0FF"/>
+        <SolidColorBrush x:Key="PowerButtonActiveBorder" Color="#38BDF8"/>
+        <SolidColorBrush x:Key="PowerButtonActiveFg" Color="#040810"/>
+
         <!-- Universal Contrasting & Accessible ToolTip Style -->
         <Style TargetType="{x:Type ToolTip}">
             <Setter Property="Background" Value="{DynamicResource ToolTipBg}"/>
@@ -121,15 +143,21 @@
 
         <!-- Rounded Accessible Cyber Button Style -->
         <Style x:Key="CyberButton" TargetType="Button">
+            <Style.Resources>
+                <!-- Automatic TextBlock child inheritance of Button Foreground -->
+                <Style TargetType="{x:Type TextBlock}">
+                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                </Style>
+            </Style.Resources>
             <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
-            <Setter Property="Background" Value="#1E293B"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ButtonFg}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorder}"/>
             <Setter Property="MinHeight" Value="32"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -139,13 +167,13 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#334155"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#00F0FF"/>
-                                <Setter Property="Foreground" Value="#00F0FF"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHoverBg}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ButtonHoverBorder}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ButtonHoverFg}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#0F172A"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#38BDF8"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonPressedBg}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ButtonHoverBorder}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45"/>
@@ -156,29 +184,38 @@
             </Setter>
         </Style>
 
+        <!-- Global Implicit Button Style so every Button gets the theme -->
+        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource CyberButton}"/>
+
         <!-- Primary Cyan Button Style -->
         <Style x:Key="PrimaryCyanButton" TargetType="Button">
+            <Style.Resources>
+                <Style TargetType="{x:Type TextBlock}">
+                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                </Style>
+            </Style.Resources>
             <Setter Property="FocusVisualStyle" Value="{StaticResource AccessibleFocusVisual}"/>
-            <Setter Property="Background" Value="#00F0FF"/>
-            <Setter Property="Foreground" Value="#040810"/>
+            <Setter Property="Background" Value="{DynamicResource PrimaryButtonBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryButtonFg}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="16,8"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryButtonBorder}"/>
             <Setter Property="MinHeight" Value="34"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#38BDF8"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource PrimaryButtonHoverBg}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#0284C7"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource PrimaryButtonPressedBg}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45"/>
@@ -203,11 +240,11 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <!-- Segmented Navigation Header Bar -->
-                            <Border Grid.Row="0" Background="#0A0F1D" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0,0,0,1" Padding="16,8">
+                            <Border Grid.Row="0" Background="{DynamicResource TitleBarBg}" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="0,0,0,1" Padding="16,8">
                                 <Grid>
                                     <TabPanel IsItemsHost="True" HorizontalAlignment="Left" KeyboardNavigation.TabIndex="1"/>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <Border Background="#131D33" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" ToolTip="Durable Configuration Auto-Sync Status">
+                                        <Border Background="{DynamicResource BadgeBg}" BorderBrush="{DynamicResource CyberBorder}" BorderThickness="1" CornerRadius="6" Padding="8,3" ToolTip="Durable Configuration Auto-Sync Status">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="💾 " FontSize="10" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{Binding DataContext.AutoSaveStatusText, RelativeSource={RelativeSource AncestorType=TabControl}}" FontSize="10" Foreground="#34D399" FontFamily="Consolas" VerticalAlignment="Center"/>

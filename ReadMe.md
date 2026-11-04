@@ -4,7 +4,7 @@
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20Arch-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-10.15%2B%20(x64%20%7C%20arm64)-000000?style=for-the-badge&logo=apple)
 ![.NET Version](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?style=for-the-badge&logo=dotnet)
-![Version](https://img.shields.io/badge/Version-v2.2.7%20(Build%2034)-38BDF8?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.2.8%20(Build%2035)-38BDF8?style=for-the-badge)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-00F0FF?style=for-the-badge)
 

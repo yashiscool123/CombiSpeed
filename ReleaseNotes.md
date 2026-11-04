@@ -1,5 +1,20 @@
 # Release Notes
 
+## [2.2.8] - 2026-11-04 - Light Theme Contrast & Universal Light Background Button Styling Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🎨 Strict Light Theme Contrast Rule (Dark Font $\rightarrow$ Light Background for All Buttons)**:
+  - **Universal Light Background Enforcement**: In Light Theme mode, any button displaying dark font colour (`#0F172A`, `#1E293B`, `#0369A1`, `#0284C7`) is strictly styled with a light background (`#FFFFFF`, `#E0F2FE`, `#F1F5F9`).
+  - **Dynamic Resource Button Brushes**: Introduced dynamic brushes (`ButtonBg`, `ButtonFg`, `ButtonBorder`, `ButtonHoverBg`, `ButtonHoverBorder`, `ButtonHoverFg`, `ButtonPressedBg`, `PrimaryButtonBg`, `PrimaryButtonFg`, `PrimaryButtonBorder`, `PrimaryButtonHoverBg`, `PrimaryButtonPressedBg`, `PowerButtonBg`, `PowerButtonBorder`, `PowerButtonIconFg`, `PowerButtonActiveBg`, `PowerButtonActiveBorder`, `PowerButtonActiveFg`) across `App.xaml` and `MainViewModel.cs`.
+  - **Child TextBlock Inheritance**: Added automatic child `TextBlock` foreground inheritance inside `CyberButton` and `PrimaryCyanButton`, ensuring text inside compound button layouts (`StackPanel` with icons) automatically inherits button foregrounds rather than falling back to default text colors.
+  - **Global Implicit Button Style**: Configured global implicit `<Style TargetType="{x:Type Button}" BasedOn="{StaticResource CyberButton}"/>` in WPF, ensuring all dialog buttons and standard buttons automatically inherit the dynamic theme styling without requiring explicit style tags.
+  - **Master Power Button Theme Adaptation**: Updated the large 78x78 Master Bonding Power button in `MainWindow.xaml` to use dynamic theme resources, rendering a clean `#FFFFFF` card in standby and `#E0F2FE` (light sky blue) with `#0284C7` (dark cyan font/icon) when active in Light Theme mode.
+  - **Linux & macOS Cyberpunk Dashboard Parity**: Applied comprehensive `body.light-theme` button CSS rules across `CyberpunkSpa.cs` for `.btn-cyber` (`background: #FFFFFF !important`, `color: #0F172A !important`), `.btn-cyber-primary` (`background: #E0F2FE !important`, `color: #0369A1 !important`), `.tab-btn` (`background: #E2E8F0 !important`, `color: #334155 !important`), and `.power-toggle-btn` (`background: #FFFFFF !important`, `color: #0F172A !important`), guaranteeing 100% triple-OS visual consistency.
+- **🧪 Automated Verification**:
+  - Enhanced `--verify-persistence` across Windows, Linux, and macOS with automated luminance calculation checks verifying that dark font colors strictly sit on light backgrounds in Light Theme mode. All test suites passed with **100% SUCCESS**.
+
+---
+
 ## [2.2.7] - 2026-11-04 - Timely Proxy Rotation, Pause Rotation, Proxy Disconnect, Proxy-Only Mode & Light Theme Contrast Release
 
 ### 🚀 Highlights & Engineering Advancements
