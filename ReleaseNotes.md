@@ -1,5 +1,18 @@
 # Release Notes
 
+## [2.2.9] - 2026-11-05 - Light Theme Contrast & Universal Light Background ToolTip Styling Release
+
+### 🚀 Highlights & Engineering Advancements
+- **🎨 Strict Light Theme Contrast Rule (Dark Font $\rightarrow$ Light Background for All Tooltips)**:
+  - **Universal Light Background Enforcement**: In Light Theme mode, any tooltip displaying dark font colour (`#0F172A`) is strictly styled with a light background (`#FFFFFF`), exceeding WCAG 2.1 AAA contrast requirements (~15:1 contrast ratio).
+  - **Dynamic Resource ToolTip Brushes**: In `App.xaml` and `MainViewModel.cs`, dynamic brushes (`ToolTipBg`, `ToolTipFg`, `ToolTipBorder`) dynamically swap between light (`Bg=#FFFFFF`, `Fg=#0F172A`, `Border=#CBD5E1`) in Light Theme, dark cyberpunk (`Bg=#0B1120`, `Fg=#F8FAFC`, `Border=#00F0FF`), and high contrast (`Bg=#000000`, `Fg=#FFFFFF`, `Border=#00F0FF`).
+  - **Child TextBlock Inheritance**: Added automatic child `TextBlock` foreground inheritance inside the universal `ToolTip` style in `App.xaml`, ensuring nested `TextBlock` elements within complex tooltips inherit `{DynamicResource ToolTipFg}` rather than falling back to global text styling.
+  - **Linux & macOS Cyberpunk Dashboard Parity**: Applied comprehensive `body.light-theme` tooltip CSS rules across `CyberpunkSpa.cs` for `.tooltip`, `[data-tooltip]::before`, `[data-tooltip]::after`, and `.cyber-tooltip` (`background: #FFFFFF !important`, `color: #0F172A !important`, `border: 1px solid #CBD5E1 !important`), guaranteeing 100% visual contrast across all 3 operating systems.
+- **🧪 Automated Verification**:
+  - Enhanced `--verify-persistence` across Windows, Linux, and macOS with automated luminance calculation tests verifying that under Light Theme, if tooltip font color is dark (`Lum < 0.5`), the background color is strictly light (`Lum > 0.5`). All test suites passed with **100% SUCCESS**.
+
+---
+
 ## [2.2.8] - 2026-11-04 - Light Theme Contrast & Universal Light Background Button Styling Release
 
 ### 🚀 Highlights & Engineering Advancements

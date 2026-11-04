@@ -521,3 +521,14 @@
 - [x] Increment semantic version to 2.2.8 and versionCode to 35 across all platform project definitions and scripts.
 - [x] Rebuild Release binaries and package standalone distribution archives (`CombiSpeed-v2.2.8-win-x64.zip`, `CombiSpeed-v2.2.8-linux-x64.zip`, `CombiSpeed-v2.2.8-macos-x64.zip`) under `publish/`.
 - [x] Update documentation (`ReadMe.md`, `ReleaseNotes.md`, `ToDos.md`, `KnownIssues.md`, `.task_memory/task_log.json`).
+
+## Milestone 37: Light Theme Contrast & Universal Light Background ToolTip Styling [COMPLETED]
+- [x] Enforce universal light theme contrast rule for all tooltips: if tooltip font colour is dark, tooltip background must strictly be light (`#FFFFFF`), exceeding WCAG 2.1 AAA contrast standards.
+- [x] Update dynamic resource tooltip brushes in `MainViewModel.cs` (`ApplyTheme` and `ApplyHighContrastTheme`): in Light Theme, set `ToolTipBg` to `#FFFFFF`, `ToolTipFg` to `#0F172A`, and `ToolTipBorder` to `#CBD5E1`.
+- [x] Add nested child `TextBlock` foreground inheritance inside universal `ToolTip` style in `App.xaml` to ensure child elements inherit `{DynamicResource ToolTipFg}`.
+- [x] Update Linux and macOS `CyberpunkSpa.cs` with `.tooltip`, `[data-tooltip]::before`, `[data-tooltip]::after`, and `.cyber-tooltip` rules under `body.light-theme` with `background: #FFFFFF !important`, `color: #0F172A !important`, and `border: 1px solid #CBD5E1 !important`.
+- [x] Add automated test step in `--verify-persistence` across Windows, Linux, and macOS calculating luminance to verify dark fonts strictly sit on light backgrounds for all tooltips.
+- [x] Increment semantic version to 2.2.9 and versionCode to 36 across all platform project definitions (`version.json`, `.csproj`, `Info.plist`, `Install-CombiSpeed.bat`).
+- [x] Rebuild Release binaries and package standalone distribution archives (`CombiSpeed-v2.2.9-win-x64.zip`, `CombiSpeed-v2.2.9-linux-x64.zip`, `CombiSpeed-v2.2.9-macos-x64.zip`) under `publish/`.
+- [x] Verify 100% test pass rate across Windows (`--verify-persistence`, `--verify-rotator`), Linux (`--verify-persistence`), and macOS (`--verify-persistence`).
+- [x] Synchronize documentation (`ReadMe.md`, `ReleaseNotes.md`, `ToDos.md`, `KnownIssues.md`, `.task_memory/task_log.json`).

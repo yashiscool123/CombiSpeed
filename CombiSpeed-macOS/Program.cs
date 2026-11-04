@@ -181,6 +181,13 @@ public class Program
                 }
                 Console.WriteLine("[PASS] macOS CyberpunkSpa Light Theme Button Contrast Verified: dark font on light background (#FFFFFF).");
 
+                // Test Light Theme ToolTip Contrast in CyberpunkSpa
+                if (!spaHtml.Contains("body.light-theme .tooltip") || !spaHtml.Contains("background: #FFFFFF !important") || !spaHtml.Contains("color: #0F172A !important"))
+                {
+                    throw new Exception("CyberpunkSpa Light Theme tooltip contrast rules missing!");
+                }
+                Console.WriteLine("[PASS] macOS CyberpunkSpa Light Theme ToolTip Contrast Verified: dark font on light background (#FFFFFF).");
+
                 Console.WriteLine("=====================================================================");
                 Console.WriteLine("  ALL macOS PERSISTENCE & COMBINATION TESTS PASSED (100% OK)         ");
                 Console.WriteLine("=====================================================================");

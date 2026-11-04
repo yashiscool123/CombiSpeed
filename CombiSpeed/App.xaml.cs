@@ -235,6 +235,19 @@ public partial class App : Application
                             throw new Exception($"Light Theme violation: PrimaryButtonFg is dark ({primaryFg.Color}) but PrimaryButtonBg is not light ({primaryBg.Color})!");
                         }
                         Console.WriteLine($"[PASS] Light Theme Button Contrast Verified: CyberButton (Bg={btnBg.Color}, Fg={btnFg.Color}), PrimaryButton (Bg={primaryBg.Color}, Fg={primaryFg.Color}) - dark font strictly on light background.");
+
+                        // Test 10: Light Theme ToolTip Contrast Verification (dark font must have light background)
+                        var tipBg = appRes?["ToolTipBg"] as SolidColorBrush;
+                        var tipFg = appRes?["ToolTipFg"] as SolidColorBrush;
+                        if (tipBg == null || tipFg == null)
+                        {
+                            throw new Exception("ToolTip theme brushes not registered in Application.Resources.");
+                        }
+                        if (Lum(tipFg.Color) < 0.5 && Lum(tipBg.Color) <= 0.5)
+                        {
+                            throw new Exception($"Light Theme violation: ToolTipFg is dark ({tipFg.Color}) but ToolTipBg is not light ({tipBg.Color})!");
+                        }
+                        Console.WriteLine($"[PASS] Light Theme ToolTip Contrast Verified: ToolTip (Bg={tipBg.Color}, Fg={tipFg.Color}) - dark font strictly on light background.");
                     }
                     catch (Exception ex)
                     {

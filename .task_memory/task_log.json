@@ -734,6 +734,30 @@
                     "progress": "All tasks completed successfully."
                 }
             ]
+        },
+        {
+            "taskId": "TASK-2026-038",
+            "userQuery": "Under the Light Theme mode, ensure that If the font colour is dark then the background color should be light for all tooltips.",
+            "status": "completed",
+            "createdAt": "2026-11-05T00:26:00+05:30",
+            "updatedAt": "2026-11-05T00:36:30+05:30",
+            "progress": "Delivered Milestone 37: Enforced strict Light Theme contrast rule for tooltips across Windows, Linux, and macOS. In Light Theme mode, any tooltip with dark font (#0F172A) strictly renders a light background (#FFFFFF) with #CBD5E1 border, exceeding WCAG 2.1 AAA contrast (~15:1). Added child TextBlock foreground inheritance inside universal ToolTip style in App.xaml; added tooltip CSS rules across Linux/macOS CyberpunkSpa.cs; automated luminance calculation test in --verify-persistence across all 3 platforms (100% pass); published v2.2.9 (Build 36) packages.",
+            "checkpoints": [
+                {
+                    "checkpointId": "CP-3801",
+                    "timestamp": "2026-11-05T00:29:40+05:30",
+                    "inputs": "User query: Under the Light Theme mode, ensure that If the font colour is dark then the background color should be light for all tooltips.",
+                    "outputs": "Identified ToolTip styling in App.xaml and dynamic brush assignments in MainViewModel.cs ApplyTheme; analyzed Linux and macOS CyberpunkSpa.cs tooltip CSS.",
+                    "progress": "Initialization and plan confirmed."
+                },
+                {
+                    "checkpointId": "CP-3802",
+                    "timestamp": "2026-11-05T00:36:30+05:30",
+                    "inputs": "Implementation, cross-platform testing, packaging, and documentation update.",
+                    "outputs": "Updated ToolTip brushes in App.xaml and MainViewModel.cs, updated CyberpunkSpa.cs CSS for tooltips in Light Theme, added automated test step in --verify-persistence for Windows, Linux, and macOS, verified 100% test pass, packaged v2.2.9 distribution zips, synchronized documentation.",
+                    "progress": "All tasks completed successfully."
+                }
+            ]
         }
     ]
 }

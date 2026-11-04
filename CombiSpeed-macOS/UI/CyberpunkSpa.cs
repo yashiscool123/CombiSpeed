@@ -167,6 +167,30 @@ public static class CyberpunkSpa
             color: #0F172A !important;
         }
 
+        /* Tooltip Contrast Rules (Dark font strictly on Light background in Light Theme) */
+        .tooltip,
+        [data-tooltip]::before,
+        [data-tooltip]::after,
+        .cyber-tooltip {
+            background: #0B1120;
+            color: #F8FAFC;
+            border: 1px solid #00F0FF;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        body.light-theme .tooltip,
+        body.light-theme [data-tooltip]::before,
+        body.light-theme [data-tooltip]::after,
+        body.light-theme .cyber-tooltip {
+            background: #FFFFFF !important;
+            color: #0F172A !important;
+            border: 1px solid #CBD5E1 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+
         body.reduce-motion * {
             animation: none !important;
             transition: none !important;

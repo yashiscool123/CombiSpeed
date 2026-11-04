@@ -68,6 +68,11 @@
 
         <!-- Universal Contrasting & Accessible ToolTip Style -->
         <Style TargetType="{x:Type ToolTip}">
+            <Style.Resources>
+                <Style TargetType="{x:Type TextBlock}">
+                    <Setter Property="Foreground" Value="{DynamicResource ToolTipFg}"/>
+                </Style>
+            </Style.Resources>
             <Setter Property="Background" Value="{DynamicResource ToolTipBg}"/>
             <Setter Property="Foreground" Value="{DynamicResource ToolTipFg}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolTipBorder}"/>

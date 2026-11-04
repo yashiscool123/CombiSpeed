@@ -1,9 +1,9 @@
 {
   "$schema": "./version.schema.json",
-  "version": "2.2.8",
-  "versionCode": 35,
-  "releaseName": "CombiSpeed v2.2.8 - Light Theme Contrast & Universal Light Background Button Styling Release",
+  "version": "2.2.9",
+  "versionCode": 36,
+  "releaseName": "CombiSpeed v2.2.9 - Light Theme Contrast & Universal Light Background ToolTip Styling Release",
   "minWindowsVersion": "10.0.17763.0",
   "dotnetVersion": "8.0",
-  "releaseDate": "2026-11-04"
+  "releaseDate": "2026-11-05"
 }

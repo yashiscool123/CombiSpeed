@@ -1177,6 +1177,10 @@ public class MainViewModel : INotifyPropertyChanged
             res["PowerButtonActiveBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
             res["PowerButtonActiveBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
             res["PowerButtonActiveFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000"));
+
+            res["ToolTipBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000"));
+            res["ToolTipFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["ToolTipBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00F0FF"));
         }
         else
         {
@@ -1202,9 +1206,10 @@ public class MainViewModel : INotifyPropertyChanged
             res["TextSecondary"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#334155"));
             res["TextMuted"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
             res["TextHeader"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
-            res["ToolTipBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
-            res["ToolTipFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F8FAFC"));
-            res["ToolTipBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            // Tooltip Palette: If font colour is dark (#0F172A) then background is strictly LIGHT (#FFFFFF)
+            res["ToolTipBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+            res["ToolTipFg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0F172A"));
+            res["ToolTipBorder"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CBD5E1"));
             res["CyberCyan"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
             res["CyberCyanHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0369A1"));
             res["TitleBarBg"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
